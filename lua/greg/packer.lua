@@ -28,7 +28,7 @@ return require('packer').startup(function(use)
   use('nvim-treesitter/playground')
 
   -- Undo tree
-  use 'mbbill/undotree'
+  use('mbbill/undotree')
 
   -- Primagen's finder.
   use('theprimeagen/harpoon')
@@ -51,6 +51,9 @@ return require('packer').startup(function(use)
       {'L3MON4D3/LuaSnip'},
     }
   }
+
+  -- Nerd tree
+  use('nvim-tree/nvim-tree.lua')
 
   -- Comments
   use {
