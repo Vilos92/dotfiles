@@ -52,6 +52,14 @@ return require('packer').startup(function(use)
     }
   }
 
+  -- Comments
+  use {
+    'numToStr/Comment.nvim',
+    config = function()
+      require('Comment').setup()
+    end
+  }
+
   -- prettier
   use('neovim/nvim-lspconfig')
   use('jose-elias-alvarez/null-ls.nvim')
