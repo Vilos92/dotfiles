@@ -110,9 +110,18 @@ source $ZSH/oh-my-zsh.sh
 # To customize prompt, run `p10k configure` or edit ~/.p10k.zsh.
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
-# Run all environment scripts
+# zsh environment setup.
 zshenv_path="$HOME/.zshenv"
-for file in $zshenv_path/*.sh; do
+
+# Run all environment pre-scripts.
+for file in $zshenv_path/pre/*.sh; do
+  if [ -f "$file" ]; then
+    source "$file"
+  fi
+done
+
+# Run all environment post-scripts.
+for file in $zshenv_path/post/*.sh; do
   if [ -f "$file" ]; then
     source "$file"
   fi
