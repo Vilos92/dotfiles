@@ -1,16 +1,20 @@
 #!/bin/zsh
 
 # Dotfiles
-alias gcd-dotfiles='cd ~/greg_projects/dotfiles'
-alias gtmux-dotfiles='gcd-dotfiles && tmux-attach dotfiles'
+# var for the dotfiles path
+export GREG_DOTFILES_PATH=~/greg_projects/dotfiles
+alias gcd-dotfiles='cd $GREG_DOTFILES_PATH'
+alias gtmux-dotfiles='tmux-attach dotfiles $GREG_DOTFILES_PATH'
 
 # Milo Engine
-alias gcd-miloengine='cd ~/greg_projects/milo-engine'
-alias gtmux-miloengine='gcd-miloengine && tmux-attach miloengine'
+export GREG_MILOENGINE_PATH=~/greg_projects/milo-engine
+alias gcd-miloengine='cd $GREG_MILOENGINE_PATH'
+alias gtmux-miloengine='tmux-attach miloengine $GREG_MILOENGINE_PATH'
 
 # Sparkify
-alias gcd-sparkify='cd ~/greg_projects/sparkify'
-alias gtmux-sparkify='gcd-sparkify && tmux-attach sparkify'
+export GREG_SPARKIFY_PATH=~/greg_projects/sparkify
+alias gcd-sparkify='cd $GREG_SPARKIFY_PATH'
+alias gtmux-sparkify='tmux-attach sparkify $GREG_SPARKIFY_PATH'
 alias ssh-sparkify='ssh root@147.182.226.122'
 
 # Black magic
