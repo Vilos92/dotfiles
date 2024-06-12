@@ -1,11 +1,14 @@
 #!/bin/zsh
 
+# zshrc
+alias vzshrc="v -p ~/.zshenv ~/.zshrc"
+
+# tmux
+alias tmux-new="tmux new-session -d -s"
+
 # nvim
 alias v=nvim
 alias vconfig="v ~/.config/nvim"
-
-# zshrc configs
-alias vzshrc="v -p ~/.zshenv ~/.zshrc"
 
 # pnpm
 export PNPM_HOME="/Users/greg.linscheid/Library/pnpm"
