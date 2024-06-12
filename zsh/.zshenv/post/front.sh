@@ -40,6 +40,6 @@ alias mystaging='export STAGING_NAMESPACE=glinscheid; npm run start:mystaging'
 alias boga='~/frontapp/front-infra/scripts/boga.sh'
 
 ## tmux sessions
-alias tmux-fchat='cdfchat && tmux new-session -A -s fchat'
-alias tmux-fclient='cdfclient && tmux new-session -A -s fclient'
-alias tmux-ffront='cdffront && tmux new-session -A -s front'
+alias tmux-fchat='cdfchat && tmux-attach fchat'
+alias tmux-fclient='cdfclient && tmux-attach fclient'
+alias tmux-ffront='cdffront && tmux-attach front'

@@ -4,7 +4,9 @@
 alias vzshrc="v -p ~/.zshenv ~/.zshrc"
 
 # tmux
-alias tmux-new="tmux new-session -d -s"
+alias tmux-attach="attach_tmux_session"
+alias tmux-kill="tmux kill-session -t"
+alias tmux-switch="tmux switch -t"
 
 # nvim
 alias v=nvim
