@@ -18,6 +18,7 @@ null_ls.setup({
         group = group,
         callback = function()
           vim.lsp.buf.format({ bufnr = bufnr, async = async })
+          vim.cmd("Prettier")
         end,
         desc = "[lsp] format on save",
       })
@@ -30,3 +31,6 @@ null_ls.setup({
     end
   end,
 })
+
+-- Display code actions.
+vim.keymap.set("n", "<C-m>", vim.lsp.buf.code_action)
