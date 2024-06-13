@@ -64,9 +64,13 @@ return require("packer").startup(function(use)
     end
   }
 
+  -- lsp for formatting (needed for eslint and prettier).
+  use('neovim/nvim-lspconfig')
+  use('jose-elias-alvarez/null-ls.nvim')
+
+  -- eslint.
+  use('MunifTanjim/eslint.nvim')
   -- prettier.
-  use("neovim/nvim-lspconfig")
-  use("jose-elias-alvarez/null-ls.nvim")
   use("MunifTanjim/prettier.nvim")
 
   -- GitHub copilot.

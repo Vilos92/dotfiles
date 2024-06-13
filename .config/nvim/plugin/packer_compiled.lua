@@ -95,6 +95,11 @@ _G.packer_plugins = {
     path = "/Users/greg.linscheid/.local/share/nvim/site/pack/packer/start/copilot.vim",
     url = "https://github.com/github/copilot.vim"
   },
+  ["eslint.nvim"] = {
+    loaded = true,
+    path = "/Users/greg.linscheid/.local/share/nvim/site/pack/packer/start/eslint.nvim",
+    url = "https://github.com/MunifTanjim/eslint.nvim"
+  },
   harpoon = {
     loaded = true,
     path = "/Users/greg.linscheid/.local/share/nvim/site/pack/packer/start/harpoon",
