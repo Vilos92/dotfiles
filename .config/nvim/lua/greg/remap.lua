@@ -30,9 +30,12 @@ vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><
 -- Make executable
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true })
 
--- Navigate between quickfix items
+-- Quick navigation.
 vim.keymap.set("n", "<leader>j", "<cmd>cnext<CR>zz", { desc = "Forward qfixlist" })
 vim.keymap.set("n", "<leader>k", "<cmd>cprev<CR>zz", { desc = "Backward qfixlist" })
+
+-- Rename all occurrences from quick fix navigation.
+vim.keymap.set("n", "<leader>r", [[:cfdo %s/\<<C-r><C-w>\>/<C-r><C-w>/g<Left><Left><Left>]])
 
 -- Save current file to buffer.
 vim.keymap.set("n", "<leader><leader>", function()
