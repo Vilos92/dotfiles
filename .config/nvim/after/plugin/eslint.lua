@@ -1,7 +1,7 @@
 local eslint = require("eslint")
 
 eslint.setup({
-  bin = 'eslint_d', -- or `eslint_d`
+  bin = 'eslint_d', -- alternative to eslint for performance
   code_actions = {
     enable = true,
     apply_on_save = {
