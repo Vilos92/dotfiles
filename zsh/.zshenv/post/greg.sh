@@ -23,7 +23,7 @@ function alacritty-theme() {
     return 1
   fi
 
-  sed -i -e "1s|.*|import = [\"$ALACRITTY_THEME_PATH/$1.toml\"]|" $ALACRITTY_PATH/alacritty.toml
+  sed -i '' "1s|.*|import = [\"$ALACRITTY_THEME_PATH/$1.toml\"]|" $ALACRITTY_PATH/alacritty.toml
   echo "Theme $1 applied"
 }
 alias at=alacritty-theme
