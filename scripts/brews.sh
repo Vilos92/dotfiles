@@ -39,7 +39,7 @@ prompt_and_install "dev packages" 'brew install tmux\
   ripgrep\
   lua-language-server\
   font-meslo-lg-nerd-font\
-  nvm'
+  fnm'
 
 # oh my zsh
 prompt_and_install "oh my zsh" 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
