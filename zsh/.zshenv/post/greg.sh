@@ -27,6 +27,7 @@ function alacritty-theme() {
   echo "Theme $1 applied"
 }
 alias at=alacritty-theme
+alias at-rose-pine='alacritty-theme rose-pine'
 alias at-rose-pine-moon='alacritty-theme rose-pine-moon'
 alias at-rose-pine-dawn='alacritty-theme rose-pine-dawn'
 alias at-catppuccin-frappe='alacritty-theme catppuccin-frappe'
