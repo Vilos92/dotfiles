@@ -1,10 +1,13 @@
 #!/bin/zsh
 
 # Dotfiles
-# var for the dotfiles path
 export GREG_DOTFILES_PATH=~/greg_projects/dotfiles
 alias gcd-dotfiles='cd $GREG_DOTFILES_PATH'
 alias gtmux-dotfiles='tmux-attach dotfiles $GREG_DOTFILES_PATH'
+alias vdotfiles='nvim $GREG_DOTFILES_PATH'
+
+# nvim config
+alias vconfig='nvim $GREG_DOTFILES_PATH/nvim/.config/nvim'
 
 # Milo Engine
 export GREG_MILOENGINE_PATH=~/greg_projects/milo-engine

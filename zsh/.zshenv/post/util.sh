@@ -1,16 +1,15 @@
 #!/bin/zsh
 
 # zshrc
-alias vzshrc="v -p ~/.zshenv ~/.zshrc"
+alias vzshrc='v -p ~/.zshenv ~/.zshrc'
 
 # tmux
-alias tmux-attach="attach_tmux_session"
-alias tmux-kill="tmux kill-session -t"
-alias tmux-switch="tmux switch -t"
+alias tmux-attach='attach_tmux_session'
+alias tmux-kill='tmux kill-session -t'
+alias tmux-switch='tmux switch -t'
 
 # nvim
 alias v=nvim
-alias vconfig="v ~/.config/nvim"
 
 # pnpm
 export PNPM_HOME="/Users/greg.linscheid/Library/pnpm"
