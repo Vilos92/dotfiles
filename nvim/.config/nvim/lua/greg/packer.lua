@@ -14,27 +14,21 @@ return require("packer").startup(function(use)
     requires = { {"nvim-lua/plenary.nvim"} }
   }
 
-  -- Theme.
-  use({
-    "rose-pine/neovim",
-    as = "rose-pine",
-    config = function()
-      vim.cmd("colorscheme rose-pine")
-    end
-  })
+  -- Theme manager.
+  use 'zaldih/themery.nvim'
 
   -- Tree sitter.
   use("nvim-treesitter/nvim-treesitter", { run = ":TSUpdate" })
-  use("nvim-treesitter/playground")
+  use "nvim-treesitter/playground"
 
   -- Undo tree.
-  use("mbbill/undotree")
+  use "mbbill/undotree"
 
   -- Primagen"s finder.
-  use("theprimeagen/harpoon")
+  use "theprimeagen/harpoon"
 
   -- vim-fugitive for additional Git capabilities.
-  use("tpope/vim-fugitive")
+  use "tpope/vim-fugitive"
 
   -- lsp-zero.
   use {
@@ -54,7 +48,7 @@ return require("packer").startup(function(use)
   }
 
   -- Nerd tree.
-  use("nvim-tree/nvim-tree.lua")
+  use "nvim-tree/nvim-tree.lua"
 
   -- Comments.
   use {
@@ -65,14 +59,18 @@ return require("packer").startup(function(use)
   }
 
   -- lsp for formatting (needed for eslint and prettier).
-  use('neovim/nvim-lspconfig')
-  use('jose-elias-alvarez/null-ls.nvim')
+  use 'neovim/nvim-lspconfig'
+  use 'jose-elias-alvarez/null-ls.nvim'
 
   -- eslint.
-  use('MunifTanjim/eslint.nvim')
+  use 'MunifTanjim/eslint.nvim'
   -- prettier.
-  use("MunifTanjim/prettier.nvim")
+  use "MunifTanjim/prettier.nvim" 
 
   -- GitHub copilot.
-  use("github/copilot.vim")
+  use "github/copilot.vim"
+
+  -- Themes.
+  use { "rose-pine/neovim", as = "rose-pine" }
+  use { "catppuccin/nvim", as = "catppuccin" }
 end)
