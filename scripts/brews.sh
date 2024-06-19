@@ -32,7 +32,14 @@ prompt_and_install "tiles" 'brew install --cask tiles'
 prompt_and_install "alacritty" 'brew install --cask alacritty'
 
 # Developer environment packages
-prompt_and_install "dev packages" 'brew install tmux zsh neovim stow ripgrep lua-language-server font-meslo-lg-nerd-font'
+prompt_and_install "dev packages" 'brew install tmux\
+  zsh\
+  neovim\
+  stow\
+  ripgrep\
+  lua-language-server\
+  font-meslo-lg-nerd-font\
+  nvm'
 
 # oh my zsh
 prompt_and_install "oh my zsh" 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
