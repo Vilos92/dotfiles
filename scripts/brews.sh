@@ -37,6 +37,9 @@ prompt_and_install "dev packages" 'brew install tmux zsh neovim stow ripgrep lua
 # oh my zsh
 prompt_and_install "oh my zsh" 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
 
+# Powerlevel10k oh my zsh theme
+prompt_and_install "powerlevel10k" 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k'
+
 # Browser
 prompt_and_install "arc" 'brew install --cask arc'
 
