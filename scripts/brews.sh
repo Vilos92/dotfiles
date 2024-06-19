@@ -22,6 +22,12 @@ prompt_and_install() {
 # Homebrew
 prompt_and_install "homebrew" '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 
+# Alt tab window manager
+prompt_and_install "alt-tab" 'brew install --cask alt-tab'
+
+# Tiles snapping window manager 
+prompt_and_install "tiles" 'brew install --cask tiles'
+
 # Terminal
 prompt_and_install "alacritty" 'brew install --cask alacritty'
 
@@ -55,3 +61,5 @@ prompt_and_install "coteditor" 'brew install --cask coteditor'
 # Database manager
 prompt_and_install "dbeaver" 'brew install --cask dbeaver-community'
 
+# Gif recorder
+prompt_and_install "gifox" 'brew install --cask gifox'
