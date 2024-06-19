@@ -22,11 +22,14 @@ prompt_and_install() {
 # Homebrew
 prompt_and_install "homebrew" '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 
-# Developer environment packages
-prompt_and_install "dev packages" 'brew install tmux neovim stow ripgrep lua-language-server font-meslo-lg-nerd-font'
-
 # Terminal
 prompt_and_install "alacritty" 'brew install --cask alacritty'
+
+# Developer environment packages
+prompt_and_install "dev packages" 'brew install tmux zsh neovim stow ripgrep lua-language-server font-meslo-lg-nerd-font'
+
+# oh my zsh
+prompt_and_install "oh my zsh" 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
 
 # Browser
 prompt_and_install "arc" 'brew install --cask arc'
@@ -51,3 +54,4 @@ prompt_and_install "coteditor" 'brew install --cask coteditor'
 
 # Database manager
 prompt_and_install "dbeaver" 'brew install --cask dbeaver-community'
+
