@@ -41,7 +41,7 @@ prompt_and_install "oh my zsh" 'sh -c "$(curl -fsSL https://raw.githubuserconten
 prompt_and_install "powerlevel10k" 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k'
 
 # Packer for neovim package management
-prompt_and_install "packer.nvim" 'git clone --depth 1 https://github.com/wbthomason/packer.nvim \ ~/.local/share/nvim/site/pack/packer/start/packer.nvim'
+prompt_and_install "packer.nvim" 'git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim'
 
 # Browser
 prompt_and_install "arc" 'brew install --cask arc'
