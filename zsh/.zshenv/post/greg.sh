@@ -19,6 +19,3 @@ export GREG_SPARKIFY_PATH=~/greg_projects/sparkify
 alias gcd-sparkify='cd $GREG_SPARKIFY_PATH'
 alias gtmux-sparkify='tmux-attach sparkify $GREG_SPARKIFY_PATH'
 alias ssh-sparkify='ssh root@147.182.226.122'
-
-# Black magic
-source ${HOME}/.ghcup/env
