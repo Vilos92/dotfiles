@@ -19,12 +19,12 @@ function alacritty-theme() {
   fi
 
   if [ ! -f "$ALACRITTY_THEME_PATH/$1.toml" ]; then
-    echo "Theme $1 not found"
+    echo "Theme $1 not found."
     return 1
   fi
 
   sed -i '' "1s|.*|import = [\"$ALACRITTY_THEME_PATH/$1.toml\"]|" $ALACRITTY_PATH/alacritty.toml
-  echo "Theme $1 applied"
+  echo "Theme $1 applied."
 }
 alias at=alacritty-theme
 alias at-rose-pine='alacritty-theme rose-pine'
