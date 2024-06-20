@@ -74,6 +74,11 @@ install_javascript_packages() {
     npm install -g eslint_d'
 }
 
+# Gleam.
+install_gleam() {
+  prompt_and_install "gleam" 'brew install gleam'
+}
+
 # Browser.
 install_arc() {
   prompt_and_install "arc" 'brew install --cask arc'
@@ -148,6 +153,9 @@ handle_arguments() {
     "javascript-packages" )
       install_javascript_packages
       ;;
+    "gleam" )
+      install_gleam
+      ;;
     "arc" )
       install_arc
       ;;
@@ -192,6 +200,7 @@ install_everything() {
   install_powerlevel10k
   install_packer_nvim
   install_javascript_packages
+  install_gleam
   install_arc
   install_notion
   install_spotify
