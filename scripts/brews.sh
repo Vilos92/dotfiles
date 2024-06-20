@@ -19,60 +19,66 @@ prompt_and_install() {
   esac
 }
 
-# Homebrew
+# Homebrew.
 prompt_and_install "homebrew" '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
 
-# Alt tab window manager
+# Alt tab window manager.
 prompt_and_install "alt-tab" 'brew install --cask alt-tab'
 
-# Tiles snapping window manager 
+# Tiles snapping window manager.
 prompt_and_install "tiles" 'brew install --cask tiles'
 
-# Terminal
+# Terminal.
 prompt_and_install "alacritty" 'brew install --cask alacritty'
 
-# Developer environment packages
+# Developer environment packages.
 prompt_and_install "dev packages" 'brew install tmux\
   zsh\
   neovim\
   stow\
   ripgrep\
   lua-language-server\
-  font-meslo-lg-nerd-font\
-  fnm'
+  font-meslo-lg-nerd-font'
 
-# oh my zsh
+# oh my zsh.
 prompt_and_install "oh my zsh" 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
 
-# Powerlevel10k oh my zsh theme
+# Powerlevel10k oh my zsh theme.
 prompt_and_install "powerlevel10k" 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k'
 
-# Packer for neovim package management
+# Packer for neovim package management.
 prompt_and_install "packer.nvim" 'git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim'
 
-# Browser
+# JavaScript/Node.js developement.
+prompt_and_install "JavaScript/Node.js packages" 'brew install fnm\
+    oven-sh/bun/bun\
+    fsouza/prettierd/prettierd &&
+  fnm install 22 &&
+  npm install -g eslint_d'
+
+# Browser.
 prompt_and_install "arc" 'brew install --cask arc'
 
-# Notes
+# Notes.
 prompt_and_install "notion" 'brew install --cask notion'
 
-# Music
+# Music.
 prompt_and_install "spotify" 'brew install --cask spotify'
 
-# Archive manager
+# Archive manager.
 prompt_and_install "keka" 'brew install --cask keka'
 
-# Photo editor
+# Photo editor.
 prompt_and_install "gimp" 'brew install --cask gimp'
 
-# Visual Studio Code
+# Visual Studio Code.
 prompt_and_install "visual studio code" 'brew install --cask visual-studio-code@insiders'
 
-# Text editor
+# Text editor.
 prompt_and_install "coteditor" 'brew install --cask coteditor'
 
-# Database manager
+# Database manager.
 prompt_and_install "dbeaver" 'brew install --cask dbeaver-community'
 
-# Gif recorder
+# Gif recorder.
 prompt_and_install "gifox" 'brew install --cask gifox'
