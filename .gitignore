@@ -1,5 +1,8 @@
 # alacritty theme set by alacritty-theme
 alacritty/.config/alacritty/theme.toml
 
+# packer.nvim compiled packages
+nvim/.config/nvim/lua/plugins/packer_compiled.lua
+
 # nvim themery config
-nvim/.config/nvim/lua/greg/theme.lua
+nvim/.config/nvim/plugin/packer_compiled.lua
