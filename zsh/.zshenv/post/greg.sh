@@ -9,23 +9,7 @@ alias vdotfiles='nvim $GREG_DOTFILES_PATH'
 # nvim config
 alias vconfig='nvim $GREG_DOTFILES_PATH/nvim/.config/nvim'
 
-# alacritty theme
-export ALACRITTY_PATH=~/.config/alacritty
-export ALACRITTY_THEME_PATH=$ALACRITTY_PATH/theme
-function alacritty-theme() {
-  if [ -z "$1" ]; then
-    echo "Usage: alacritty-theme <theme>"
-    return 1
-  fi
-
-  if [ ! -f "$ALACRITTY_THEME_PATH/$1.toml" ]; then
-    echo "Theme $1 not found."
-    return 1
-  fi
-
-  sed -i '' "1s|.*|import = [\"$ALACRITTY_THEME_PATH/$1.toml\"]|" $ALACRITTY_PATH/alacritty.toml
-  echo "Theme $1 applied."
-}
+# alacritty themes
 alias at=alacritty-theme
 alias at-rose-pine='alacritty-theme rose-pine'
 alias at-rose-pine-moon='alacritty-theme rose-pine-moon'

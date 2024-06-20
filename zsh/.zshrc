@@ -1,3 +1,5 @@
+export GREG_DOTFILES_PATH=~/greg_projects/dotfiles
+
 # zsh environment setup.
 zshenv_path="$HOME/.zshenv"
 
