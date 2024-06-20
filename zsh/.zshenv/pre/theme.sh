@@ -1,8 +1,14 @@
 #!/bin/zsh
 
-# Auto-create ignored theme files if they do not exist
-export NVIM_THEME_PATH=$GREG_DOTFILES_PATH/nvim/.config/nvim/lua/greg/theme.lua
+# Auto-create theme config for alacritty-theme if it does not exist.
+export ALACRITTY_THEME_PATH=$ALACRITTY_PATH/theme.toml
+if [ ! -f "$ALACRITTY_THEME_PATH" ]; then
+  touch $ALACRITTY_THEME_PATH
+  echo "This line will be replaced by alacritty-theme." > $ALACRITTY_THEME_PATH
+fi
 
+# Auto-create nvim themery config if it does not exist.
+export NVIM_THEME_PATH=$GREG_DOTFILES_PATH/nvim/.config/nvim/lua/greg/theme.lua
 if [ ! -f "$NVIM_THEME_PATH" ]; then
   touch $NVIM_THEME_PATH
   {
@@ -13,20 +19,20 @@ if [ ! -f "$NVIM_THEME_PATH" ]; then
 fi
 
 # alacritty theme switcher
-export ALACRITTY_PATH=~/.config/alacritty
-export ALACRITTY_THEME_PATH=$ALACRITTY_PATH/theme
+export ALACRITTY_THEME_DIR_PATH=$ALACRITTY_PATH/theme
 function alacritty-theme() {
   if [ -z "$1" ]; then
     echo "Usage: alacritty-theme <theme>"
     return 1
   fi
 
-  if [ ! -f "$ALACRITTY_THEME_PATH/$1.toml" ]; then
+  if [ ! -f "$ALACRITTY_THEME_DIR_PATH/$1.toml" ]; then
     echo "Theme $1 not found."
     return 1
   fi
 
-  sed -i '' "1s|.*|import = [\"$ALACRITTY_THEME_PATH/$1.toml\"]|" $ALACRITTY_PATH/alacritty.toml
+  sed -i '' "1s|.*|import = [\"$ALACRITTY_THEME_DIR_PATH/$1.toml\"]|" $ALACRITTY_PATH/theme.toml
+  touch $ALACRITTY_PATH/alacritty.toml
   echo "Theme $1 applied."
 }
 

@@ -1,4 +1,8 @@
+# Personal dotfiles. 
 export GREG_DOTFILES_PATH=~/greg_projects/dotfiles
+
+# Alacritty config location.
+export ALACRITTY_PATH=~/.config/alacritty
 
 # zsh environment setup.
 zshenv_path="$HOME/.zshenv"
