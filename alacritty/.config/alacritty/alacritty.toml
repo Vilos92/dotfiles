@@ -1,4 +1,4 @@
-# DO NOT REMOVE - This line is a placeholder for the theme import
+import = ["~/.config/alacritty/theme.toml"]
 
 [env]
 TERM = "xterm-256color"

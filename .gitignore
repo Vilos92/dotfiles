@@ -1,2 +1,5 @@
-# themery config
+# alacritty theme set by alacritty-theme
+alacritty/.config/alacritty/theme.toml
+
+# nvim themery config
 nvim/.config/nvim/lua/greg/theme.lua
