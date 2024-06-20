@@ -3,7 +3,6 @@
 # Auto-create ignored theme files if they do not exist
 export NVIM_THEME_PATH=$GREG_DOTFILES_PATH/nvim/.config/nvim/lua/greg/theme.lua
 
-echo $NVIM_THEME_PATH
 if [ ! -f "$NVIM_THEME_PATH" ]; then
   touch $NVIM_THEME_PATH
   {
