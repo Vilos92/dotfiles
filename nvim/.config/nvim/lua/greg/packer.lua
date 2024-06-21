@@ -52,7 +52,7 @@ return require("packer").startup(function(use)
       require("oil").setup({
         view_options = {
           show_hidden = true,
-        }
+        },
       })
     end,
   })
