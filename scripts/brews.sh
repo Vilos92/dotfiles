@@ -68,10 +68,12 @@ install_packer_nvim() {
 # JavaScript/Node.js developement.
 install_javascript_packages() {
   prompt_and_install "JavaScript packages" 'brew install fnm\
-    oven-sh/bun/bun\
+      oven-sh/bun/bun\
     fsouza/prettierd/prettierd &&
     fnm install 22 &&
-    npm install -g eslint_d'
+    npm install -g eslint_d\
+      typescript-language-server\
+      typescript'
 }
 
 # Gleam.
