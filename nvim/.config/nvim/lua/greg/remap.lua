@@ -39,6 +39,5 @@ vim.keymap.set("n", "<leader>r", [[:cfdo %s/\<<C-r><C-w>\>/<C-r><C-w>/g<Left><Le
 
 -- Save current file to buffer.
 vim.keymap.set("n", "<leader><leader>", function()
-    vim.cmd("so")
+  vim.cmd("so")
 end)
-
