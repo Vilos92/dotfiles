@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 
 # Frontapp
 
@@ -55,9 +55,36 @@ alias glinscheid-workers-tail='stern -n glinscheid -l "app.kubernetes.io/name=fr
 alias glinscheid-workers-exec="kubectl exec -it \$(kubectl get pod -l \"app.kubernetes.io/name=front-worker-components\" -o jsonpath='{.items[0].metadata.name}') bash"
 alias glinscheid-workers-reload="kubectl exec -it \$(kubectl get pod -l \"app.kubernetes.io/name=front-worker-components\" -o jsonpath='{.items[0].metadata.name}') front-reload"
 
-# front-client personal staging.
-alias mystaging='export STAGING_NAMESPACE=glinscheid; npm run start:mystaging'
+# Push front to staging.
+function my-staging-push() {
+  ## Check if repo is  git@github.com:frontapp/front-client.git
+  if [ "$(git remote get-url origin)" != "git@github.com:frontapp/front.git" ]; then
+    echo "Only the front repo can be pushed to staging."
+    return 1
+  fi
 
-# Primary on call
+  local branch=$(git rev-parse --abbrev-ref HEAD)
+
+  read "answer?Do you want to push $branch to HEAD:glinscheid/staging? (y/n): "
+  case "$answer" in
+    [Yy]* )
+      echo "Pushing to staging: $branch"
+      local cmd="git push origin HEAD:glinscheid/staging"
+      echo $cmd
+      eval $cmd
+      ;;
+    * )
+      echo "Aborted staging push."
+      return 1;
+      ;;
+  esac
+}
+
+alias mystaging-push='my-staging-push'
+
+# front-client personal staging.
+alias mystaging-client='export STAGING_NAMESPACE=glinscheid; npm run start:mystaging'
+
+# Primary on call.
 alias boga='${FRONTAPP_INFRA_DIR}/scripts/boga.sh'
 

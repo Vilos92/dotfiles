@@ -14,7 +14,7 @@ prompt_and_install() {
       ;;
     * )
       echo "Please answer yes or no.";
-      exit 1;
+      return 1;
       ;;
   esac
 }

@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 
 # Dotfiles
 export GREG_DOTFILES_PATH=~/greg_projects/dotfiles
