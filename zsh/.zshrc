@@ -20,3 +20,6 @@ for file in $zshenv_path/post/*.sh; do
     source "$file"
   fi
 done
+
+# Refresh config.
+alias zshsource="source ~/.zshrc"
