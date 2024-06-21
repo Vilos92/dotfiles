@@ -9,11 +9,6 @@ vim.keymap.set("n", "<C-t>", function()
 end)
 
 -- Open Oil in a vertical split.
-vim.keymap.set("n", "<C-\\>", function()
+vim.keymap.set("n", "<C-o>", function()
   vim.cmd("rightbelow vsplit | Oil")
-end)
-
--- Open Oil in a horizontal split.
-vim.keymap.set("n", "<C-S->", function()
-  vim.cmd("belowright split | Oil")
 end)
