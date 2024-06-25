@@ -2,8 +2,8 @@ vim.g.mapleader = " "
 vim.keymap.set("n", "<leader>pq", vim.cmd.Ex)
 
 -- Move current tab left or right, using alt left and right.
-vim.keymap.set("n", "<M-left>", "<cmd>tabmove -1<CR>")
-vim.keymap.set("n", "<M-right>", "<cmd>tabmove +1<CR>")
+vim.keymap.set("n", "<leader>[", "<cmd>tabmove -1<CR>")
+vim.keymap.set("n", "<leader>]", "<cmd>tabmove +1<CR>")
 
 -- Move lines up and down while respecting scope.
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
