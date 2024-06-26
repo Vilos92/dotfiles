@@ -1,6 +1,6 @@
 return {
   -- Undo tree
-  { "mbbill/undotree", lazy = true, },
+  { "mbbill/undotree" },
 
   -- Comments
   {
@@ -12,8 +12,8 @@ return {
   },
 
   -- vim-fugitive for additional Git capabilities
-  { "tpope/vim-fugitive", lazy = true, },
+  { "tpope/vim-fugitive" },
 
   -- GitHub copilot
-  { "github/copilot.vim", lazy = true, }
+  { "github/copilot.vim" }
 }
