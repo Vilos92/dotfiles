@@ -12,9 +12,10 @@ return {
           highlight = { enable = true },
           indent = { enable = true },
         })
-    end
- },
-  "nvim-treesitter/playground",
+    end,
+    lazy = true,
+  },
+  { "nvim-treesitter/playground" },
 
   -- lsp-zero
   {
@@ -27,16 +28,16 @@ return {
       "hrsh7th/nvim-cmp",
       "hrsh7th/cmp-nvim-lsp",
       "L3MON4D3/LuaSnip"
-    }
+    },
   },
 
   -- lsp for formatting (needed for eslint and prettier)
-  "neovim/nvim-lspconfig",
-  "jose-elias-alvarez/null-ls.nvim",
+  { "neovim/nvim-lspconfig", lazy = true, },
+  { "jose-elias-alvarez/null-ls.nvim", lazy = true, },
 
   -- eslint
-  "MunifTanjim/eslint.nvim",
+  { "MunifTanjim/eslint.nvim", lazy = true, },
 
   -- prettier
-  "MunifTanjim/prettier.nvim",
+  { "MunifTanjim/prettier.nvim", lazy = true, },
 }
