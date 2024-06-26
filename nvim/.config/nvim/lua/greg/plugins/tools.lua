@@ -1,18 +1,19 @@
 return {
   -- Undo tree
-  "mbbill/undotree",
+  { "mbbill/undotree", lazy = true, },
 
   -- Comments
   {
     "numToStr/Comment.nvim",
     config = function()
       require("Comment").setup()
-    end
+    end,
+    lazy = true,
   },
 
   -- vim-fugitive for additional Git capabilities
-  "tpope/vim-fugitive",
+  { "tpope/vim-fugitive", lazy = true, },
 
   -- GitHub copilot
-  "github/copilot.vim",
+  { "github/copilot.vim", lazy = true, }
 }

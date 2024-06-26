@@ -1,8 +1,8 @@
 return {
   -- Theme manager
-  "zaldih/themery.nvim",
+  { "zaldih/themery.nvim", lazy = true, },
 
   -- Themes
-  { "rose-pine/neovim", name = "rose-pine" },
-  { "catppuccin/nvim", name = "catppuccin" }
+  { "rose-pine/neovim", name = "rose-pine", },
+  { "catppuccin/nvim", name = "catppuccin", }
 }

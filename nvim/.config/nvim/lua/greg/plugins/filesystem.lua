@@ -15,9 +15,10 @@ return {
   {
     "nvim-telescope/telescope.nvim",
     version = "0.1.6",
-    dependencies = { "nvim-lua/plenary.nvim" }
+    dependencies = { "nvim-lua/plenary.nvim" },
+    lazy = true,
   },
 
   -- Primagen's finder
-  "theprimeagen/harpoon",
+  { "theprimeagen/harpoon", lazy = true, },
 }
