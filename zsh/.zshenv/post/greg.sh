@@ -19,6 +19,11 @@ alias at-catppuccin-latte='alacritty-theme catppuccin-latte'
 alias at-catppuccin-macchiato='alacritty-theme catppuccin-macchiato'
 alias at-catppuccin-mocha='alacritty-theme catppuccin-mocha'
 
+# greglinscheid.com
+export GREG_ASTROGREG_PATH=~/greg_projects/astro-greg
+alias gcd-astrogreg='cd $GREG_ASTROGREG_PATH'
+alias gtmux-astrogreg='tmux-attach astrogreg $GREG_ASTROGREG_PATH'
+
 # Milo Engine
 export GREG_MILOENGINE_PATH=~/greg_projects/milo-engine
 alias gcd-miloengine='cd $GREG_MILOENGINE_PATH'
