@@ -26,7 +26,7 @@ prompt_and_stow() {
   esac
 }
 
-# If user passed a package name, only stow that package
+# If user passed a package name, only stow that package.
 if [ "$#" -eq 1 ]; then
   prompt_and_stow "$1"
   exit 0
@@ -38,3 +38,5 @@ prompt_and_stow tmux
 prompt_and_stow vim
 prompt_and_stow zsh
 
+# Submodules for private dotfiles.
+prompt_and_stow front
