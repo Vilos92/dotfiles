@@ -46,6 +46,8 @@ install_dev_packages() {
     neovim\
     stow\
     ripgrep\
+    fzf\
+    bat\
     font-meslo-lg-nerd-font'
 }
 

@@ -6,7 +6,7 @@ __   __/ _ \___ \
   \_/    /_/_____|
 ]]
 
-local footer = "Hello Greg! The current date is " .. os.date("%B %d, %Y")
+local footer = "Hey Greg, the current date is " .. os.date("%B %d, %Y")
 
 require("mini.starter").setup({
   items = {

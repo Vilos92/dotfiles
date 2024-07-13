@@ -10,18 +10,18 @@ alias vdotfiles='nvim $GREG_DOTFILES_PATH'
 alias vconfig='nvim $GREG_DOTFILES_PATH/nvim/.config/nvim'
 
 # alacritty themes
-alias at=alacritty-theme
-alias at-rose-pine='alacritty-theme rose-pine'
-alias at-rose-pine-moon='alacritty-theme rose-pine-moon'
-alias at-rose-pine-dawn='alacritty-theme rose-pine-dawn'
-alias at-catppuccin-frappe='alacritty-theme catppuccin-frappe'
-alias at-catppuccin-latte='alacritty-theme catppuccin-latte'
-alias at-catppuccin-macchiato='alacritty-theme catppuccin-macchiato'
-alias at-catppuccin-mocha='alacritty-theme catppuccin-mocha'
-alias at-tokyonight-day='alacritty-theme tokyonight_day'
-alias at-tokyonight-moon='alacritty-theme tokyonight_moon'
-alias at-tokyonight-night='alacritty-theme tokyonight_night'
-alias at-tokyonight-storm='alacritty-theme tokyonight_storm'
+alias kt='alacritty-theme-select'
+alias kt-rose-pine='alacritty-theme rose-pine'
+alias kt-rose-pine-moon='alacritty-theme rose-pine-moon'
+alias kt-rose-pine-dawn='alacritty-theme rose-pine-dawn'
+alias kt-catppuccin-frappe='alacritty-theme catppuccin-frappe'
+alias kt-catppuccin-latte='alacritty-theme catppuccin-latte'
+alias kt-catppuccin-macchiato='alacritty-theme catppuccin-macchiato'
+alias kt-catppuccin-mocha='alacritty-theme catppuccin-mocha'
+alias kt-tokyonight-day='alacritty-theme tokyonight_day'
+alias kt-tokyonight-moon='alacritty-theme tokyonight_moon'
+alias kt-tokyonight-night='alacritty-theme tokyonight_night'
+alias kt-tokyonight-storm='alacritty-theme tokyonight_storm'
 
 # greglinscheid.com
 export GREG_ASTROGREG_PATH=~/greg_projects/astro-greg
