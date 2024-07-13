@@ -1,5 +1,8 @@
 vim.g.mapleader = " "
-vim.keymap.set("n", "<leader>pq", vim.cmd.Ex)
+
+-- Close current tab.
+vim.keymap.set("n", "<leader>pq", "<cmd>tabclose<CR>")
+vim.keymap.set("n", "<C-w>", "<cmd>tabclose<CR>")
 
 -- Move current tab left or right, using alt left and right.
 vim.keymap.set("n", "<leader>[", "<cmd>tabmove -1<CR>")
