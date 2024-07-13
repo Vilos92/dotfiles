@@ -6,6 +6,9 @@ return {
     lazy = true,
   },
 
+  -- Splash screen
+  { 'echasnovski/mini.starter', version = false, lazy = true },
+
   -- Undo tree
   { "mbbill/undotree" },
 
