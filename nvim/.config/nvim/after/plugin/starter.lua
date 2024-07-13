@@ -8,12 +8,20 @@ __   __/ _ \___ \
 
 local footer = "Hello Greg! The current date is " .. os.date("%B %d, %Y")
 
-require('mini.starter').setup({
+require("mini.starter").setup({
   items = {
     -- Telescope
-    { name = "Find Files", action = ":lua require'telescope.builtin'.find_files({ find_command = {'rg', '--files', '--hidden', '-g', '!.git' }})", section = "Telescope" },
+    {
+      name = "Find Files",
+      action = ":lua require'telescope.builtin'.find_files({ find_command = {'rg', '--files', '--hidden', '-g', '!.git' }})",
+      section = "Telescope",
+    },
     { name = "Recent Files", action = ":Telescope oldfiles", section = "Telescope" },
-    { name = "Search", action = "lua require'telescope.builtin'.grep_string({ search = vim.fn.input(\"Grep > \") })", section = "Telescope" },
+    {
+      name = "Search",
+      action = "lua require'telescope.builtin'.grep_string({ search = vim.fn.input(\"Grep > \") })",
+      section = "Telescope",
+    },
     -- Oil
     { name = "Oil", action = ":Oil", section = "Oil" },
     -- Lazy

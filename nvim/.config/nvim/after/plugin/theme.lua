@@ -14,28 +14,28 @@ local themes = {
     colorscheme = "tokyonight-night",
     after = [[
       vim.schedule(function() vim.cmd("colorscheme tokyonight-night") end)
-    ]]
+    ]],
   },
- {
+  {
     name = "tokyonight-storm",
     colorscheme = "tokyonight-storm",
     after = [[
       vim.schedule(function() vim.cmd("colorscheme tokyonight-storm") end)
-    ]]
+    ]],
   },
   {
     name = "tokyonight-day",
     colorscheme = "tokyonight-day",
     after = [[
       vim.schedule(function() vim.cmd("colorscheme tokyonight-day") end)
-    ]]
+    ]],
   },
   {
     name = "tokyonight-moon",
     colorscheme = "tokyonight-moon",
     after = [[
       vim.schedule(function() vim.cmd("colorscheme tokyonight-moon") end)
-    ]]
+    ]],
   },
 }
 
@@ -45,4 +45,6 @@ require("themery").setup({
   livePreview = true, -- Apply theme while browsing. Default to true.
 })
 
-vim.keymap.set("n", "<leader>kt", function() vim.cmd("Themery") end)
+vim.keymap.set("n", "<leader>kt", function()
+  vim.cmd("Themery")
+end)

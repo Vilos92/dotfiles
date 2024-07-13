@@ -30,4 +30,6 @@ prettier.setup({
 })
 
 -- Format.
-vim.keymap.set("n", "<C-f>", function() vim.cmd("Prettier") end)
+vim.keymap.set("n", "<C-f>", function()
+  vim.cmd("Prettier")
+end)

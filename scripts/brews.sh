@@ -46,7 +46,6 @@ install_dev_packages() {
     neovim\
     stow\
     ripgrep\
-    lua-language-server\
     font-meslo-lg-nerd-font'
 }
 
@@ -58,6 +57,12 @@ install_oh_my_zsh() {
 # Powerlevel10k oh my zsh theme.
 install_powerlevel10k() {
   prompt_and_install "powerlevel10k" 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k'
+}
+
+# lua packages.
+install_lua_packages() {
+  prompt_and_install "lua packages" 'brew install lua-language-server\
+    stylua'
 }
 
 # Packer for neovim package management.
@@ -149,6 +154,9 @@ handle_arguments() {
     "powerlevel10k" )
       install_powerlevel10k
       ;;
+    "lua-packages" )
+      install_lua_packages
+      ;;
     "packer-nvim" )
       install_packer_nvim
       ;;
@@ -200,6 +208,7 @@ install_everything() {
   install_dev_packages
   install_oh_my_zsh
   install_powerlevel10k
+  install_lua_packages
   install_packer_nvim
   install_javascript_packages
   install_gleam
