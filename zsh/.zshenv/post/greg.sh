@@ -18,6 +18,10 @@ alias at-catppuccin-frappe='alacritty-theme catppuccin-frappe'
 alias at-catppuccin-latte='alacritty-theme catppuccin-latte'
 alias at-catppuccin-macchiato='alacritty-theme catppuccin-macchiato'
 alias at-catppuccin-mocha='alacritty-theme catppuccin-mocha'
+alias at-tokyonight-day='alacritty-theme tokyonight_day'
+alias at-tokyonight-moon='alacritty-theme tokyonight_moon'
+alias at-tokyonight-night='alacritty-theme tokyonight_night'
+alias at-tokyonight-storm='alacritty-theme tokyonight_storm'
 
 # greglinscheid.com
 export GREG_ASTROGREG_PATH=~/greg_projects/astro-greg

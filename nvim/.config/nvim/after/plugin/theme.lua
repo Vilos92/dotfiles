@@ -7,7 +7,11 @@ local themes = {
   "catppuccin-latte",
   "catppuccin-frappe",
   "catppuccin-macchiato",
-  "catppuccin-mocha"
+  "catppuccin-mocha",
+  "tokyonight-night",
+  "tokyonight-storm",
+  "tokyonight-day",
+  "tokyonight-moon",
 }
 
 require("themery").setup({
