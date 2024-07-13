@@ -1,5 +1,6 @@
 require("rose-pine")
 require("catppuccin")
+require("tokyonight")
 
 local themes = {
   "rose-pine-moon",
@@ -8,10 +9,34 @@ local themes = {
   "catppuccin-frappe",
   "catppuccin-macchiato",
   "catppuccin-mocha",
-  "tokyonight-night",
-  "tokyonight-storm",
-  "tokyonight-day",
-  "tokyonight-moon",
+  {
+    name = "tokyonight-night",
+    colorscheme = "tokyonight-night",
+    after = [[
+      vim.schedule(function() vim.cmd("colorscheme tokyonight-night") end)
+    ]]
+  },
+ {
+    name = "tokyonight-storm",
+    colorscheme = "tokyonight-storm",
+    after = [[
+      vim.schedule(function() vim.cmd("colorscheme tokyonight-storm") end)
+    ]]
+  },
+  {
+    name = "tokyonight-day",
+    colorscheme = "tokyonight-day",
+    after = [[
+      vim.schedule(function() vim.cmd("colorscheme tokyonight-day") end)
+    ]]
+  },
+  {
+    name = "tokyonight-moon",
+    colorscheme = "tokyonight-moon",
+    after = [[
+      vim.schedule(function() vim.cmd("colorscheme tokyonight-moon") end)
+    ]]
+  },
 }
 
 require("themery").setup({
