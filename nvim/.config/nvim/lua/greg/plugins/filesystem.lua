@@ -24,5 +24,5 @@ return {
   },
 
   -- Primagen's finder
-  { "theprimeagen/harpoon", lazy = true, },
+  { "theprimeagen/harpoon", lazy = true },
 }

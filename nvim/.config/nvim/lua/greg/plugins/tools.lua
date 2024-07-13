@@ -7,7 +7,7 @@ return {
   },
 
   -- Splash screen
-  { 'echasnovski/mini.starter', version = false, lazy = true },
+  { "echasnovski/mini.starter", version = false, lazy = true },
 
   -- Undo tree
   { "mbbill/undotree" },
@@ -25,5 +25,5 @@ return {
   { "tpope/vim-fugitive" },
 
   -- GitHub copilot
-  { "github/copilot.vim" }
+  { "github/copilot.vim" },
 }

@@ -1,5 +1,5 @@
 vim.opt.guicursor = ""
- 
+
 vim.opt.nu = true
 vim.opt.relativenumber = true
 
@@ -30,7 +30,7 @@ vim.opt.updatetime = 50
 
 vim.opt.colorcolumn = "120"
 
-  -- Reload buffer if file changes
+-- Reload buffer if file changes
 vim.opt.autoread = true
 vim.api.nvim_create_autocmd({ "FileChangedShellPost" }, {
   command = 'echohl WarningMsg | echo "File changed on disk. Buffer reloaded." | echohl None',
