@@ -1,3 +1,3 @@
 #!/bin/sh
 
-stylua --allow-hidden --glob '**/*.lua' .
+stylua --config-path=.stylua.toml --allow-hidden --glob '**/*.lua' .
