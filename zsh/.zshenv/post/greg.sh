@@ -1,5 +1,3 @@
-#!/bin/sh
-
 # Dotfiles
 export GREG_DOTFILES_PATH=~/greg_projects/dotfiles
 alias gcd-dotfiles='cd $GREG_DOTFILES_PATH'

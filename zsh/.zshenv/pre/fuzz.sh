@@ -1,5 +1,3 @@
-#!/bin/sh
-
 fuzzy-find() {
   local selected
   selected=$(find . -type f | fzf --ansi --tmux 80% --preview "bat --color=always {}")

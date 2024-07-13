@@ -1,5 +1,3 @@
-#!/bin/sh
-
 # zshrc
 alias vzshrc='v -p ~/.zshenv ~/.zshrc'
 

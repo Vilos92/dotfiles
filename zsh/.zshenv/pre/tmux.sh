@@ -1,5 +1,3 @@
-#!/bin/sh
-
 attach-tmux-session() {
   if [ -z "$TMUX" ]; then
     # Not inside a tmux session.
