@@ -14,4 +14,4 @@ jobs:
         with:
           token: ${{ secrets.GITHUB_TOKEN }}
           version: latest
-          args: --check --config-path=./nvim/.config/nvim/.stylua.toml --glob '**/*.lua' ./nvim/.config/nvim
+          args: --allow-hidden --check --glob '**/*.lua' ./nvim
