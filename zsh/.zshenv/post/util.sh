@@ -9,7 +9,8 @@ alias tmux-kill='tmux kill-session -t'
 alias tmux-switch='tmux switch -t'
 
 # Fuzzy find
-alias ff='selected=$(fzf --preview "bat --color=always {}"); [ -n "$selected" ] && nvim "$selected"'
+alias ff=fuzzy-find
+alias rgf=ripgrep-fuzzy
 
 # nvim
 alias v=nvim
