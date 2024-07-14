@@ -48,7 +48,8 @@ install_dev_packages() {
     ripgrep\
     fzf\
     bat\
-    font-meslo-lg-nerd-font'
+    font-meslo-lg-nerd-font\
+    shellcheck'
 }
 
 # oh my zsh.
