@@ -1,11 +1,10 @@
 #!/bin/sh
 
-local theme
-theme=$(ls $ALACRITTY_THEME_DIR_PATH | sed 's/\.toml$//g' | fzf --tmux 60% --preview 'bat --color=always $ALACRITTY_THEME_DIR_PATH/{}.toml')
+theme=$(find "$ALACRITTY_THEME_DIR_PATH" -maxdepth 1 -type f -name '*.toml' -exec basename {} .toml \; | sort | fzf --tmux 60% --preview "bat --color=always \"$ALACRITTY_THEME_DIR_PATH\"/{}.toml")
 
 if [ -z "$theme" ]; then
   echo "Theme not selected."
   exit 1
 fi
 
-alacritty-theme $theme
+alacritty-theme "$theme"

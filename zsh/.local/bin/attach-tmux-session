@@ -9,7 +9,7 @@ fi
 if [ -z "$TMUX" ]; then
   # If a second parameter is passed, change to that directory.
   if [ -n "$2" ]; then
-    cd "$2"
+    cd "$2" || exit 1
   fi 
 
   # Create a new session and attach.
