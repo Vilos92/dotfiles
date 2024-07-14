@@ -1,10 +1,19 @@
 #!/bin/sh
 
-theme=$(find "$ALACRITTY_THEME_DIR_PATH" -maxdepth 1 -type f -name '*.toml' -exec basename {} .toml \; | sort | fzf --tmux 60% --preview "bat --color=always \"$ALACRITTY_THEME_DIR_PATH\"/{}.toml")
+current_theme=$(grep import "$ALACRITTY_PATH"/theme.toml | sed 's/.*\///;s/\.toml.*//')
 
-if [ -z "$theme" ]; then
+new_theme=$(
+    find "$ALACRITTY_THEME_DIR_PATH" -maxdepth 1 -type f -name '*.toml' -exec basename {} .toml \; \
+    | sort \
+    | fzf --tmux 60% \
+          --preview "bat --color=always \"$ALACRITTY_THEME_DIR_PATH\"/{}.toml" \
+          --bind "change:execute-silent:alacritty-theme {}"
+)
+
+if [ -z "$new_theme" ]; then
   echo "Theme not selected."
+  alacritty-theme "$current_theme"
   exit 1
 fi
 
-alacritty-theme "$theme"
+alacritty-theme "$new_theme"
