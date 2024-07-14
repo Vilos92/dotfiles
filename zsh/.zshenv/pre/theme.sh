@@ -35,7 +35,7 @@ function alacritty-theme() {
 }
 
 function alacritty-theme-select() {
-  theme=$(ls $ALACRITTY_THEME_DIR_PATH | sed 's/\.toml$//g' | fzf --tmux --preview 'bat --color=always $ALACRITTY_THEME_DIR_PATH/{}.toml')
+  theme=$(ls $ALACRITTY_THEME_DIR_PATH | sed 's/\.toml$//g' | fzf --tmux 60% --preview 'bat --color=always $ALACRITTY_THEME_DIR_PATH/{}.toml')
 
   if [ -z "$theme" ]; then
     echo "Theme not selected."
