@@ -51,6 +51,7 @@ install_dev_packages() {
     ripgrep\
     fzf\
     bat\
+    tealdeer\
     font-meslo-lg-nerd-font\
     shellcheck'
 }
