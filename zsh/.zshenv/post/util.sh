@@ -8,7 +8,8 @@ alias tmux-switch='tmux switch -t'
 
 # Fuzzy find
 alias ff=fuzzy-find
-alias rgf=ripgrep-fuzzy
+alias frg=fuzzy-ripgrep
+alias fenv='env | fzf'
 
 # nvim
 alias v=nvim

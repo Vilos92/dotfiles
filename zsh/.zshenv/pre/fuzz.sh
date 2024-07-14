@@ -4,7 +4,7 @@ fuzzy-find() {
   [ -n "$selected" ] && nvim "$selected"
 }
 
-ripgrep-fuzzy() {
+fuzzy-ripgrep() {
   [ -z "$1" ] && echo "Usage: rgf <pattern>" && return
 
   local selected
