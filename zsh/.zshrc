@@ -1,3 +1,6 @@
+# Personal scripts
+export PATH="$HOME/.local/bin:$PATH"
+
 # Personal dotfiles. 
 export GREG_DOTFILES_PATH=~/greg_projects/dotfiles
 

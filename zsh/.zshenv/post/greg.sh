@@ -9,17 +9,6 @@ alias vconfig='nvim $GREG_DOTFILES_PATH/nvim/.config/nvim'
 
 # alacritty themes
 alias kt='alacritty-theme-select'
-alias kt-rose-pine='alacritty-theme rose-pine'
-alias kt-rose-pine-moon='alacritty-theme rose-pine-moon'
-alias kt-rose-pine-dawn='alacritty-theme rose-pine-dawn'
-alias kt-catppuccin-frappe='alacritty-theme catppuccin-frappe'
-alias kt-catppuccin-latte='alacritty-theme catppuccin-latte'
-alias kt-catppuccin-macchiato='alacritty-theme catppuccin-macchiato'
-alias kt-catppuccin-mocha='alacritty-theme catppuccin-mocha'
-alias kt-tokyonight-day='alacritty-theme tokyonight_day'
-alias kt-tokyonight-moon='alacritty-theme tokyonight_moon'
-alias kt-tokyonight-night='alacritty-theme tokyonight_night'
-alias kt-tokyonight-storm='alacritty-theme tokyonight_storm'
 
 # greglinscheid.com
 export GREG_ASTROGREG_PATH=~/greg_projects/astro-greg
