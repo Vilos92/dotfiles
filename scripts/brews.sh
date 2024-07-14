@@ -1,4 +1,4 @@
-#!/bin/zsh
+#!/bin/sh
 
 prompt_and_install() {
   local message="$1"
