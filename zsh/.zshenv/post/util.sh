@@ -20,7 +20,8 @@ export PATH="$PNPM_HOME:$PATH"
 # pnpm end
 
 # bun completions
-[ -s "/Users/greg.linscheid/.bun/_bun" ] && source "/Users/greg.linscheid/.bun/_bun"
+# shellcheck disable=SC1091
+[ -s "/Users/greg.linscheid/.bun/_bun" ] && . "/Users/greg.linscheid/.bun/_bun"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"

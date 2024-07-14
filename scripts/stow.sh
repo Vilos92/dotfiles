@@ -1,6 +1,6 @@
 #!/bin/sh
 
-if ! command -v stow &> /dev/null
+if ! command -v stow > /dev/null 2>&1
 then
   echo "stow could not be found, please run brews.sh"
   exit 1
@@ -9,11 +9,14 @@ fi
 stow_dir="$(dirname "$(dirname "$0")")"
 
 prompt_and_stow() {
-  local package="$1"
-  read -p "Do you want to stow $package? (y/n): " answer
+  package="$1"
+
+  printf "Do you want to stow %s? (y/n): " "$package"
+  read -r answer
+
   case "$answer" in
     [Yy]* )
-      stow -d $stow_dir -t ~/ "$package" &&
+      stow -d "$stow_dir" -t ~/ "$package" &&
       echo "Successfully stowed $package.";
       ;;
     [Nn]* )

@@ -1,9 +1,12 @@
 #!/bin/sh
 
 prompt_and_install() {
-  local message="$1"
-  local install_command="$2"
-  read -p "Do you want to install $message? (y/n): " answer
+  message="$1"
+  install_command="$2"
+
+  printf "Do you want to install %s? (y/n): " "$message"
+  read -r answer
+
   case "$answer" in
     [Yy]* )
       echo "Executing: $install_command";
@@ -21,7 +24,7 @@ prompt_and_install() {
 
 # Homebrew.
 install_homebrew() {
-  prompt_and_install "homebrew" '/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"'
+  prompt_and_install "homebrew" "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
 }
 
 # Alt tab window manager.
@@ -48,12 +51,14 @@ install_dev_packages() {
     ripgrep\
     fzf\
     bat\
-    font-meslo-lg-nerd-font'
+    tealdeer\
+    font-meslo-lg-nerd-font\
+    shellcheck'
 }
 
 # oh my zsh.
 install_oh_my_zsh() {
-  prompt_and_install "oh my zsh" 'sh -c "$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"'
+  prompt_and_install "oh my zsh" "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
 }
 
 # Powerlevel10k oh my zsh theme.
@@ -65,11 +70,6 @@ install_powerlevel10k() {
 install_lua_packages() {
   prompt_and_install "lua packages" 'brew install lua-language-server\
     stylua'
-}
-
-# Packer for neovim package management.
-install_packer_nvim() {
-  prompt_and_install "packer.nvim" 'git clone --depth 1 https://github.com/wbthomason/packer.nvim ~/.local/share/nvim/site/pack/packer/start/packer.nvim'
 }
 
 # JavaScript/Node.js developement.
@@ -159,9 +159,6 @@ handle_arguments() {
     "lua-packages" )
       install_lua_packages
       ;;
-    "packer-nvim" )
-      install_packer_nvim
-      ;;
     "javascript-packages" )
       install_javascript_packages
       ;;
@@ -211,7 +208,6 @@ install_everything() {
   install_oh_my_zsh
   install_powerlevel10k
   install_lua_packages
-  install_packer_nvim
   install_javascript_packages
   install_gleam
   install_arc
@@ -228,5 +224,5 @@ install_everything() {
 if [ "$#" -eq 0 ]; then
   install_everything
 else
-  handle_arguments $1
+  handle_arguments "$1"
 fi
