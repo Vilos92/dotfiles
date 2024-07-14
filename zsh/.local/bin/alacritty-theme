@@ -2,12 +2,12 @@
 
 if [ -z "$1" ]; then
   echo "Usage: alacritty-theme <theme>"
-  return 1
+  exit 1
 fi
 
 if [ ! -f "$ALACRITTY_THEME_DIR_PATH/$1.toml" ]; then
   echo "Theme $1 not found."
-  return 1
+  exit 1
 fi
 
 sed -i '' "1s|.*|import = [\"$ALACRITTY_THEME_DIR_PATH/$1.toml\"]|" $ALACRITTY_PATH/theme.toml

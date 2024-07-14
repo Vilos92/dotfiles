@@ -5,7 +5,7 @@ theme=$(ls $ALACRITTY_THEME_DIR_PATH | sed 's/\.toml$//g' | fzf --tmux 60% --pre
 
 if [ -z "$theme" ]; then
   echo "Theme not selected."
-  return 1
+  exit 1
 fi
 
 alacritty-theme $theme
