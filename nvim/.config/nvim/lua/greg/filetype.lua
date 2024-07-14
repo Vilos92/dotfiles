@@ -1,3 +1,5 @@
+-- Auto-detect filetype in cases where the file extension is not enough.
+-- Source: https://github.com/neovim/neovim/blob/master/runtime/filetype.lua
 if vim.g.did_load_filetypes then
   return
 end
