@@ -1,0 +1,31 @@
+#!/bin/sh
+
+session_name=$1
+directory=$2
+
+options="-A -s $session_name"
+
+if [ -z "$session_name" ]; then
+  echo "Usage: attach-tmux-session <session-name> [directory]"
+  exit 1
+fi
+
+if [ -n "$directory" ]; then
+  options="$options -c $directory"
+fi
+
+# Not inside a tmux session.
+if [ -z "$TMUX" ]; then
+  # Create a new session and attach.
+  tmux new-session $options
+
+  exit 0
+fi
+
+# Session does not exist.
+if ! tmux has-session -t=$session_name 2> /dev/null; then
+  # Inside a tmux session, create a new detached session.
+  tmux new-session $options -d
+fi
+
+tmux switch-client -t $session_name

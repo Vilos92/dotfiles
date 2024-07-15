@@ -19,12 +19,8 @@ prompt_and_stow() {
       stow -d "$stow_dir" -t ~/ "$package" &&
       echo "Successfully stowed $package.";
       ;;
-    [Nn]* )
-      echo "Skipped stowing $package.";
-      ;;
     * )
-      echo "Please answer yes or no.";
-      exit 1;
+      echo "Skipped stowing $package.";
       ;;
   esac
 }

@@ -1,0 +1,49 @@
+#!/bin/sh
+
+project_paths=$(find "$GREG_PROJECTS_PATH" "$FRONTAPP_DIR" -mindepth 1 -maxdepth 1 -type d)
+projects=$(echo "$project_paths" | xargs -n 1 basename)
+
+if [[ -n $1 ]]; then
+  if echo "$projects" | grep -qx "$1"; then
+    selected_project_path=$(echo "$project_paths" | grep "/$1$" | head -n 1)
+    attach-tmux-session $1 $selected_project_path
+    exit 0
+  fi
+
+  attach-tmux-session $1 $2
+  exit 0
+fi
+
+sessions=$(tmux list-sessions 2>/dev/null | awk -F: '{ print $1 }')
+
+current_session=$(tmux list-sessions -F "#{session_name}" -f "#{session_attached}" 2>/dev/null)
+
+options=$(echo "$projects\n$sessions" | sort -u | sed '/^$/d')
+
+select_options=$(echo "$options" | while read project; do
+  if [[ "$project" = "$current_session" ]]; then
+    echo "🟢 $project"
+  elif echo "$sessions" | grep -qx "$project"; then
+    echo "🔵 $project"
+  else
+    echo "🌑 $project"
+  fi
+done)
+
+selected_option=$(echo "$select_options" | sort -r |fzf --ansi --tmux 80%)
+
+if [[ -z $selected_option ]]; then
+  exit 0
+fi
+
+selected_project=$(echo "$selected_option" | awk '{print $2}')
+
+selected_project_path=$(echo "$project_paths" | grep "/$selected_project$" | head -n 1)
+
+if [[ -n $selected_project_path ]]; then
+  attach-tmux-session $selected_project $selected_project_path
+  exit 0
+fi
+
+attach-tmux-session $selected_project
+
