@@ -3,11 +3,11 @@
 project_paths=$(find "$GREG_PROJECTS_PATH" "$FRONTAPP_DIR" -mindepth 1 -maxdepth 1 -type d)
 projects=$(echo "$project_paths" | xargs -n 1 basename)
 
-sessions=$(tmux list-sessions | awk -F: '{ print $1 }')
+sessions=$(tmux list-sessions 2>/dev/null | awk -F: '{ print $1 }')
 
 options=$(echo "$projects" | while read project; do
   if echo "$sessions" | grep -qx "$project"; then
-    echo "$project (*)"
+    echo "$project 🔵"
   else
     echo "$project"
   fi
@@ -20,7 +20,8 @@ if [[ -z $selected_option ]]; then
 fi
 
 selected_project=$(echo "$selected_option" | sed 's/\(.*\) .*/\1/')
-selected_project_path=$(echo "$project_paths" | grep -F "$selected_project")
+
+selected_project_path=$(echo "$project_paths" | grep "/$selected_project$" | head -n 1)
 
 if [[ -z $selected_project_path ]]; then
   exit 0
