@@ -18,7 +18,7 @@ sessions=$(tmux list-sessions 2>/dev/null | awk -F: '{ print $1 }')
 
 current_session=$(tmux list-sessions -F "#{session_name}" -f "#{session_attached}" 2>/dev/null)
 
-options=$(echo "$projects\n$sessions" | sort -u)
+options=$(echo "$projects\n$sessions" | sort -u | sed '/^$/d')
 
 select_options=$(echo "$options" | while read project; do
   if [[ "$project" = "$current_session" ]]; then
