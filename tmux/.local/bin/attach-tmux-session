@@ -22,12 +22,10 @@ if [ -z "$TMUX" ]; then
   exit 0
 fi
 
-if tmux has-session -t=$session_name 2> /dev/null; then
-  exit 0
+# Session does not exist.
+if ! tmux has-session -t=$session_name 2> /dev/null; then
+  # Inside a tmux session, create a new detached session.
+  tmux new-session $options -d
 fi
 
-echo $session_name
-echo $directory
-
-# Inside a tmux session, create a new detached session.
-tmux new-session $options -d
+tmux switch-client -t $session_name
