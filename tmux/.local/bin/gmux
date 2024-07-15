@@ -5,8 +5,12 @@ projects=$(echo "$project_paths" | xargs -n 1 basename)
 
 sessions=$(tmux list-sessions 2>/dev/null | awk -F: '{ print $1 }')
 
+current_session=$(tmux list-sessions -F "#{session_name}" -f "#{session_attached}")
+
 options=$(echo "$projects" | while read project; do
-  if echo "$sessions" | grep -qx "$project"; then
+  if [[ "$project" = "$current_session" ]]; then
+    echo "$project 🟢"
+  elif echo "$sessions" | grep -qx "$project"; then
     echo "$project 🔵"
   else
     echo "$project"
