@@ -10,7 +10,7 @@ if [[ -n $1 ]]; then
     exit 0
   fi
 
-  attach-tmux-session $1
+  attach-tmux-session $1 $2
   exit 0
 fi
 
