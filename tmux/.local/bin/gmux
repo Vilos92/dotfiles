@@ -1,12 +1,12 @@
 #!/bin/sh
 
-selected_path=$(find "$GREG_PROJECTS_PATH" "$FRONTAPP_DIR" -mindepth 1 -maxdepth 1 -type d | fzf)
+selected_path=$(find "$GREG_PROJECTS_PATH" "$FRONTAPP_DIR" -mindepth 1 -maxdepth 1 -type d | fzf --ansi --tmux 80%)
 
 if [[ -z $selected_path ]]; then
   exit 0
 fi
 
-selected_name=$(basename "$(dirname "$selected_path")")/$(basename "$selected_path" | tr . _)
+selected_name=$(basename $selected_path)
 
 tmux_running=$(pgrep tmux)
 

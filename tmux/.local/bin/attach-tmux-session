@@ -11,7 +11,6 @@ if [ -z "$session_name" ]; then
 fi
 
 if [ -n "$directory" ]; then
-  cd "$directory" || exit 1
   options="$options -c $directory"
 fi
 
@@ -22,6 +21,13 @@ if [ -z "$TMUX" ]; then
 
   exit 0
 fi
+
+if tmux has-session -t=$session_name 2> /dev/null; then
+  exit 0
+fi
+
+echo $session_name
+echo $directory
 
 # Inside a tmux session, create a new detached session.
 tmux new-session $options -d
