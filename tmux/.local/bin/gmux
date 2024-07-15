@@ -9,11 +9,11 @@ current_session=$(tmux list-sessions -F "#{session_name}" -f "#{session_attached
 
 options=$(echo "$projects" | while read project; do
   if [[ "$project" = "$current_session" ]]; then
-    echo "$project 🟢"
+    echo "🟢 $project"
   elif echo "$sessions" | grep -qx "$project"; then
-    echo "$project 🔵"
+    echo "🔵 $project"
   else
-    echo "$project"
+    echo "🌑 $project"
   fi
 done)
 
@@ -23,7 +23,7 @@ if [[ -z $selected_option ]]; then
   exit 0
 fi
 
-selected_project=$(echo "$selected_option" | sed 's/\(.*\) .*/\1/')
+selected_project=$(echo "$selected_option" | awk '{print $2}')
 
 selected_project_path=$(echo "$project_paths" | grep "/$selected_project$" | head -n 1)
 
