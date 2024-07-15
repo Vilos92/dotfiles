@@ -1,0 +1,22 @@
+#!/bin/sh
+
+selected_path=$(find "$GREG_PROJECTS_PATH" "$FRONTAPP_DIR" -mindepth 1 -maxdepth 1 -type d | fzf)
+
+if [[ -z $selected_path ]]; then
+  exit 0
+fi
+
+selected_name=$(basename "$(dirname "$selected_path")")/$(basename "$selected_path" | tr . _)
+
+tmux_running=$(pgrep tmux)
+
+if [[ -z $TMUX ]] && [[ -z $tmux_running ]]; then
+  attach-tmux-session $selected_name $selected_path
+  exit 0
+fi
+
+if ! tmux has-session -t=$selected_name 2> /dev/null; then
+  attach-tmux-session $selected_name $selected_path
+fi
+
+tmux switch-client -t $selected_name

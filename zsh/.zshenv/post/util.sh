@@ -1,11 +1,6 @@
 # zshrc
 alias vzshrc='v -p ~/.zshenv ~/.zshrc'
 
-# tmux
-alias tmux-attach='attach-tmux-session'
-alias tmux-kill='tmux kill-session -t'
-alias tmux-switch='tmux switch -t'
-
 # Fuzzy find
 alias ff=fuzzy-find
 alias frg=fuzzy-ripgrep

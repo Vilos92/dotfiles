@@ -1,23 +1,27 @@
 #!/bin/sh
 
-if [ -z "$1" ]; then
+session_name=$1
+directory=$2
+
+options="-A -s $session_name"
+
+if [ -z "$session_name" ]; then
   echo "Usage: attach-tmux-session <session-name> [directory]"
   exit 1
 fi
 
+if [ -n "$directory" ]; then
+  cd "$directory" || exit 1
+  options="$options -c $directory"
+fi
+
 # Not inside a tmux session.
 if [ -z "$TMUX" ]; then
-  # If a second parameter is passed, change to that directory.
-  if [ -n "$2" ]; then
-    cd "$2" || exit 1
-  fi 
-
   # Create a new session and attach.
-  tmux new-session -A -s "$1"
+  tmux new-session $options
 
-  # exit without error
   exit 0
 fi
 
 # Inside a tmux session, create a new detached session.
-tmux new-session -d -s "$1"
+tmux new-session $options -d
