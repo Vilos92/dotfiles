@@ -6,6 +6,9 @@ alias ff=fuzzy-find
 alias frg=fuzzy-ripgrep
 alias fenv='env | fzf'
 
+# tmux
+alias g=gmux
+
 # nvim
 alias v=nvim
 
