@@ -1,4 +1,8 @@
 #!/bin/sh
 
-selected=$(find . -type f | fzf --ansi --tmux 80% --preview "bat --color=always {}")
+selected=$(
+  fd . -H -t f --exclude .git --exclude node_modules |
+  fzf --ansi --tmux 80% --preview "bat --color=always {}"
+)
+
 [ -n "$selected" ] && nvim "$selected"
