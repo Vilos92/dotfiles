@@ -4,7 +4,17 @@ alias vzshrc='v -p ~/.zshenv ~/.zshrc'
 # Fuzzy find
 alias ff=fuzzy-find
 alias frg=fuzzy-ripgrep
-alias fenv='env | fzf'
+alias fenv='env | fzf --ansi --tmux 80%'
+
+falias () {
+  local aliases=$(alias)
+
+  selection=$(echo "$aliases" | fzf --ansi --tmux 80%)
+  [ -z "$selection" ] && return
+
+  echo "alias: $selection"
+  eval $(echo "$selection" | awk -F= '{print $1}')
+}
 
 # tmux
 alias g=gmux
