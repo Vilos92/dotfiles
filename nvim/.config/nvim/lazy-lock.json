@@ -21,7 +21,7 @@
   "playground": { "branch": "master", "commit": "ba48c6a62a280eefb7c85725b0915e021a1a0749" },
   "plenary.nvim": { "branch": "master", "commit": "a3e3bc82a3f95c5ed0d7201546d5d2c19b20d683" },
   "prettier.nvim": { "branch": "main", "commit": "d98e732cb73690b07c00c839c924be1d1d9ac5c2" },
-  "rose-pine": { "branch": "main", "commit": "0f5635ca8cfe94c23ae05148c205eeb24b1c05f6" },
+  "rose-pine": { "branch": "main", "commit": "7b2d9ce64659457105e13c085457a2f8aad4cd7c" },
   "telescope.nvim": { "branch": "master", "commit": "6312868392331c9c0f22725041f1ec2bef57c751" },
   "themery.nvim": { "branch": "main", "commit": "f745a49d9c103babde35e1111b91faa6bc591d5c" },
   "tokyonight": { "branch": "main", "commit": "6c30395146c246055ac3cea32d39d6b9876a1dcc" },
