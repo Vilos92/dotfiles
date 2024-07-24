@@ -3,12 +3,48 @@ require("catppuccin")
 require("tokyonight")
 
 local themes = {
-  "rose-pine-moon",
-  "rose-pine-dawn",
-  "catppuccin-latte",
-  "catppuccin-frappe",
-  "catppuccin-macchiato",
-  "catppuccin-mocha",
+  {
+    name = "rose-pine-moon",
+    colorscheme = "rose-pine-moon",
+    after = [[
+      os.execute('alacritty-theme rose-pine-moon')
+    ]],
+  },
+  {
+    name = "rose-pine-dawn",
+    colorscheme = "rose-pine-dawn",
+    after = [[
+      os.execute('alacritty-theme rose-pine-dawn')
+    ]],
+  },
+  {
+    name = "catppuccin-latte",
+    colorscheme = "catppuccin-latte",
+    after = [[
+      os.execute('alacritty-theme catppuccin-latte')
+    ]],
+  },
+  {
+    name = "catppuccin-frappe",
+    colorscheme = "catppuccin-frappe",
+    after = [[
+      os.execute('alacritty-theme catppuccin-frappe')
+    ]],
+  },
+  {
+    name = "catppuccin-macchiato",
+    colorscheme = "catppuccin-macchiato",
+    after = [[
+      os.execute('alacritty-theme catppuccin-macchiato')
+    ]],
+  },
+  {
+    name = "catppuccin-mocha",
+    colorscheme = "catppuccin-mocha",
+    after = [[
+      os.execute('alacritty-theme catppuccin-mocha')
+    ]],
+  },
   {
     name = "tokyonight-night",
     colorscheme = "tokyonight-night",
