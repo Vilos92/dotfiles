@@ -14,6 +14,7 @@ local themes = {
     colorscheme = "tokyonight-night",
     after = [[
       vim.schedule(function() vim.cmd("colorscheme tokyonight-night") end)
+      os.execute('alacritty-theme tokyonight_night')
     ]],
   },
   {
@@ -21,6 +22,7 @@ local themes = {
     colorscheme = "tokyonight-storm",
     after = [[
       vim.schedule(function() vim.cmd("colorscheme tokyonight-storm") end)
+      os.execute('alacritty-theme tokyonight_storm')
     ]],
   },
   {
@@ -28,6 +30,7 @@ local themes = {
     colorscheme = "tokyonight-day",
     after = [[
       vim.schedule(function() vim.cmd("colorscheme tokyonight-day") end)
+      os.execute('alacritty-theme tokyonight_day')
     ]],
   },
   {
@@ -35,6 +38,7 @@ local themes = {
     colorscheme = "tokyonight-moon",
     after = [[
       vim.schedule(function() vim.cmd("colorscheme tokyonight-moon") end)
+      os.execute('alacritty-theme tokyonight_moon')
     ]],
   },
 }
