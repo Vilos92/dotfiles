@@ -70,6 +70,12 @@ install_dev_packages() {
     shellcheck'
 }
 
+# Docker.
+install_docker_packages() {
+  prompt_and_install "docker" 'brew install --cask docker'
+  prompt_and_install "lazydocker" 'brew install lazydocker'
+}
+
 # lua packages.
 install_lua_packages() {
   prompt_and_install "lua packages" 'brew install lua-language-server\
@@ -154,6 +160,9 @@ handle_arguments() {
     "dev-pkgs" )
       install_dev_packages
       ;;
+    "docker-pkgs" )
+      install_docker_packages
+      ;;
     "lua-pkgs" )
       install_lua_packages
       ;;
@@ -203,6 +212,7 @@ install_everything() {
   install_tiles
   install_terminal_packages
   install_dev_packages
+  install_docker_packages
   install_lua_packages
   install_javascript_packages
   install_gleam
