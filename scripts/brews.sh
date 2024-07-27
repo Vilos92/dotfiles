@@ -65,6 +65,7 @@ install_dev_packages() {
     bat\
     fd\
     eza\
+    zoxide\
     tealdeer\
     shellcheck'
 }
@@ -150,7 +151,7 @@ handle_arguments() {
     "terminal-pkgs" )
       install_terminal_packages
       ;;
-    "dev-pks" )
+    "dev-pkgs" )
       install_dev_packages
       ;;
     "lua-pkgs" )

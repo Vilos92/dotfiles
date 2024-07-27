@@ -32,10 +32,10 @@ if [ "$#" -eq 1 ]; then
 fi
 
 prompt_and_stow alacritty
-prompt_and_stow nvim
 prompt_and_stow tmux
-prompt_and_stow vim
 prompt_and_stow zsh
+prompt_and_stow nvim
+prompt_and_stow vim
 
 # Submodules for private dotfiles.
 prompt_and_stow front
