@@ -11,6 +11,7 @@ alias vzshrc='v -p ~/.zshenv ~/.zshrc'
 alias ff=fuzzy-find
 alias frg=fuzzy-ripgrep
 alias fenv='env | fzf --ansi --tmux 80%'
+alias fh=fuzzy-history
 
 falias () {
   local aliases=$(alias)
@@ -32,5 +33,15 @@ fuzzy-history () {
 
   [ -z "$selection" ] && return
 
-  eval "$selection"
+
+  printf "Command: %s" "$selection"
+  printf "\nExecute? (y/n)"
+
+  stty -echo -icanon
+  key=$(dd bs=1 count=1 2>/dev/null)
+  stty echo icanon
+
+  printf "\n"
+
+  [ "$key" = "y" ] && eval "$selection"
 }
