@@ -22,9 +22,13 @@ prompt_and_install() {
   esac
 }
 
-# Homebrew.
-install_homebrew() {
-  prompt_and_install "homebrew" "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+# Dotfile packages.
+install_dotfile_packages() {
+  # stow is needed to link dotfiles.
+  prompt_and_install "stow" 'brew install stow'
+
+  # brew is needed for MacOS package installations.
+  prompt_and_install "homebrew" "/bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
 }
 
 # Alt tab window manager.
@@ -37,34 +41,39 @@ install_tiles() {
   prompt_and_install "tiles" 'brew install --cask tiles'
 }
 
-# Terminal.
-install_alacritty() {
+# Terminal environment.
+install_terminal_packages() {
+  # Alacritty.
   prompt_and_install "alacritty" 'brew install --cask alacritty'
+
+  # Tmux.
+  prompt_and_install "tmux" 'brew install tmux'
+
+  # zsh.
+  prompt_and_install "zsh" 'brew install zsh'
+  prompt_and_install "oh my zsh" "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
+  prompt_and_install "powerlevel10k" 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k'
 }
 
-# Developer environment packages.
+# Developer environment.
 install_dev_packages() {
-  prompt_and_install "dev packages" 'brew install tmux\
-    zsh\
-    neovim\
+  prompt_and_install "dev packages" 'brew install neovim\
+    font-meslo-lg-nerd-font\
     stow\
     ripgrep\
     fzf\
     bat\
     fd\
+    eza\
+    zoxide\
     tealdeer\
-    font-meslo-lg-nerd-font\
     shellcheck'
 }
 
-# oh my zsh.
-install_oh_my_zsh() {
-  prompt_and_install "oh my zsh" "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
-}
-
-# Powerlevel10k oh my zsh theme.
-install_powerlevel10k() {
-  prompt_and_install "powerlevel10k" 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k'
+# Docker.
+install_docker_packages() {
+  prompt_and_install "docker" 'brew install --cask docker'
+  prompt_and_install "lazydocker" 'brew install lazydocker'
 }
 
 # lua packages.
@@ -136,8 +145,8 @@ install_gifox() {
 
 handle_arguments() {
   case $1 in
-    "homebrew" )
-      install_homebrew
+    "dotfile-pkgs" )
+      install_dotfile_packages
       ;;
     "alt-tab" )
       install_alt_tab
@@ -145,22 +154,19 @@ handle_arguments() {
     "tiles" )
       install_tiles
       ;;
-    "alacritty" )
-      install_alacritty
+    "terminal-pkgs" )
+      install_terminal_packages
       ;;
-    "dev-packages" )
+    "dev-pkgs" )
       install_dev_packages
       ;;
-    "oh-my-zsh" )
-      install_oh_my_zsh
+    "docker-pkgs" )
+      install_docker_packages
       ;;
-    "powerlevel10k" )
-      install_powerlevel10k
-      ;;
-    "lua-packages" )
+    "lua-pkgs" )
       install_lua_packages
       ;;
-    "javascript-packages" )
+    "javascript-pkgs" )
       install_javascript_packages
       ;;
     "gleam" )
@@ -201,13 +207,12 @@ handle_arguments() {
 }
 
 install_everything() {
-  install_homebrew
+  install_dotfile_packages
   install_alt_tab
   install_tiles
-  install_alacritty
+  install_terminal_packages
   install_dev_packages
-  install_oh_my_zsh
-  install_powerlevel10k
+  install_docker_packages
   install_lua_packages
   install_javascript_packages
   install_gleam

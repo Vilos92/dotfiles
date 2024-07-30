@@ -1,3 +1,9 @@
+# tmux
+alias g=gmux
+
+# nvim
+alias v=nvim
+
 # zshrc
 alias vzshrc='v -p ~/.zshenv ~/.zshrc'
 
@@ -5,6 +11,7 @@ alias vzshrc='v -p ~/.zshenv ~/.zshrc'
 alias ff=fuzzy-find
 alias frg=fuzzy-ripgrep
 alias fenv='env | fzf --ansi --tmux 80%'
+alias fh=fuzzy-history
 
 falias () {
   local aliases=$(alias)
@@ -26,24 +33,15 @@ fuzzy-history () {
 
   [ -z "$selection" ] && return
 
-  eval "$selection"
+
+  printf "Command: %s" "$selection"
+  printf "\nExecute? (y/n)"
+
+  stty -echo -icanon
+  key=$(dd bs=1 count=1 2>/dev/null)
+  stty echo icanon
+
+  printf "\n"
+
+  [ "$key" = "y" ] && eval "$selection"
 }
-
-# tmux
-alias g=gmux
-
-# nvim
-alias v=nvim
-
-# pnpm
-export PNPM_HOME="/Users/greg.linscheid/Library/pnpm"
-export PATH="$PNPM_HOME:$PATH"
-# pnpm end
-
-# bun completions
-# shellcheck disable=SC1091
-[ -s "/Users/greg.linscheid/.bun/_bun" ] && . "/Users/greg.linscheid/.bun/_bun"
-
-# bun
-export BUN_INSTALL="$HOME/.bun"
-export PATH="$BUN_INSTALL/bin:$PATH"
