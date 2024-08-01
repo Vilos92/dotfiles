@@ -1,3 +1,7 @@
+if vim.g.vscode then
+  return
+end
+
 local builtin = require("telescope.builtin")
 
 -- Fuzzy search by file name, including hidden (.) files, but excluding the .git directory.

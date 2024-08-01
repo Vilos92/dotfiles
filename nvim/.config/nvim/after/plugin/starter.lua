@@ -1,3 +1,7 @@
+if vim.g.vscode then
+  return
+end
+
 local header = [[
         ___ ____  
 __   __/ _ \___ \ 
