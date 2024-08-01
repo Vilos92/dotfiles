@@ -1,5 +1,4 @@
 # Dotfiles
-export GREG_DOTFILES_PATH=~/greg_projects/dotfiles
 alias gcd-dotfiles='cd $GREG_DOTFILES_PATH'
 alias vdotfiles='nvim $GREG_DOTFILES_PATH'
 
