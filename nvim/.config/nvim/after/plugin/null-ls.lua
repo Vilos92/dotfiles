@@ -1,3 +1,7 @@
+if vim.g.vscode then
+  return
+end
+
 local null_ls = require("null-ls")
 
 local group = vim.api.nvim_create_augroup("lsp_format_on_save", { clear = false })

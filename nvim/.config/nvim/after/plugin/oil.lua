@@ -1,3 +1,7 @@
+if vim.g.vscode then
+  return
+end
+
 -- Open Oil.
 vim.keymap.set("n", "<C-o>", "<CMD>Oil<CR>", { desc = "Open parent directory" })
 

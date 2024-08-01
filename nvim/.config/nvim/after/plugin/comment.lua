@@ -1,3 +1,7 @@
+if vim.g.vscode then
+  return
+end
+
 local commentApi = require("Comment.api")
 
 local esc = vim.api.nvim_replace_termcodes("<ESC>", true, false, true)

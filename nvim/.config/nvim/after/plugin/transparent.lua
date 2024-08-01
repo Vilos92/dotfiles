@@ -1,3 +1,7 @@
+if vim.g.vscode then
+  return
+end
+
 local transparent = require("transparent")
 
 transparent.setup({
