@@ -1,6 +1,6 @@
 #!/bin/sh
 
-[ -z "$1" ] && echo "Usage: rgf <pattern>" && exit 1
+[ -z "$1" ] && echo "Usage: fuzzy-ripgrep <pattern>" && exit 1
 
 selected=$(rg --hidden --color=always --line-number --no-heading --smart-case \
                --glob '!.git/*' --glob '!node_modules/*' "$1" |
