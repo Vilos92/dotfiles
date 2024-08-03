@@ -10,10 +10,25 @@ vim.keymap.set("n", "<leader>pf", function()
   builtin.find_files({ find_command = { "rg", "--files", "--hidden", "-g", "!.git" } })
 end)
 
--- Fuzzy search through the results of `git ls-files`.
-vim.keymap.set("n", "<leader>pg", builtin.git_files, {})
+-- Recent files.
+vim.keymap.set("n", "<leader>pr", builtin.oldfiles, {})
 
 -- Fuzzy search for text using ripgrep.
 vim.keymap.set("n", "<leader>ps", function()
-  builtin.grep_string({ search = vim.fn.input("Grep > ") })
+  builtin.grep_string({
+    search = vim.fn.input("Grep > "),
+    vimgrep_arguments = {
+      "rg",
+      "--hidden",
+      "--glob", "!.git/**",
+      "--no-heading",
+      "--with-filename",
+      "--line-number",
+      "--column",
+      "--smart-case",
+    }
+  })
 end)
+
+-- Fuzzy search through the results of `git ls-files`.
+vim.keymap.set("n", "<leader>pg", builtin.git_files, {})

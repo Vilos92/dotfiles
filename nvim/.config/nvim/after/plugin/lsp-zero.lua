@@ -11,10 +11,7 @@ lsp.setup_servers({
   "rust_analyzer",
 })
 
-require("lspconfig").lua_ls.setup({})
-
--- Fix Undefined global 'vim'
-lsp.configure("lua_ls", {
+require("lspconfig").lua_ls.setup({
   settings = {
     Lua = {
       diagnostics = {
