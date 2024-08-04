@@ -25,7 +25,7 @@ require("lualine").setup({
     lualine_a = {},
     lualine_b = {},
     lualine_c = {
-      media_controls.listen,
+      media_controls.status_listen,
     },
     lualine_x = { "filename", "location" },
     lualine_y = {},
