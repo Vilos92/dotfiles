@@ -23,7 +23,7 @@ require("mini.starter").setup({
     { name = "Recent Files", action = ":Telescope oldfiles", section = "Explorer" },
     {
       name = "Search",
-      action = "lua require'telescope.builtin'.grep_string({ search = vim.fn.input(\"Grep > \") })",
+      action = "lua require'telescope.builtin'.grep_string({ search = vim.fn.input('Grep > '), vimgrep_arguments = { 'rg', '--hidden', '--glob', '!.git/**', '--no-heading', '--with-filename', '--line-number', '--column', '--smart-case' } })",
       section = "Explorer",
     },
     -- Oil
