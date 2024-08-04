@@ -24,7 +24,7 @@ local footer = (function()
         return
       end
 
-      local new_media_status = media_controls.status_listen()
+      local new_media_status = media_controls.status_cache()
       new_media_status = new_media_status or ""
 
       if new_media_status == media_status then
@@ -65,9 +65,9 @@ require("mini.starter").setup({
     { name = "Create Buffer", action = "enew", section = "Neovim" },
     { name = "Quit Neovim", action = "qall", section = "Neovim" },
     -- Media
-    { name = "Play/Pause Track", action = ":MCToggle", section = "Media" },
-    { name = "Next Track", action = ":MCNext", section = "Media" },
-    { name = "Previous Track", action = ":MCPrevious", section = "Media" },
+    { name = "Play/Pause Track", action = ":MediaControlToggle", section = "Media" },
+    { name = "Next Track", action = ":MediaControlNext", section = "Media" },
+    { name = "Previous Track", action = ":MediaControlPrevious", section = "Media" },
   },
 
   header = header,

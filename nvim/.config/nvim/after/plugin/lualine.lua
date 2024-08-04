@@ -10,7 +10,7 @@ require("lualine").setup({
     lualine_a = { "mode" },
     lualine_b = { "branch", "diff", "diagnostics" },
     lualine_c = {
-      media_controls.status_listen,
+      media_controls.playback_cache,
     },
     lualine_x = {
       "filename",
@@ -25,7 +25,7 @@ require("lualine").setup({
     lualine_a = {},
     lualine_b = {},
     lualine_c = {
-      media_controls.status_listen,
+      media_controls.playback_cache,
     },
     lualine_x = { "filename", "location" },
     lualine_y = {},

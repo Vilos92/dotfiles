@@ -83,7 +83,8 @@ install_docker_packages() {
 
 # lua packages.
 install_lua_packages() {
-  prompt_and_install "lua packages" 'brew install lua-language-server\
+  prompt_and_install "lua packages" 'brew install lua\
+    lua-language-server\
     luarocks\
     stylua'
 }
