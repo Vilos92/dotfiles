@@ -2,7 +2,7 @@ if vim.g.vscode then
   return
 end
 
-local media_controls = require('media-controls')
+local media_controls = require("media-controls")
 
 local header = [[
         ___ ____  
@@ -16,19 +16,23 @@ local footer = (function()
   local media_status = ""
   local timer = vim.loop.new_timer()
 
-  timer:start(0, 1000, vim.schedule_wrap(function()
-    if vim.bo.filetype ~= 'ministarter' then
-      return
-    end
+  timer:start(
+    0,
+    1000,
+    vim.schedule_wrap(function()
+      if vim.bo.filetype ~= "ministarter" then
+        return
+      end
 
-    local new_media_status = media_controls.status_listen()
-    if new_media_status == media_status then
-      return
-    end
+      local new_media_status = media_controls.status_listen()
+      if new_media_status == media_status then
+        return
+      end
 
-    media_status = new_media_status
-    MiniStarter.refresh()
-  end))
+      media_status = new_media_status
+      MiniStarter.refresh()
+    end)
+  )
 
   return function()
     return "Hey Greg,\n\n📅 The current date is " .. os.date("%B %d, %Y") .. "\n\n" .. media_status
