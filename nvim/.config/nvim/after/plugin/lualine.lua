@@ -3,7 +3,6 @@ if vim.g.vscode then
 end
 
 local media_controls = require("media-controls")
-media_controls.status_poll()
 
 require("lualine").setup({
   options = { theme = "auto" },

@@ -27,7 +27,7 @@ local footer = (function()
       local new_media_status = media_controls.status_listen()
       new_media_status = new_media_status or ""
 
-      if new_media_status == nil or new_media_status == media_status then
+      if new_media_status == media_status then
         return
       end
 
