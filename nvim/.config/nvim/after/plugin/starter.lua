@@ -60,8 +60,12 @@ require("mini.starter").setup({
     { name = "Lazy", action = ":Lazy", section = "Config" },
     { name = "Check Health", action = ":checkhealth", section = "Config" },
     -- Neovim
-    { name = "New Buffer", action = "enew", section = "Neovim" },
+    { name = "Create Buffer", action = "enew", section = "Neovim" },
     { name = "Quit Neovim", action = "qall", section = "Neovim" },
+    -- Media
+    { name = "Play/Pause Track", action = ":MCToggle", section = "Media" },
+    { name = "Next Track", action = ":MCNext", section = "Media" },
+    { name = "Previous Track", action = ":MCPrevious", section = "Media" },
   },
 
   header = header,
