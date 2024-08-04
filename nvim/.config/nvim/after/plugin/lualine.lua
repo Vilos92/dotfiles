@@ -11,7 +11,7 @@ require("lualine").setup({
     lualine_a = { "mode" },
     lualine_b = { "branch", "diff", "diagnostics" },
     lualine_c = {
-      media_controls.listen,
+      media_controls.status_listen,
     },
     lualine_x = {
       "filename",

@@ -10,7 +10,21 @@ __   __/ _ \___ \
   \_/    /_/_____|
 ]]
 
-local footer = "Hey Greg, the current date is " .. os.date("%B %d, %Y")
+local footer = (function()
+  local timer = vim.loop.new_timer()
+  local now_playing = ""
+  timer:start(0, 1000, vim.schedule_wrap(function()
+    if vim.bo.filetype ~= 'ministarter' then
+      return
+    end
+    now_playing = require('media-controls').status_listen()
+    MiniStarter.refresh()
+  end))
+
+  return function()
+    return "Hey Greg, the current date is " .. os.date("%B %d, %Y") .. "\n\n" .. now_playing
+  end
+end)()
 
 require("mini.starter").setup({
   items = {

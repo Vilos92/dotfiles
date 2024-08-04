@@ -27,6 +27,7 @@ return {
   -- GitHub copilot
   { "github/copilot.vim" },
 
+  -- MacOS media status and controls
   {
     "media-controls.nvim",
     dir = "~/greg_projects/media-controls.nvim",
