@@ -26,4 +26,10 @@ return {
 
   -- GitHub copilot
   { "github/copilot.vim" },
+
+  {
+    "media-controls.nvim",
+    dir = "~/greg_projects/media-controls.nvim",
+    opts = { name = "greg" },
+  },
 }

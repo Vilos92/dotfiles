@@ -109,8 +109,9 @@ install_notion() {
 }
 
 # Music.
-install_spotify() {
+install_audio_packages() {
   prompt_and_install "spotify" 'brew install --cask spotify'
+  prompt_and_install "nowplaying-cli" 'brew install nowplaying-cli'
 }
 
 # Archive manager.
@@ -178,8 +179,8 @@ handle_arguments() {
     "notion" )
       install_notion
       ;;
-    "spotify" )
-      install_spotify
+    "audio-pkgs" )
+      install_audio_packages
       ;;
     "keka" )
       install_keka
@@ -218,7 +219,7 @@ install_everything() {
   install_gleam
   install_arc
   install_notion
-  install_spotify
+  install_audio_packages
   install_keka
   install_gimp
   install_vscode
