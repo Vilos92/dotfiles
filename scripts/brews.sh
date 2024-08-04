@@ -70,6 +70,11 @@ install_dev_packages() {
     shellcheck'
 }
 
+# GitHub CLI.
+install_gh() {
+  prompt_and_install "gh" 'brew install gh'
+}
+
 # Docker.
 install_docker_packages() {
   prompt_and_install "docker" 'brew install --cask docker'
@@ -79,6 +84,7 @@ install_docker_packages() {
 # lua packages.
 install_lua_packages() {
   prompt_and_install "lua packages" 'brew install lua-language-server\
+    luarocks\
     stylua'
 }
 
@@ -109,8 +115,9 @@ install_notion() {
 }
 
 # Music.
-install_spotify() {
+install_audio_packages() {
   prompt_and_install "spotify" 'brew install --cask spotify'
+  prompt_and_install "nowplaying-cli" 'brew install nowplaying-cli'
 }
 
 # Archive manager.
@@ -160,6 +167,9 @@ handle_arguments() {
     "dev-pkgs" )
       install_dev_packages
       ;;
+    "gh" )
+      install_gh
+      ;;
     "docker-pkgs" )
       install_docker_packages
       ;;
@@ -178,8 +188,8 @@ handle_arguments() {
     "notion" )
       install_notion
       ;;
-    "spotify" )
-      install_spotify
+    "audio-pkgs" )
+      install_audio_packages
       ;;
     "keka" )
       install_keka
@@ -212,13 +222,14 @@ install_everything() {
   install_tiles
   install_terminal_packages
   install_dev_packages
+  install_gh
   install_docker_packages
   install_lua_packages
   install_javascript_packages
   install_gleam
   install_arc
   install_notion
-  install_spotify
+  install_audio_packages
   install_keka
   install_gimp
   install_vscode

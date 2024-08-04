@@ -20,13 +20,14 @@ vim.keymap.set("n", "<leader>ps", function()
     vimgrep_arguments = {
       "rg",
       "--hidden",
-      "--glob", "!.git/**",
+      "--glob",
+      "!.git/**",
       "--no-heading",
       "--with-filename",
       "--line-number",
       "--column",
       "--smart-case",
-    }
+    },
   })
 end)
 
