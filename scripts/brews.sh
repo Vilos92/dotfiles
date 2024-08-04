@@ -70,6 +70,11 @@ install_dev_packages() {
     shellcheck'
 }
 
+# GitHub CLI.
+install_gh() {
+  prompt_and_install "gh" 'brew install gh'
+}
+
 # Docker.
 install_docker_packages() {
   prompt_and_install "docker" 'brew install --cask docker'
@@ -162,6 +167,9 @@ handle_arguments() {
     "dev-pkgs" )
       install_dev_packages
       ;;
+    "gh" )
+      install_gh
+      ;;
     "docker-pkgs" )
       install_docker_packages
       ;;
@@ -214,6 +222,7 @@ install_everything() {
   install_tiles
   install_terminal_packages
   install_dev_packages
+  install_gh
   install_docker_packages
   install_lua_packages
   install_javascript_packages

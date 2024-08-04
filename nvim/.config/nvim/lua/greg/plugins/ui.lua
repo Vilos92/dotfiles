@@ -11,8 +11,7 @@ return {
 
   -- MacOS media status and controls
   {
-    "media-controls.nvim",
+    "vilos92/media-controls.nvim",
     dir = "~/greg_projects/media-controls.nvim",
-    opts = {},
   },
 }
