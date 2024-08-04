@@ -1,7 +1,9 @@
 #!/bin/sh
 
 project_paths=$(find "$GREG_PROJECTS_PATH" "$FRONTAPP_DIR" -mindepth 1 -maxdepth 1 -type d)
-projects=$(echo "$project_paths" | xargs -n 1 basename)
+project_dirs=$(echo "$project_paths" | xargs -n 1 basename)
+# tmux does not allow `.` in session names. Replace with `_` for nvim projects.
+projects=$(echo "$project_dirs" | sed 's/\.nvim$/_nvim/')
 
 if [[ -n $1 ]]; then
   if echo "$projects" | grep -qx "$1"; then
@@ -16,9 +18,9 @@ fi
 
 sessions=$(tmux list-sessions 2>/dev/null | awk -F: '{ print $1 }')
 
-current_session=$(tmux list-sessions -F "#{session_name}" -f "#{session_attached}" 2>/dev/null)
-
 options=$(echo "$projects\n$sessions" | sort -u | sed '/^$/d')
+
+current_session=$(tmux list-sessions -F "#{session_name}" -f "#{session_attached}" 2>/dev/null)
 
 select_options=$(echo "$options" | while read project; do
   if [[ "$project" = "$current_session" ]]; then
@@ -36,9 +38,10 @@ if [[ -z $selected_option ]]; then
   exit 0
 fi
 
-selected_project=$(echo "$selected_option" | awk '{print $2}')
-
-selected_project_path=$(echo "$project_paths" | grep "/$selected_project$" | head -n 1)
+selected_project=$(echo "$selected_option" | awk '{print $2}') 
+# Restore the `.` for any nvim projects.
+selected_project_dir=$(echo "$selected_project" | sed 's/_nvim$/.nvim/')
+selected_project_path=$(echo "$project_paths" | grep "/$selected_project_dir$" | head -n 1)
 
 if [[ -n $selected_project_path ]]; then
   attach-tmux-session $selected_project $selected_project_path
