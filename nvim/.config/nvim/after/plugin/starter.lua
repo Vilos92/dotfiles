@@ -24,7 +24,7 @@ local footer = (function()
         return
       end
 
-      local new_media_status = media_controls.status_cache()
+      local new_media_status = media_controls.get_status()
       new_media_status = new_media_status or ""
 
       if new_media_status == media_status then
