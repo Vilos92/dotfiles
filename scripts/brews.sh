@@ -41,6 +41,11 @@ install_tiles() {
   prompt_and_install "tiles" 'brew install --cask tiles'
 }
 
+# Smooth scrolling.
+install_smooth_scroll() {
+  prompt_and_install "mos" 'brew install mos'
+}
+
 # Terminal environment.
 install_terminal_packages() {
   # Alacritty.
@@ -162,6 +167,9 @@ handle_arguments() {
     "tiles" )
       install_tiles
       ;;
+    "smooth-scroll" )
+      install_smooth_scroll
+      ;;
     "terminal-pkgs" )
       install_terminal_packages
       ;;
@@ -221,6 +229,7 @@ install_everything() {
   install_dotfile_packages
   install_alt_tab
   install_tiles
+  install_smooth_scroll
   install_terminal_packages
   install_dev_packages
   install_gh
