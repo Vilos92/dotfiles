@@ -3,6 +3,13 @@ alias g=gmux
 
 # nvim
 alias v=nvim
+# last file
+alias vl='nvim -c "normal '\''0"'
+# temporary buffer
+alias vtmp='nvim -c "setlocal buftype=nofile bufhidden=wipe" -c "nnoremap <buffer> q :q!<CR>" -'
+# Oil
+alias voil='nvim -c Oil'
+
 
 # zshrc
 alias vzshrc='v -p ~/.zshenv ~/.zshrc'
