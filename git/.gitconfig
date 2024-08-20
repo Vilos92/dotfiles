@@ -11,7 +11,7 @@
 	required = true
 	clean = git-lfs clean -- %f
 [alias]
-    merge-root = "!f() { \
+    merge-main = "!f() { \
         ROOT_BRANCH=\"master\"; \
         if git show-ref --quiet refs/heads/main; then \
             ROOT_BRANCH=\"main\"; \
@@ -28,7 +28,7 @@
             echo \"There are staged or uncommitted changes. Please commit or stash them before merging.\"; \
             exit 1; \
         fi; \
-        echo \"Do you want to merge $ROOT_BRANCH into $BRANCH? (y/n)\"; \
+        printf \"Do you want to merge $ROOT_BRANCH into $BRANCH? (y/n) \"; \
         read -r answer; \
         if [ \"$answer\" = \"y\" ]; then \
             echo \"Fetching latest changes for $ROOT_BRANCH...\"; \
