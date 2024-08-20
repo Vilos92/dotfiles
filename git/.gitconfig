@@ -1,0 +1,41 @@
+[diff "sopsdiffer"]
+	textconv = sops -d
+[user]
+	name = Gregory Linscheid
+	email = linscheid.greg@gmail.com
+[push]
+	autoSetupRemote = true
+[filter "lfs"]
+	smudge = git-lfs smudge -- %f
+	process = git-lfs filter-process
+	required = true
+	clean = git-lfs clean -- %f
+[alias]
+    merge-main = "!f() { \
+        ROOT_BRANCH=\"master\"; \
+        if git show-ref --quiet refs/heads/main; then \
+            ROOT_BRANCH=\"main\"; \
+        elif ! git show-ref --quiet refs/heads/$ROOT_BRANCH; then \
+            echo \"Neither 'main' nor 'master' branch exists.\"; \
+            exit 1; \
+        fi; \
+        BRANCH=$(git symbolic-ref --short HEAD); \
+        if [ \"$BRANCH\" = \"$ROOT_BRANCH\" ]; then \
+            echo \"You are already on the $ROOT_BRANCH branch. Cannot merge into itself.\"; \
+            exit 1; \
+        fi; \
+        if ! git diff-index --quiet HEAD --; then \
+            echo \"There are staged or uncommitted changes. Please commit or stash them before merging.\"; \
+            exit 1; \
+        fi; \
+        printf \"Do you want to merge $ROOT_BRANCH into $BRANCH? (y/n) \"; \
+        read -r answer; \
+        if [ \"$answer\" = \"y\" ]; then \
+            echo \"Fetching latest changes for $ROOT_BRANCH...\"; \
+            git fetch origin $ROOT_BRANCH; \
+            git merge origin/$ROOT_BRANCH; \
+        else \
+            echo \"Merge aborted.\"; \
+        fi; \
+    }; f"
+

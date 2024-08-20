@@ -36,6 +36,7 @@ prompt_and_stow tmux
 prompt_and_stow zsh
 prompt_and_stow nvim
 prompt_and_stow vim
+prompt_and_stow git
 
 # Submodules for private dotfiles.
 prompt_and_stow front
