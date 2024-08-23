@@ -10,6 +10,9 @@
 	process = git-lfs filter-process
 	required = true
 	clean = git-lfs clean -- %f
+[rerere]
+	enabled = true
+	autoUpdate = true
 [alias]
     merge-main = "!f() { \
         ROOT_BRANCH=\"master\"; \
@@ -38,4 +41,3 @@
             echo \"Merge aborted.\"; \
         fi; \
     }; f"
-
