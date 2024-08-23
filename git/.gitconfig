@@ -41,3 +41,4 @@
             echo \"Merge aborted.\"; \
         fi; \
     }; f"
+    bat-diff = "!f() { git diff --name-only --relative --diff-filter=d | xargs bat --diff; }; f"

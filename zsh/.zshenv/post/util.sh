@@ -10,7 +10,6 @@ alias vtmp='nvim -c "setlocal buftype=nofile bufhidden=wipe" -c "nnoremap <buffe
 # Oil
 alias voil='nvim -c Oil'
 
-
 # zshrc
 alias vzshrc='v -p ~/.zshenv ~/.zshrc'
 
