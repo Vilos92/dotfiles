@@ -20,7 +20,16 @@ require("lazy").setup({
   },
 
   -- automatically check for plugin updates
-  checker = { enabled = true },
+  checker = {
+    enabled = {
+      enabled = true,
+      concurrency = nil,
+      notify = true,
+      -- 7 days * 24 hours/minute * 60 minutes/hour * 60 seconds/minute
+      frequency = 7 * 24 * 60 * 60,
+      check_pinned = false,
+    },
+  },
 
   -- colorscheme that will be used when installing plugins.
   install = { colorscheme = { "catppuccin-frappe" } },
