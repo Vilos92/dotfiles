@@ -50,6 +50,13 @@ local themes = {
     ]],
   },
   {
+    name = "nord",
+    colorscheme = "nord",
+    after = [[
+      os.execute('alacritty-theme nord > /dev/null 2>&1')
+    ]],
+  },
+  {
     name = "tokyonight-night",
     colorscheme = "tokyonight-night",
     after = [[
