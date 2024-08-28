@@ -65,9 +65,9 @@ require("mini.starter").setup({
     { name = "Create Buffer", action = "enew", section = "Neovim" },
     { name = "Quit Neovim", action = "qall", section = "Neovim" },
     -- Media
-    { name = "Play/Pause Track", action = ":MediaControlToggle", section = "Media" },
-    { name = "Next Track", action = ":MediaControlNext", section = "Media" },
-    { name = "Previous Track", action = ":MediaControlPrevious", section = "Media" },
+    { name = "Play/Pause Track 󰐎", action = ":MediaControlToggle", section = "Media" },
+    { name = "Next Track 󰒭", action = ":MediaControlNext", section = "Media" },
+    { name = "Previous Track 󰒮", action = ":MediaControlPrevious", section = "Media" },
   },
 
   header = header,
