@@ -12,6 +12,7 @@ return {
   -- MacOS media status and controls
   {
     "Vilos92/media-controls.nvim",
+    dependencies = { "nvim-lua/plenary.nvim" },
     lazy = true,
     -- Uncomment for local development
     -- dir = "~/greg_projects/media-controls.nvim",
