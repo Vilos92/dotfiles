@@ -23,5 +23,5 @@ return {
       require("nord").setup({})
       vim.cmd.colorscheme("nord")
     end,
-  }
+  },
 }
