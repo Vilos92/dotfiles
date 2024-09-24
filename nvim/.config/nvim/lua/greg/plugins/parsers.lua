@@ -51,15 +51,30 @@ return {
     },
   },
 
-  -- lsp for formatting (needed for eslint and prettier)
-  { "neovim/nvim-lspconfig", lazy = true },
-  { "jose-elias-alvarez/null-ls.nvim", lazy = true },
+  -- Quickstart nvm lsp configs
+  {
+    "neovim/nvim-lspconfig",
+    lazy = true,
+  },
 
-  -- eslint
-  { "MunifTanjim/eslint.nvim", lazy = true },
+  -- Asynchronous linter
+  {
+    "mfussenegger/nvim-lint",
+    config = function()
+      local lint = require("lint")
 
-  -- prettier
-  { "MunifTanjim/prettier.nvim", lazy = true },
+      lint.linters_by_ft = {
+        javascript = { "eslint_d" },
+      }
+    end,
+  },
+
+  -- Formatter (needed for prettier)
+  {
+    "stevearc/conform.nvim",
+    opts = {},
+    lazy = true,
+  },
 
   -- Markdown editing
   "OXY2DEV/markview.nvim",
