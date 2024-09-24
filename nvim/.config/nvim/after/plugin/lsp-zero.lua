@@ -7,7 +7,7 @@ local lsp = require("lsp-zero")
 lsp.preset("recommended")
 
 lsp.setup_servers({
-  "tsserver",
+  "ts_ls",
   "rust_analyzer",
 })
 
