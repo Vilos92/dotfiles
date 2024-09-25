@@ -9,7 +9,7 @@ null_ls.setup({
     null_ls.builtins.formatting.stylua,
     null_ls.builtins.completion.spell,
     -- requires none-ls-extras.nvim
-    require("none-ls.diagnostics.eslint"),
+    require("none-ls.diagnostics.eslint_d"),
     -- requires none-ls-shellcheck.nvim
     require("none-ls-shellcheck.diagnostics"),
     require("none-ls-shellcheck.code_actions"),
