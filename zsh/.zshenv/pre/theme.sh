@@ -1,3 +1,5 @@
+#!/bin/sh
+
 export ALACRITTY_THEME_DIR_PATH="$ALACRITTY_PATH"/theme
 
 # Auto-create theme config for alacritty-theme if it does not exist.

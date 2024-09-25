@@ -8,7 +8,11 @@ null_ls.setup({
   sources = {
     null_ls.builtins.formatting.stylua,
     null_ls.builtins.completion.spell,
-    require("none-ls.diagnostics.eslint"), -- requires none-ls-extras.nvim
+    -- requires none-ls-extras.nvim
+    require("none-ls.diagnostics.eslint"),
+    -- requires none-ls-shellcheck.nvim
+    require("none-ls-shellcheck.diagnostics"),
+    require("none-ls-shellcheck.code_actions"),
   },
 })
 

@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # tmux
 alias g=gmux
 

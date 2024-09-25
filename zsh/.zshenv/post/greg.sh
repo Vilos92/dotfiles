@@ -1,3 +1,5 @@
+#!/bin/sh
+
 # Dotfiles
 alias gcd-dotfiles='cd $GREG_DOTFILES_PATH'
 alias vdotfiles='nvim $GREG_DOTFILES_PATH'
