@@ -60,25 +60,13 @@ return {
   -- Asynchronous linter
   {
     "mfussenegger/nvim-lint",
-    config = function()
-      local lint = require("lint")
-
-      lint.linters_by_ft = {
-        javascript = { "eslint_d" },
-      }
-    end,
+    lazy = true,
   },
 
   -- Formatter (needed for prettier)
   {
     "stevearc/conform.nvim",
-    opts = {
-      formatters_by_ft = {
-        lua = { "stylua" },
-        -- Conform will run the first available formatter
-        javascript = { "prettierd", "prettier", stop_after_first = true },
-      },
-    },
+    opts = {},
     lazy = true,
   },
 
