@@ -57,9 +57,12 @@ return {
     lazy = true,
   },
 
-  -- Asynchronous linter
+  -- Linter + code actions
   {
-    "mfussenegger/nvim-lint",
+    "nvimtools/none-ls.nvim",
+    dependencies = {
+      "nvimtools/none-ls-extras.nvim",
+    },
     lazy = true,
   },
 
