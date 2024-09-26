@@ -14,11 +14,3 @@ end)
 vim.keymap.set("n", "<leader>pe", function()
   vim.cmd("rightbelow vsplit | Oil")
 end, { desc = "Open parent directory" })
--- Alternative that mimics the VSCode "open explorer" shortcut.
-vim.keymap.set("n", "<C-b>", function()
-  vim.cmd("rightbelow vsplit | Oil")
-end, { desc = "Open parent directory" })
-
--- Vertical and horizontal split.
-vim.keymap.set("n", "<C-w>\\", "<cmd>rightbelow vsplit | Oil<CR>")
-vim.keymap.set("n", "<C-w>_", "<cmd>split | Oil<CR>")

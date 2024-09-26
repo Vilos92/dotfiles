@@ -95,6 +95,6 @@ require("themery").setup({
   livePreview = true,
 })
 
-vim.keymap.set("n", "<leader>kt", function()
+vim.keymap.set("n", "<leader>t", function()
   vim.cmd("Themery")
 end)
