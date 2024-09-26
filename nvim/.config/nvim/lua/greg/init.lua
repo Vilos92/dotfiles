@@ -6,4 +6,3 @@ end
 
 require("greg.lazy")
 require("greg.set")
-require("greg.filetype")
