@@ -8,6 +8,18 @@ vim.keymap.set("n", "<C-w>", "<cmd>tabclose<CR>")
 vim.keymap.set("n", "<leader>[", "<cmd>tabmove -1<CR>")
 vim.keymap.set("n", "<leader>]", "<cmd>tabmove +1<CR>")
 
+-- Navigate panes using vim keys.
+vim.keymap.set("n", "<C-w>h", "<C-w>h")
+vim.keymap.set("n", "<C-w>j", "<C-w>j")
+vim.keymap.set("n", "<C-w>k", "<C-w>k")
+vim.keymap.set("n", "<C-w>l", "<C-w>l")
+
+-- Resize vim panes.
+vim.keymap.set("n", "<C-w>[", "5<C-w><")
+vim.keymap.set("n", "<C-w>]", "5<C-w>>")
+vim.keymap.set("n", "<C-w>-", "5<C-w>-")
+vim.keymap.set("n", "<C-w>=", "5<C-w>+")
+
 -- Move lines up and down while respecting scope.
 vim.keymap.set("v", "J", ":m '>+1<CR>gv=gv")
 vim.keymap.set("v", "K", ":m '<-2<CR>gv=gv")
