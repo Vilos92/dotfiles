@@ -129,6 +129,11 @@ install_audio_packages() {
   prompt_and_install "nowplaying-cli" 'brew install nowplaying-cli'
 }
 
+# Audio engineering.
+install_audio_engineering_packages() {
+  prompt_and_install "audacity" 'brew install --cask audacity'
+}
+
 # Archive manager.
 install_keka() {
   prompt_and_install "keka" 'brew install --cask keka'
@@ -203,6 +208,9 @@ handle_arguments() {
     "audio-pkgs" )
       install_audio_packages
       ;;
+    "audio-engineering-pkgs" )
+      install_audio_engineering_packages
+      ;;
     "keka" )
       install_keka
       ;;
@@ -243,6 +251,7 @@ install_everything() {
   install_arc
   install_notion
   install_audio_packages
+  install_audio_engineering_packages
   install_keka
   install_gimp
   install_vscode
