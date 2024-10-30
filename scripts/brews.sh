@@ -125,6 +125,7 @@ install_notion() {
 
 # Music.
 install_audio_packages() {
+  prompt_and_install "vlc" 'brew install --cask vlc'
   prompt_and_install "spotify" 'brew install --cask spotify'
   prompt_and_install "nowplaying-cli" 'brew install nowplaying-cli'
 }
@@ -162,6 +163,11 @@ install_dbeaver() {
 # Gif recorder.
 install_gifox() {
   prompt_and_install "gifox" 'brew install --cask gifox'
+}
+
+# Timezone data for friends + family.
+install_there() {
+  prompt_and_install "there" 'brew install --cask there'
 }
 
 handle_arguments() {
@@ -229,6 +235,9 @@ handle_arguments() {
     "gifox" )
       install_gifox
       ;;
+    "there" )
+      install_there
+      ;;
     * )
       echo "Invalid argument: $1"
       exit 1
@@ -258,6 +267,7 @@ install_everything() {
   install_coteditor
   install_dbeaver
   install_gifox
+  install_there
 }
 
 if [ "$#" -eq 0 ]; then
