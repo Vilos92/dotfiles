@@ -7,3 +7,6 @@ export PATH="$PNPM_HOME:$PATH"
 
 # bun
 export BUN_INSTALL="$HOME/.bun"
+
+# bun completions
+[ -s "/Users/greg.linscheid/.bun/_bun" ] && . "/Users/greg.linscheid/.bun/_bun"
