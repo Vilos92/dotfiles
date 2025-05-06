@@ -118,6 +118,11 @@ install_arc() {
   prompt_and_install "arc" 'brew install --cask arc'
 }
 
+# Browserosaurus.
+install_browserosaurus() {
+  prompt_and_install "browserosaurus" 'brew install --cask browserosaurus'
+}
+
 # Notes.
 install_notion() {
   prompt_and_install "notion" 'brew install --cask notion'
@@ -208,6 +213,9 @@ handle_arguments() {
     "arc" )
       install_arc
       ;;
+    "browserosaurus" )
+      install_browserosaurus
+      ;;
     "notion" )
       install_notion
       ;;
@@ -258,6 +266,7 @@ install_everything() {
   install_javascript_packages
   install_gleam
   install_arc
+  install_browserosaurus
   install_notion
   install_audio_packages
   install_audio_engineering_packages
