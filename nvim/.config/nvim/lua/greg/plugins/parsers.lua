@@ -1,4 +1,15 @@
 return {
+  -- Markdown editing
+  {
+    "OXY2DEV/markview.nvim",
+    lazy = false, -- Recommended
+    -- ft = "markdown" -- If you decide to lazy-load anyway
+
+    dependencies = {
+      "nvim-tree/nvim-web-devicons",
+    },
+  },
+
   -- Tree sitter
   {
     "nvim-treesitter/nvim-treesitter",
@@ -31,7 +42,10 @@ return {
         indent = { enable = true },
       })
     end,
-    lazy = true,
+    dependencies = {
+      "OXY2DEV/markview.nvim",
+    },
+    lazy = false,
   },
 
   -- Tree sitter playground
@@ -72,21 +86,5 @@ return {
     "stevearc/conform.nvim",
     opts = {},
     lazy = true,
-  },
-
-  -- Markdown editing
-  {
-    "OXY2DEV/markview.nvim",
-    lazy = false, -- Recommended
-    -- ft = "markdown" -- If you decide to lazy-load anyway
-
-    dependencies = {
-      -- You will not need this if you installed the
-      -- parsers manually
-      -- Or if the parsers are in your $RUNTIMEPATH
-      "nvim-treesitter/nvim-treesitter",
-
-      "nvim-tree/nvim-web-devicons",
-    },
   },
 }
