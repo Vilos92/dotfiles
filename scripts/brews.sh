@@ -176,6 +176,11 @@ install_there() {
   prompt_and_install "there" 'brew install --cask there'
 }
 
+# Transmission.
+install_transmission() {
+  prompt_and_install "transmission" 'brew install --cask transmission'
+}
+
 handle_arguments() {
   case $1 in
     "dotfile-pkgs" )
@@ -244,6 +249,9 @@ handle_arguments() {
     "there" )
       install_there
       ;;
+    "transmission" )
+      install_transmission
+      ;;
     * )
       echo "Invalid argument: $1"
       exit 1
@@ -274,6 +282,7 @@ install_everything() {
   install_dbeaver
   install_gifox
   install_there
+  install_transmission
 }
 
 if [ "$#" -eq 0 ]; then
