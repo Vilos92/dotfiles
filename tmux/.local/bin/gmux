@@ -1,6 +1,12 @@
 #!/bin/sh
 
-project_paths=$(find "$GREG_PROJECTS_PATH" "$FRONTAPP_DIR" -mindepth 1 -maxdepth 1 -type d)
+project_paths_command="find \"$GREG_PROJECTS_PATH\""
+
+if [ -d "$FRONTAPP_DIR" ]; then
+    project_paths_command+=" \"$FRONTAPP_DIR\""
+fi
+
+project_paths=$(eval "$project_paths_command -mindepth 1 -maxdepth 1 -type d")
 project_dirs=$(echo "$project_paths" | xargs -n 1 basename)
 # tmux does not allow `.` in session names. Replace with `_` for nvim projects.
 projects=$(echo "$project_dirs" | sed 's/\.nvim$/_nvim/')
