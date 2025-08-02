@@ -1,5 +1,13 @@
 #!/bin/sh
 
+if ! command -v brew &> /dev/null; then
+  /bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+
+  echo >> /Users/greg.linscheid/.zprofile
+  echo 'eval "$(/opt/homebrew/bin/brew shellenv)"' >> /Users/greg.linscheid/.zprofile
+  eval "$(/opt/homebrew/bin/brew shellenv)"
+fi
+
 prompt_and_install() {
   message="$1"
   install_command="$2"
@@ -26,9 +34,6 @@ prompt_and_install() {
 install_dotfile_packages() {
   # stow is needed to link dotfiles.
   prompt_and_install "stow" 'brew install stow'
-
-  # brew is needed for MacOS package installations.
-  prompt_and_install "homebrew" "/bin/bash -c \"\$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
 }
 
 # Alt tab window manager.
@@ -56,7 +61,7 @@ install_terminal_packages() {
 
   # zsh.
   prompt_and_install "zsh" 'brew install zsh'
-  prompt_and_install "oh my zsh" "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\""
+  prompt_and_install "oh my zsh" "sh $(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)"
   prompt_and_install "powerlevel10k" 'git clone --depth=1 https://github.com/romkatv/powerlevel10k.git ~/powerlevel10k'
 
   # Neofetch.
@@ -113,11 +118,6 @@ install_gleam() {
   prompt_and_install "gleam" 'brew install gleam'
 }
 
-# Browser.
-install_arc() {
-  prompt_and_install "arc" 'brew install --cask arc'
-}
-
 # Browserosaurus.
 install_browserosaurus() {
   prompt_and_install "browserosaurus" 'brew install --cask browserosaurus'
@@ -132,12 +132,12 @@ install_notion() {
 install_audio_packages() {
   prompt_and_install "vlc" 'brew install --cask vlc'
   prompt_and_install "spotify" 'brew install --cask spotify'
-  prompt_and_install "nowplaying-cli" 'brew install nowplaying-cli'
 }
 
 # Audio engineering.
 install_audio_engineering_packages() {
   prompt_and_install "audacity" 'brew install --cask audacity'
+  prompt_and_install "ableton" 'brew install --cask ableton-live-suite'
 }
 
 # Archive manager.
@@ -152,7 +152,7 @@ install_gimp() {
 
 # Visual Studio Code.
 install_vscode() {
-  prompt_and_install "visual studio code" 'brew install --cask visual-studio-code@insiders'
+  prompt_and_install "visual studio code" 'brew install --cask visual-studio-code'
 }
 
 # Text editor.

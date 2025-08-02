@@ -2,8 +2,6 @@ if vim.g.vscode then
   return
 end
 
-local media_controls = require("media-controls")
-
 local header = [[
         ___ ____  
 __   __/ _ \___ \ 
@@ -13,31 +11,8 @@ __   __/ _ \___ \
 ]]
 
 local footer = (function()
-  local media_status = ""
-  local timer = vim.loop.new_timer()
-
-  timer:start(
-    0,
-    1000,
-    vim.schedule_wrap(function()
-      if vim.bo.filetype ~= "ministarter" then
-        return
-      end
-
-      local new_media_status = media_controls.get_status()
-      new_media_status = new_media_status or ""
-
-      if new_media_status == media_status then
-        return
-      end
-
-      media_status = new_media_status
-      MiniStarter.refresh()
-    end)
-  )
-
   return function()
-    return "Hey Greg,\n\n📅 The current date is " .. os.date("%B %d, %Y") .. "\n\n" .. media_status
+    return "Hey Greg,\n\n📅 The current date is " .. os.date("%B %d, %Y")
   end
 end)()
 
@@ -64,10 +39,6 @@ require("mini.starter").setup({
     -- Neovim
     { name = "Create Buffer", action = "enew", section = "Neovim" },
     { name = "Quit Neovim", action = "qall", section = "Neovim" },
-    -- Media
-    { name = "Play/Pause Track 󰐎", action = ":MediaControlToggle", section = "Media" },
-    { name = "Next Track 󰒭", action = ":MediaControlNext", section = "Media" },
-    { name = "Previous Track 󰒮", action = ":MediaControlPrevious", section = "Media" },
   },
 
   header = header,
