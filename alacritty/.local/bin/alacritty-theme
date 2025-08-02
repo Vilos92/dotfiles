@@ -10,6 +10,6 @@ if [ ! -f "$ALACRITTY_THEME_DIR_PATH/$1.toml" ]; then
   exit 1
 fi
 
-sed -i '' "1s|.*|import = [\"$ALACRITTY_THEME_DIR_PATH/$1.toml\"]|" "$ALACRITTY_PATH"/theme.toml
+printf "[general]\nimport = [\"$ALACRITTY_THEME_DIR_PATH/$1.toml\"]\n" > "$ALACRITTY_PATH"/theme.toml
 touch "$ALACRITTY_PATH"/alacritty.toml
 echo "Theme $1 applied."
