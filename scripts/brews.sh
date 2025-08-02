@@ -68,6 +68,12 @@ install_terminal_packages() {
   prompt_and_install "neofetch" 'brew install neofetch'
 }
 
+# Simple file sharing.
+install_copyparty() {
+  # install copy party so it's available to use directly via calling 'copyparty'.
+  prompt_and_install "copyparty" 'pip3 install --user copyparty'
+}
+
 # Developer environment.
 install_dev_packages() {
   prompt_and_install "dev packages" 'brew install neovim\
@@ -198,6 +204,9 @@ handle_arguments() {
     "terminal-pkgs" )
       install_terminal_packages
       ;;
+    "copyparty" )
+      install_copyparty
+      ;;
     "dev-pkgs" )
       install_dev_packages
       ;;
@@ -265,6 +274,7 @@ install_everything() {
   install_tiles
   install_smooth_scroll
   install_terminal_packages
+  install_copyparty
   install_dev_packages
   install_gh
   install_docker_packages
