@@ -130,6 +130,7 @@ install_notion() {
 
 # Music.
 install_audio_packages() {
+  prompt_and_install "ffmpeg" 'brew install pillow ffmpeg'
   prompt_and_install "vlc" 'brew install --cask vlc'
   prompt_and_install "spotify" 'brew install --cask spotify'
 }
@@ -210,9 +211,6 @@ handle_arguments() {
     "gleam" )
       install_gleam
       ;;
-    "arc" )
-      install_arc
-      ;;
     "browserosaurus" )
       install_browserosaurus
       ;;
@@ -265,7 +263,6 @@ install_everything() {
   install_lua_packages
   install_javascript_packages
   install_gleam
-  install_arc
   install_browserosaurus
   install_notion
   install_audio_packages
