@@ -38,5 +38,8 @@ prompt_and_stow nvim
 prompt_and_stow vim
 prompt_and_stow git
 
+# Mac Mini specific dotfiles.
+prompt_and_stow mac-mini
+
 # Submodules for private dotfiles.
 prompt_and_stow front
