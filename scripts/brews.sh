@@ -193,6 +193,13 @@ install_transmission() {
   prompt_and_install "transmission" 'brew install --cask transmission'
 }
 
+# Chat
+install_chats() {
+  prompt_and_install "whatsapp" 'brew install --cask whatsapp'
+  prompt_and_install "slack" 'brew install --cask slack'
+  prompt_and_install "discord" 'brew install --cask discord'
+}
+
 handle_arguments() {
   case $1 in
     "dotfile-pkgs" )
@@ -267,6 +274,9 @@ handle_arguments() {
     "transmission" )
       install_transmission
       ;;
+    "chats" )
+      install_chats
+      ;;
     * )
       echo "Invalid argument: $1"
       exit 1
@@ -299,6 +309,7 @@ install_everything() {
   install_gifox
   install_there
   install_transmission
+  install_chats
 }
 
 if [ "$#" -eq 0 ]; then
