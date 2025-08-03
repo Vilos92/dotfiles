@@ -38,6 +38,9 @@ prompt_and_stow nvim
 prompt_and_stow vim
 prompt_and_stow git
 
+# Dot files related to connecting to remote servers.
+prompt_and_stow remote
+
 # Mac Mini specific dotfiles.
 prompt_and_stow mac-mini
 
