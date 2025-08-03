@@ -1,2 +1,2 @@
 copyparty.conf
-.zshenv/post/copyparty-env.sh
+.zshenv/init/copyparty-env.sh
