@@ -1,0 +1,7 @@
+#!/bin/sh
+
+export PATH="/usr/local/bin:/opt/homebrew/bin:$PATH"
+
+source ~/.zshenv/init/copyparty-env.sh
+
+cloudflared tunnel run --token "$COPYPARTY_CLOUDFLARED_TOKEN"

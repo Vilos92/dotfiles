@@ -3,20 +3,18 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.greg.copyparty-cloudflared</string>
+    <string>com.greg.copyparty-mini</string>
     <key>ProgramArguments</key>
     <array>
-        <string>zsh</string>
-        <string>-c</string>
-        <string>source ~/.zshenv/post/mac-mini.sh; copyparty-mini</string>
+      <string>/Users/greg.linscheid/.local/bin/copyparty-mini</string>
     </array>
     <key>RunAtLoad</key>
     <true/>
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/usr/local/var/log/copyparty-cloudflared.log</string>
+    <string>/Users/greg.linscheid/Library/logs/copyparty/copyparty-mini.log</string>
     <key>StandardErrorPath</key>
-    <string>/usr/local/var/log/copyparty-cloudflared.error.log</string>
+    <string>/Users/greg.linscheid/Library/logs/copyparty/copyparty-mini.error.log</string>
 </dict>
 </plist>
