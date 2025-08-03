@@ -1,0 +1,3 @@
+#!/bin/sh
+
+export COPYPARTY_CLOUDFLARED_TOKEN=''

@@ -72,6 +72,9 @@ install_terminal_packages() {
 install_copyparty() {
   # install copy party so it's available to use directly via calling 'copyparty'.
   prompt_and_install "copyparty" 'pip3 install --user copyparty'
+
+  # install cloudflared to allow exposing the copyparty instance.
+  prompt_and_install "cloudflared" 'brew install cloudflared'
 }
 
 # Developer environment.
