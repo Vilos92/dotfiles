@@ -1,44 +1,82 @@
 #!/bin/sh
 
 # --- Video Compression Script with Bitrate Control ---
-# Usage: compress_video_hevc <input_file> [bitrate] [output_file]
+# Usage:
+#   compress_video_hevc <input_file> [bitrate] [output_file]
+#   compress_video_hevc --all [bitrate]
 #
 # Arguments:
-#   <input_file>     - The video file to compress.
-#   [bitrate]        - Optional. The target video bitrate in 'k' or 'M'.
-#                      (e.g., 2000k or 2M). Default is 2500k.
-#   [output_file]    - Optional. Custom output filename.
+#   <input_file>       - The video file to compress.
+#   --all              - Process all non-x265 MP4 files in the current directory.
+#   [bitrate]          - Optional. The target video bitrate in 'k' or 'M'.
+#                        (e.g., 2000k or 2M). Default is 5000k.
+#   [output_file]      - Optional. Custom output filename.
 #
 # Note: Requires FFmpeg with videotoolbox support.
 
+# --- Function to process a single file ---
+process_file() {
+    local input_file="$1"
+    local bitrate="$2"
+    local output_file="$3"
+
+    old_size=$(du -h "$input_file" | awk '{print $1}')
+    echo "Processing '$input_file' (Original size: $old_size)..."
+
+    ffmpeg -i "$input_file" \
+        -c:v hevc_videotoolbox \
+        -b:v "$bitrate" \
+        -tag:v hvc1 \
+        -c:a copy \
+        "$output_file"
+
+    if [ -f "$output_file" ]; then
+        new_size=$(du -h "$output_file" | awk '{print $1}')
+        echo "   -> Created '$output_file' (New size: $new_size)."
+    else
+        echo "   -> FAILED: Output file was not created."
+    fi
+}
+
+# --- Main script logic ---
+
+# Check if no arguments are provided
 if [ -z "$1" ]; then
     echo "Usage: $0 <input_file> [bitrate] [output_file]"
+    echo "       $0 --all [bitrate]"
     exit 1
 fi
 
-input_file="$1"
-bitrate="${2:-5000k}"
-output_file="${3:-${input_file%.*}.x265.mp4}"
+# Check for the --all flag
+if [ "$1" = "--all" ]; then
+    bitrate="${2:-5000k}"
+    echo "--- Running in --all mode. Bitrate: $bitrate ---"
+    
+    # Use find to get the list of files to process
+    find . -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.MP4" \) -not -iname "*x265*" -print0 | while read -d '' file
+    do
+        # Construct output file name for each file
+        base_name="${file%.[Mm][Pp]4}"
+        extension="${file##*.}"
+        output_file="${base_name}.x265.${extension}"
+        
+        # Check if the x265 version already exists
+        if [ ! -e "$output_file" ]; then
+            process_file "$file" "$bitrate" "$output_file"
+            echo "-----------------------------------"
+        else
+            echo "Skipping '$file' because '$output_file' already exists."
+        fi
+    done
+    echo "--- All files processed. ---"
 
-# Get the size of the input file before compression
-old_size=$(du -h "$input_file" | awk '{print $1}')
-echo "Original file size: $old_size"
-  
-echo "Processing: '$input_file' -> '$output_file' (Bitrate: $bitrate)"
-  
-ffmpeg -i "$input_file" \
-    -c:v hevc_videotoolbox \
-    -b:v "$bitrate" \
-    -tag:v hvc1 \
-    -c:a copy \
-    "$output_file"
-
-# Get the size of the output file and calculate the difference
-if [ -f "$output_file" ]; then
-    new_size=$(du -h "$output_file" | awk '{print $1}')
-    echo "New file size: $new_size"
 else
-    echo "Output file was not created."
+    # --- Single file mode ---
+    input_file="$1"
+    bitrate="${2:-5000k}"
+    output_file="${3:-${input_file%.*}.x265.mp4}"
+    
+    echo "--- Running in single-file mode ---"
+    process_file "$input_file" "$bitrate" "$output_file"
+    echo "--- Compression complete. ---"
 fi
-
-echo "Compression complete."
