@@ -1,0 +1,109 @@
+#!/bin/sh
+
+# --- Video Compression Script with Bitrate Control & Date Preservation ---
+#
+# Usage:
+#   compress_video_hevc <input_file> [bitrate] [output_file]
+#   compress_video_hevc --all [bitrate]
+#
+# Arguments:
+#   <input_file>        - The video file to compress.
+#   --all               - Process all supported video files in the current directory.
+#   [bitrate]           - Optional. The target video bitrate in 'k' or 'M'. Default is set below.
+#   [output_file]       - Optional. Custom output filename.
+#
+# Note: Requires FFmpeg with videotoolbox support and Xcode Command Line Tools (for SetFile).
+
+
+# --- Internal Documentation: Bitrate Recommendations (for HEVC/H.265) ---
+# --- 1080p (1920x1080) ---
+#   Standard FPS (24-30): Sweet Spot: 4000k
+#   High FPS (50-60):     Sweet Spot: 7500k
+# --- 4K (3840x2160) ---
+#   Standard FPS (24-30): Sweet Spot: 15000k
+#   High FPS (50-60):     Sweet Spot: 25000k
+# * Test First, increase bitrate by ~30% for HDR, and use higher bitrates for high-motion content.
+
+# Just above the sweet spot for 1080p at 30 FPS, which is a common use case.
+DEFAULT_BITRATE="5000k"
+
+process_file() {
+    local input_file="$1"
+    local bitrate="$2"
+    local output_file="$3"
+
+    old_size=$(du -h "$input_file" | awk '{print $1}')
+    echo "Processing '$input_file' (Original size: $old_size)..."
+
+    original_date=$(stat -f "%Sm" -t "%m/%d/%Y %H:%M:%S" "$input_file")
+    
+    # Run ffmpeg with a high nice value to keep the system responsive.
+    nice -n 15 ffmpeg -i "$input_file" \
+        -c:v hevc_videotoolbox \
+        -b:v "$bitrate" \
+        -tag:v hvc1 \
+        -c:a copy \
+        -map_metadata 0 \
+        -movflags use_metadata_tags \
+        "$output_file"
+
+    if [ -f "$output_file" ]; then
+        new_size=$(du -h "$output_file" | awk '{print $1}')
+        echo "    -> Created '$output_file' (New size: $new_size)."
+
+        SetFile -d "$original_date" -m "$original_date" "$output_file"
+        echo "    -> Preserved original creation & modification date."
+
+    else
+        echo "    -> FAILED: Output file was not created."
+    fi
+}
+
+
+# --- Main script logic ---
+
+# Check if no arguments are provided.
+if [ -z "$1" ]; then
+    echo "Usage: $0 <input_file> [bitrate] [output_file]"
+    echo "       $0 --all [bitrate]"
+    exit 1
+fi
+
+# Check for the --all flag.
+if [ "$1" = "--all" ]; then
+    # Use the provided bitrate or fall back to the default.
+    bitrate="${2:-$DEFAULT_BITRATE}"
+    echo "--- Running in --all mode. Bitrate: $bitrate ---"
+    
+    # Use find to get the list of files to process. Now includes more archival formats.
+    find . -maxdepth 1 -type f \( -iname "*.mp4" -o -iname "*.mov" -o -iname "*.mkv" -o -iname "*.avi" -o -iname "*.mts" -o -iname "*.m2ts" -o -iname "*.ts" \) -not -iname "*x265*" -print0 | while read -d '' file
+    do
+        # Construct output file name for each file, preserving the original extension.
+        base_name="${file%.*}"
+        extension="${file##*.}"
+        output_file="${base_name}.x265.${extension}"
+        
+        # Check if the x265 version already exists.
+        if [ ! -e "$output_file" ]; then
+            process_file "$file" "$bitrate" "$output_file"
+            echo "-----------------------------------"
+        else
+            echo "Skipping '$file' because '$output_file' already exists."
+        fi
+    done
+    echo "--- All files processed. ---"
+
+else
+    # Single file mode.
+    input_file="$1"
+    # Use the provided bitrate or fall back to the default.
+    bitrate="${2:-$DEFAULT_BITRATE}"
+    # Construct a robust output filename, preserving the original extension.
+    base_name="${input_file%.*}"
+    extension="${input_file##*.}"
+    output_file="${3:-${base_name}.x265.${extension}}"
+    
+    echo "--- Running in single-file mode ---"
+    process_file "$input_file" "$bitrate" "$output_file"
+    echo "--- Compression complete. ---"
+fi

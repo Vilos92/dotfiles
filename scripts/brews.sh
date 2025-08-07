@@ -68,13 +68,16 @@ install_terminal_packages() {
   prompt_and_install "neofetch" 'brew install neofetch'
 }
 
-# Simple file sharing.
-install_copyparty() {
+# Hosting.
+install_host_packages() {
+  # install cloudflared to allow exposing the copyparty instance.
+  prompt_and_install "cloudflared" 'brew install cloudflared'
+
   # install copy party so it's available to use directly via calling 'copyparty'.
   prompt_and_install "copyparty" 'pip3 install --user copyparty'
 
-  # install cloudflared to allow exposing the copyparty instance.
-  prompt_and_install "cloudflared" 'brew install cloudflared'
+  # install plex media server to stream my content to my devices.
+  prompt_and_install "plex-server" 'brew install --cask plex-media-server'
 }
 
 # Developer environment.
@@ -190,6 +193,13 @@ install_transmission() {
   prompt_and_install "transmission" 'brew install --cask transmission'
 }
 
+# Chat
+install_chats() {
+  prompt_and_install "whatsapp" 'brew install --cask whatsapp'
+  prompt_and_install "slack" 'brew install --cask slack'
+  prompt_and_install "discord" 'brew install --cask discord'
+}
+
 handle_arguments() {
   case $1 in
     "dotfile-pkgs" )
@@ -207,8 +217,8 @@ handle_arguments() {
     "terminal-pkgs" )
       install_terminal_packages
       ;;
-    "copyparty" )
-      install_copyparty
+    "host" )
+      install_host_packages
       ;;
     "dev-pkgs" )
       install_dev_packages
@@ -264,6 +274,9 @@ handle_arguments() {
     "transmission" )
       install_transmission
       ;;
+    "chats" )
+      install_chats
+      ;;
     * )
       echo "Invalid argument: $1"
       exit 1
@@ -277,7 +290,7 @@ install_everything() {
   install_tiles
   install_smooth_scroll
   install_terminal_packages
-  install_copyparty
+  install_host_packages
   install_dev_packages
   install_gh
   install_docker_packages
@@ -296,6 +309,7 @@ install_everything() {
   install_gifox
   install_there
   install_transmission
+  install_chats
 }
 
 if [ "$#" -eq 0 ]; then
