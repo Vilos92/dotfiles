@@ -200,6 +200,11 @@ install_chats() {
   prompt_and_install "discord" 'brew install --cask discord'
 }
 
+# Install llama.cpp
+install_llama_cpp() {
+  prompt_and_install "llama.cpp" 'brew install llama.cpp'
+}
+
 handle_arguments() {
   case $1 in
     "dotfile-pkgs" )
@@ -277,6 +282,9 @@ handle_arguments() {
     "chats" )
       install_chats
       ;;
+    "llama-cpp" )
+      install_llama_cpp
+      ;;
     * )
       echo "Invalid argument: $1"
       exit 1
@@ -310,6 +318,7 @@ install_everything() {
   install_there
   install_transmission
   install_chats
+  install_llama_cpp
 }
 
 if [ "$#" -eq 0 ]; then
