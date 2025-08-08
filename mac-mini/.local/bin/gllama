@@ -22,18 +22,12 @@ fi
 
 selected_model_path="$LLM_MODELS/$selected_model_name"
 
-# Build the command using a shell array for safety and clarity.
-# This avoids issues with spaces in file paths.
-COMMAND=("llama" "-m" "$selected_model_path" "-c" "2048" "--color")
-
 if [ "$RUN_SERVER" = true ]; then
-  COMMAND+=("--server" "--host" "0.0.0.0")
   echo "Starting web server for: $selected_model_name"
+  COMMAND=("llama-server" "-m" "$selected_model_path" "--host" "0.0.0.0")
 else
-  COMMAND+=("--interactive-first")
   echo "Starting interactive client for: $selected_model_name"
+  COMMAND=("llama-cli" "-m" "$selected_model_path" "--color" "--interactive-first")
 fi
 
-# Execute the command by expanding the array.
 "${COMMAND[@]}"
-
