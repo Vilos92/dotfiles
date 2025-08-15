@@ -1,2 +1,5 @@
 # alacritty theme set by alacritty-theme
 alacritty/.config/alacritty/theme.toml
+
+# copyparty configuration
+docker/copyparty/copyparty.conf
