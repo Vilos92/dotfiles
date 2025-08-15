@@ -18,30 +18,26 @@ if [ ! -d "/Users/greg.linscheid/Desktop/Mac Vault" ]; then
     exit 1
 fi
 
-if [ ! -d "$HOME/.cloudflared" ]; then
-    echo "Error: ~/.cloudflared directory does not exist"
-    echo "Please make sure cloudflared is configured on your system"
-    exit 1
-fi
-
-# Get the directory where this script is located
+# Get the directory where this script is located.
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$SCRIPT_DIR")"
 DOCKER_DIR="$PROJECT_ROOT/docker/copyparty"
 
 echo "Stopping and removing existing container..."
 
-# Stop and remove existing container if it exists
-docker stop gcopyparty 2>/dev/null || true
-docker rm gcopyparty 2>/dev/null || true
+docker stop copyparty-tunnel 2>/dev/null || true
+docker rm copyparty-tunnel 2>/dev/null || true
 
-# Build the image
-echo "Building new gcopyparty Docker image..."
-docker build -t gcopyparty:latest "$DOCKER_DIR"
+echo "Pulling the latest copyparty-tunnel image from Docker Hub..."
+docker pull greglinscheid/copyparty-tunnel:latest
 
-# Run the container
+if [ $? -ne 0 ]; then
+    echo "Error: Failed to pull the greglinscheid/copyparty-tunnel image. Please check your internet connection or Docker configuration."
+    exit 1
+fi
+
 docker run -d \
-  --name gcopyparty \
+  --name copyparty-tunnel \
   -p 3923:3923 \
   -u 1000 \
   -v "$DOCKER_DIR/copyparty.conf:/app/copyparty.conf:ro" \
@@ -49,9 +45,9 @@ docker run -d \
   -v "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault" \
   -e COPYPARTY_CLOUDFLARED_TOKEN="$COPYPARTY_CLOUDFLARED_TOKEN" \
   --restart unless-stopped \
-  gcopyparty:latest
+  greglinscheid/copyparty-tunnel:latest
 
-echo "Container started! Check logs with: docker logs -f gcopyparty"
+echo "Container started! Check logs with: docker logs -f copyparty-tunnel"
 
 echo "Copyparty available at http://localhost:8080"
 echo "Cloudflare tunnel will available at https://copyparty.greglinscheid.com"
