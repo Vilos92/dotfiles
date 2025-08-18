@@ -1,0 +1,35 @@
+#!/bin/sh
+
+# --- Check if a URL (first argument) is provided ---
+if [ "$#" -lt 1 ]; then
+    echo "Error: You must provide a video URL." >&2
+    echo "Usage: $0 <video_url> [--audio]" >&2
+    exit 1
+fi
+
+# The URL is always the first argument
+URL="$1"
+DOWNLOAD_AUDIO=false
+
+# Shift the arguments so we can iterate through the rest
+shift
+
+# --- Check for the optional --audio flag in remaining arguments ---
+while [ "$#" -gt 0 ]; do
+    if [ "$1" = "--audio" ]; then
+        DOWNLOAD_AUDIO=true
+        break
+    fi
+    shift
+done
+
+# --- Run yt-dlp based on the flags ---
+if [ "$DOWNLOAD_AUDIO" = true ]; then
+    # Download the highest quality audio and convert it to MP3
+    echo "Downloading audio from $URL..."
+    yt-dlp -x --audio-format mp3 --audio-quality 0 --output "%(title)s.%(ext)s" "$URL"
+else
+    # Download the highest quality video
+    echo "Downloading video from $URL..."
+    yt-dlp -f "bv*+ba/b" --merge-output-format mp4 --output "%(title)s.%(ext)s" "$URL"
+fi

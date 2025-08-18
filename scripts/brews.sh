@@ -194,6 +194,11 @@ install_transmission() {
   prompt_and_install "transmission" 'brew install --cask transmission'
 }
 
+# yt-dlp.
+install_yt_dlp() {
+  prompt_and_install "yt-dlp" 'brew install yt-dlp'
+}
+
 # Chat
 install_chats() {
   prompt_and_install "whatsapp" 'brew install --cask whatsapp'
@@ -281,6 +286,9 @@ handle_arguments() {
     "transmission" )
       install_transmission
       ;;
+    "yt-dlp" )
+      install_yt_dlp
+      ;;
     "chats" )
       install_chats
       ;;
@@ -319,6 +327,7 @@ install_everything() {
   install_gifox
   install_there
   install_transmission
+  install_yt_dlp
   install_chats
   install_ai_packages
 }
