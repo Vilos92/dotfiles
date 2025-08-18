@@ -1,38 +1,61 @@
 #!/bin/sh
 
+# Check if a URL (first argument) is provided.
 if [ "$#" -lt 1 ]; then
     echo "Error: You must provide a video URL." >&2
-    echo "Usage: $0 <video_url> [--audio] [--index]" >&2
+    echo "Usage: $0 <video_url> [--audio] [--index] [--output <filename>]" >&2
     exit 1
 fi
 
+# Process arguments.
 URL="$1"
 DOWNLOAD_AUDIO=false
 ADD_PLAYLIST_INDEX=false
+MANUAL_OUTPUT_NAME=""
 
-# Shift the arguments to iterate through the rest.
 shift
 
 while [ "$#" -gt 0 ]; do
-    if [ "$1" = "--audio" ]; then
-        DOWNLOAD_AUDIO=true
-    elif [ "$1" = "--index" ]; then
-        ADD_PLAYLIST_INDEX=true
-    fi
+    case "$1" in
+        --audio)
+            DOWNLOAD_AUDIO=true
+            ;;
+        --index)
+            ADD_PLAYLIST_INDEX=true
+            ;;
+        --output)
+            if [ -z "$2" ]; then
+                echo "Error: --output requires a filename argument." >&2
+                exit 1
+            fi
+            MANUAL_OUTPUT_NAME="$2"
+            shift # Consume the filename argument
+            ;;
+        *)
+            # Stop parsing flags if an unrecognized argument is found
+            break
+            ;;
+    esac
     shift
 done
 
-OUTPUT_TEMPLATE="%(title)s.%(ext)s"
-if [ "$ADD_PLAYLIST_INDEX" = true ]; then
-    OUTPUT_TEMPLATE="%(playlist_index)s - $OUTPUT_TEMPLATE"
-fi
-
-if [ "$DOWNLOAD_AUDIO" = true ]; then
-    # Download the highest quality audio and convert it to MP3.
-    echo "Downloading audio from $URL..."
-    yt-dlp -x --audio-format mp3 --audio-quality 0 --output "$OUTPUT_TEMPLATE" "$URL"
+# Run yt-dlp based on the flags.
+if [ -n "$MANUAL_OUTPUT_NAME" ]; then
+    if [ "$DOWNLOAD_AUDIO" = true ]; then
+        yt-dlp -x --audio-format mp3 --audio-quality 0 --restrict-filenames --output "$MANUAL_OUTPUT_NAME" "$URL"
+    else
+        yt-dlp -f "bv*+ba/b" --remux-video mp4 --restrict-filenames --output "$MANUAL_OUTPUT_NAME" "$URL"
+    fi
 else
-    # Download the highest quality video with forced merge to MP4.
-    echo "Downloading video from $URL..."
-    yt-dlp -f "bv*+ba/b" --merge-output-format mp4 --remux-video mp4 --output "$OUTPUT_TEMPLATE" "$URL"
+    # Construct the output template.
+    OUTPUT_TEMPLATE="%(title)s.%(ext)s"
+    if [ "$ADD_PLAYLIST_INDEX" = true ]; then
+        OUTPUT_TEMPLATE="%(playlist_index)s - $OUTPUT_TEMPLATE"
+    fi
+
+    if [ "$DOWNLOAD_AUDIO" = true ]; then
+        yt-dlp -x --audio-format mp3 --audio-quality 0 --restrict-filenames --output "$OUTPUT_TEMPLATE" "$URL"
+    else
+        yt-dlp -f "bv*+ba/b" --remux-video mp4 --restrict-filenames --output "$OUTPUT_TEMPLATE" "$URL"
+    fi
 fi
