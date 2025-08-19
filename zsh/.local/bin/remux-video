@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# --- Simple Remux Script ---
+#
+# Usage:
+#   ./remux.sh <input_file>
+#
+# This script copies the video and audio streams of a file into a new
+# container, without re-encoding. It's useful for fixing corrupt files
+# and is very fast.
+#
+# The output file will be named: <original_filename>.remux.<extension>
+
+# Check if an input file is provided
+if [ -z "$1" ]; then
+    echo "Usage: $0 <input_file>"
+    exit 1
+fi
+
+input_file="$1"
+
+# Check if the input file exists
+if [ ! -f "$input_file" ]; then
+    echo "Error: Input file '$input_file' not found."
+    exit 1
+fi
+
+# Extract filename and extension
+base_name="${input_file%.*}"
+extension="${input_file##*.}"
+
+# Construct the output filename
+output_file="${base_name}.remux.${extension}"
+
+# Check if the output file already exists to prevent overwriting
+if [ -f "$output_file" ]; then
+    echo "Error: Output file '$output_file' already exists. Aborting to prevent overwrite."
+    exit 1
+fi
+
+echo "Remuxing '$input_file' to '$output_file'..."
+
+# Run FFmpeg to copy all streams
+ffmpeg -i "$input_file" -c copy "$output_file"
+
+# Check the exit status of FFmpeg
+if [ $? -eq 0 ]; then
+    echo "Remuxing complete. File saved as '$output_file'."
+else
+    echo "Remuxing failed. Please check the FFmpeg output for errors."
+fi
+
+exit 0
