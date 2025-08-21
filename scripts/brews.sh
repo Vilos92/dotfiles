@@ -36,6 +36,11 @@ install_dotfile_packages() {
   prompt_and_install "stow" 'brew install stow'
 }
 
+# Better Display for scalable displays.
+install_better_display() {
+  prompt_and_install "better-display" 'brew install --cask betterdisplay'
+}
+
 # Alt tab window manager.
 install_alt_tab() {
   prompt_and_install "alt-tab" 'brew install --cask alt-tab'
@@ -217,6 +222,9 @@ handle_arguments() {
     "dotfile-pkgs" )
       install_dotfile_packages
       ;;
+    "better-display" )
+      install_better_display
+      ;;
     "alt-tab" )
       install_alt_tab
       ;;
@@ -304,6 +312,7 @@ handle_arguments() {
 
 install_everything() {
   install_dotfile_packages
+  install_better_display
   install_alt_tab
   install_tiles
   install_smooth_scroll
