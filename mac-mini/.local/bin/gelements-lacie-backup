@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# ==============================================================================
+#
+#                            !!! IMPORTANT !!!
+#
+# This script performs a ONE-WAY MIRROR backup.
+#
+# The LaCie drives ("Lacie" and "LaCie Small") are the DESTINATION. They are
+# intended to be an exact copy of the source files.
+#
+# Data flows FROM:
+#   - /Volumes/Elements/
+#   - ~/Desktop/Mac Vault/
+#
+# Data flows TO:
+#   - /Volumes/Lacie/
+#   - /Volumes/LaCie Small/
+#
+# Because this script uses the --delete flag, any file that exists on the
+# LaCie drives but NOT on the source drives will be PERMANENTLY DELETED
+# from the LaCie drives during the sync.
+#
+# DO NOT STORE UNIQUE FILES IN THE LACIE DRIVE VAULTS.
+#
+# The only exception to this is the `Cold Local Vault`. These are permanently archived
+# files that no longer add utility (they have been scrapped for parts).
+#
+# ==============================================================================
+
+# --- 🛡️ Safety Check & Global Options ---
+# This script is in DRY-RUN mode by default.
+# Pass the --execute flag as the first argument to make real changes.
+RSYNC_OPTS="-av --progress --delete" # Base options
+if [ "$1" == "--execute" ]; then
+    echo "✅ --execute flag detected. Live backup mode engaged."
+else
+    echo "🛡️ SAFE MODE: Running in simulation (dry-run) mode."
+    RSYNC_OPTS="$RSYNC_OPTS --dry-run"
+fi
+echo "===================================================="
+
+
+# --- Stage 1: Local Vault Backup (Elements -> LaCie) ---
+echo "▶️  Starting Stage 1: Local Vault Backup"
+# --- Configuration for Stage 1 ---
+LV_SOURCE_DRIVE="/Volumes/Elements/Local Vault/media"
+LV_DEST_DRIVE="/Volumes/Lacie/Local Vault/media"
+LV_DIRS_TO_SYNC=( "concerts" "audio_books" "music" "podcasts" )
+LV_SHOWS_TO_SYNC=( "HarmonQuest" "The Vietnam War 2017" "Samurai Jack" "Documentary Now!" )
+
+# --- Logic for Stage 1 ---
+for dir in "${LV_DIRS_TO_SYNC[@]}"; do
+    SOURCE_PATH="$LV_SOURCE_DRIVE/$dir/"
+    DEST_PATH="$LV_DEST_DRIVE/$dir/"
+    if [ -d "$SOURCE_PATH" ]; then
+        echo "🔄 Syncing: $dir"
+        rsync $RSYNC_OPTS "$SOURCE_PATH" "$DEST_PATH"
+    else
+        echo "⚠️  Skipping, not found: $SOURCE_PATH"
+    fi
+done
+for show in "${LV_SHOWS_TO_SYNC[@]}"; do
+    SOURCE_PATH="$LV_SOURCE_DRIVE/shows/$show/"
+    DEST_PATH="$LV_DEST_DRIVE/shows/$show/"
+    if [ -d "$SOURCE_PATH" ]; then
+        echo "🔄 Syncing show: $show"
+        rsync $RSYNC_OPTS "$SOURCE_PATH" "$DEST_PATH"
+    else
+        echo "⚠️  Skipping, not found: $SOURCE_PATH"
+    fi
+done
+echo "----------------------------------------------------"
+
+
+# --- Stage 2: Cloud Vault Backup (Elements -> LaCie Small) ---
+echo "▶️  Starting Stage 2: Cloud Vault Backup"
+# --- Configuration for Stage 2 ---
+CV_SOURCE_DRIVE="/Volumes/Elements/Cloud Vault"
+CV_DEST_DRIVE="/Volumes/LaCie Small/Cloud Vault"
+CV_DIRS_TO_SYNC=( "GoPro" "video renders" )
+
+# --- Logic for Stage 2 ---
+for dir in "${CV_DIRS_TO_SYNC[@]}"; do
+    SOURCE_PATH="$CV_SOURCE_DRIVE/$dir/"
+    DEST_PATH="$CV_DEST_DRIVE/$dir/"
+    if [ -d "$SOURCE_PATH" ]; then
+        echo "🔄 Syncing: $dir"
+        rsync $RSYNC_OPTS "$SOURCE_PATH" "$DEST_PATH"
+    else
+        echo "⚠️  Skipping, not found: $SOURCE_PATH"
+    fi
+done
+echo "----------------------------------------------------"
+
+
+# --- Stage 3: Mac Vault Backup (Desktop -> LaCie Small) ---
+echo "▶️  Starting Stage 3: Mac Music Production Backup"
+# --- Configuration for Stage 3 ---
+MV_SOURCE_PATH="$HOME/Desktop/Mac Vault/Music Production/"
+MV_DEST_PATH="/Volumes/LaCie Small/Mac Vault/Music Production/"
+
+# --- Logic for Stage 3 ---
+if [ -d "$MV_SOURCE_PATH" ]; then
+    echo "🔄 Syncing: Music Production"
+    rsync $RSYNC_OPTS "$MV_SOURCE_PATH" "$MV_DEST_PATH"
+else
+    echo "⚠️  Skipping, not found: $MV_SOURCE_PATH"
+fi
+echo "----------------------------------------------------"
+
+echo "✅ All backup stages finished."
