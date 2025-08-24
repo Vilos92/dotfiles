@@ -217,6 +217,16 @@ install_ai_packages() {
   prompt_and_install "draw-things" 'brew install --cask draw-things'
 }
 
+# Install Kiwix for offline Wikipedia access.
+install_kiwix() {
+  prompt_and_install "kiwix" 'brew install --cask kiwix'
+}
+
+# Install gaming packages.
+install_gaming_packages() {
+  prompt_and_install "openemu" 'brew install --cask openemu'
+}
+
 handle_arguments() {
   case $1 in
     "dotfile-pkgs" )
@@ -303,6 +313,12 @@ handle_arguments() {
     "ai-pkgs" )
       install_ai_packages
       ;;
+    "kiwix" )
+      install_kiwix
+      ;;
+    "gaming-pkgs" )
+      install_gaming_packages
+      ;;
     * )
       echo "Invalid argument: $1"
       exit 1
@@ -339,6 +355,8 @@ install_everything() {
   install_yt_dlp
   install_chats
   install_ai_packages
+  install_kiwix
+  install_gaming_packages
 }
 
 if [ "$#" -eq 0 ]; then
