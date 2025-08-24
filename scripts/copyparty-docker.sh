@@ -29,10 +29,10 @@ docker stop copyparty-tunnel 2>/dev/null || true
 docker rm copyparty-tunnel 2>/dev/null || true
 
 echo "Pulling the latest copyparty-tunnel image from Docker Hub..."
-docker pull greglinscheid/copyparty-tunnel:latest
+docker pull ghcr.io/vilos92/copyparty-tunnel:latest
 
 if [ $? -ne 0 ]; then
-    echo "Error: Failed to pull the greglinscheid/copyparty-tunnel image. Please check your internet connection or Docker configuration."
+    echo "Error: Failed to pull the ghcr.io/vilos92/copyparty-tunnel image. Please check your internet connection or Docker configuration."
     exit 1
 fi
 
@@ -45,7 +45,7 @@ docker run -d \
   -v "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault" \
   -e COPYPARTY_CLOUDFLARED_TOKEN="$COPYPARTY_CLOUDFLARED_TOKEN" \
   --restart unless-stopped \
-  greglinscheid/copyparty-tunnel:latest
+  ghcr.io/vilos92/copyparty-tunnel:latest
 
 echo "Container started! Check logs with: docker logs -f copyparty-tunnel"
 
