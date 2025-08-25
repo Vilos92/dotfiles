@@ -4,30 +4,30 @@ LLM_MODELS="$HOME/Desktop/Mac Vault/llm_models"
 
 RUN_SERVER=false
 if [ "$1" = "--server" ]; then
-  RUN_SERVER=true
+    RUN_SERVER=true
 fi
 
 if [ ! -d "$LLM_MODELS" ]; then
-  echo "Error: Model directory not found at '$LLM_MODELS'"
-  echo "Please edit this script and set the LLM_MODELS variable."
-  exit 1
+    echo "Error: Model directory not found at '$LLM_MODELS'"
+    echo "Please edit this script and set the LLM_MODELS variable."
+    exit 1
 fi
 
 selected_model_name=$(find "$LLM_MODELS" -type f -name "*.gguf" -exec basename {} \; | fzf --prompt="Select a model > ")
 
 if [ -z "$selected_model_name" ]; then
-  echo "No model selected. Exiting."
-  exit 0
+    echo "No model selected. Exiting."
+    exit 0
 fi
 
 selected_model_path="$LLM_MODELS/$selected_model_name"
 
 if [ "$RUN_SERVER" = true ]; then
-  echo "Starting web server for: $selected_model_name"
-  COMMAND=("llama-server" "-m" "$selected_model_path" "--host" "0.0.0.0")
+    echo "Starting web server for: $selected_model_name"
+    COMMAND=("llama-server" "-m" "$selected_model_path" "--host" "0.0.0.0" "--port" "11434")
 else
-  echo "Starting interactive client for: $selected_model_name"
-  COMMAND=("llama-cli" "-m" "$selected_model_path" "--color" "--interactive-first")
+    echo "Starting interactive client for: $selected_model_name"
+    COMMAND=("llama-cli" "-m" "$selected_model_path" "--color" "--interactive-first")
 fi
 
 "${COMMAND[@]}"

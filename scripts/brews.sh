@@ -168,10 +168,11 @@ install_gimp() {
   prompt_and_install "gimp" 'brew install --cask gimp'
 }
 
-# IDE packages.
-install_ide_packages() {
+# Coding packages.
+install_coding_packages() {
   prompt_and_install "visual studio code" 'brew install --cask visual-studio-code'
   prompt_and_install "cursor" 'brew install --cask cursor'
+  prompt_and_install "cursor-cli" 'brew install --cask cursor-cli'
 }
 
 # Text editor.
@@ -286,8 +287,8 @@ handle_arguments() {
     "gimp" )
       install_gimp
       ;;
-    "ide-pkgs" )
-      install_ide_packages
+    "coding-pkgs" )
+      install_coding_packages
       ;;
     "coteditor" )
       install_coteditor
@@ -346,7 +347,7 @@ install_everything() {
   install_audio_engineering_packages
   install_keka
   install_gimp
-  install_ide_packages
+  install_coding_packages
   install_coteditor
   install_dbeaver
   install_gifox

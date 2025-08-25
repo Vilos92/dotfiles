@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 if [ -z "$COPYPARTY_CLOUDFLARED_TOKEN" ]; then
     echo "Error: COPYPARTY_CLOUDFLARED_TOKEN environment variable is not set"
