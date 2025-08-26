@@ -51,9 +51,10 @@ install_tiles() {
   prompt_and_install "tiles" 'brew install --cask tiles'
 }
 
-# Smooth scrolling.
-install_smooth_scroll() {
+# Mouse packages.
+install_mouse_packages() {
   prompt_and_install "mos" 'brew install mos'
+  prompt_and_install "sensible-side-buttons" 'brew install --cask sensiblesidebuttons'
 }
 
 # Terminal environment.
@@ -242,8 +243,8 @@ handle_arguments() {
     "tiles" )
       install_tiles
       ;;
-    "smooth-scroll" )
-      install_smooth_scroll
+    "mouse-pkgs" )
+      install_mouse_packages
       ;;
     "terminal-pkgs" )
       install_terminal_packages
@@ -332,7 +333,7 @@ install_everything() {
   install_better_display
   install_alt_tab
   install_tiles
-  install_smooth_scroll
+  install_mouse_packages
   install_terminal_packages
   install_host_packages
   install_dev_packages
