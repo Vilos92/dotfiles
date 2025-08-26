@@ -28,7 +28,7 @@ echo "Stopping and removing existing container..."
 docker stop copyparty-tunnel 2>/dev/null || true
 docker rm copyparty-tunnel 2>/dev/null || true
 
-echo "Pulling the latest copyparty-tunnel image from Docker Hub..."
+echo "Pulling the latest copyparty-tunnel image from GitHub Container Registry..."
 docker pull ghcr.io/vilos92/copyparty-tunnel:latest
 
 if [ $? -ne 0 ]; then
