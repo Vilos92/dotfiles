@@ -1,0 +1,60 @@
+services:
+  nginx:
+    image: nginx:alpine
+    container_name: nginx
+    ports:
+      - "9847:80"
+    volumes:
+      - "./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "./docker/nginx/auth:/etc/nginx/auth:ro"
+    restart: unless-stopped
+    depends_on:
+      - copyparty
+      - freshrss
+      - kiwix-server
+
+  copyparty:
+    image: copyparty/ac:latest
+    container_name: copyparty
+    ports:
+      - "3923:3923"
+    user: "1000"
+    volumes:
+      - "./docker/copyparty/copyparty.conf:/app/copyparty.conf:ro"
+      - "/Volumes/Elements:/Volumes/Elements"
+      - "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault"
+    restart: unless-stopped
+    command: ["--rproxy", "-1", "-c", "/app/copyparty.conf"]
+
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflare-tunnel
+    restart: unless-stopped
+    network_mode: host
+    command: tunnel --no-autoupdate run --token ${COPYPARTY_CLOUDFLARED_TOKEN}
+
+  freshrss:
+    image: freshrss/freshrss:latest
+    container_name: freshrss
+    ports:
+      - "49153:80"
+    environment:
+      - TZ=America/Los_Angeles
+      - CRON_MIN=1,31
+    volumes:
+      - "/Users/greg.linscheid/Desktop/Mac Vault/Greg News/freshrss-data:/var/www/FreshRSS/data"
+      - "/Users/greg.linscheid/Desktop/Mac Vault/Greg News/freshrss-extensions:/var/www/FreshRSS/extensions"
+    restart: unless-stopped
+    logging:
+      options:
+        max-size: "10m"
+
+  kiwix-server:
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    container_name: kiwix-server
+    ports:
+      - "8473:8080"
+    volumes:
+      - "/Volumes/Elements/Local Vault/media/zim:/data"
+    restart: unless-stopped
+    command: '**/*.zim'

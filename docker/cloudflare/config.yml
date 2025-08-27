@@ -1,0 +1,10 @@
+tunnel: 98ddb9c3-6baf-4778-8c33-6679640c59ef
+
+ingress:
+  - hostname: copyparty.greglinscheid.com
+    service: http://nginx:80
+  - hostname: news.greglinscheid.com
+    service: http://nginx:80
+  - hostname: kiwix.greglinscheid.com
+    service: http://nginx:80
+  - service: http_status:404
