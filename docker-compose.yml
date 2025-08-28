@@ -11,7 +11,9 @@ services:
     depends_on:
       - copyparty
       - freshrss
-      - kiwix-server
+      - kiwix
+    networks:
+      - greg-zone
 
   copyparty:
     image: copyparty/ac:latest
@@ -25,13 +27,18 @@ services:
       - "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault"
     restart: unless-stopped
     command: ["--rproxy", "-1", "-c", "/app/copyparty.conf"]
+    networks:
+      - greg-zone
 
   cloudflare-tunnel:
     image: cloudflare/cloudflared:latest
     container_name: cloudflare-tunnel
     restart: unless-stopped
-    network_mode: host
+    depends_on:
+      - nginx
     command: tunnel --no-autoupdate run --token ${COPYPARTY_CLOUDFLARED_TOKEN}
+    networks:
+      - greg-zone
 
   freshrss:
     image: freshrss/freshrss:latest
@@ -48,13 +55,21 @@ services:
     logging:
       options:
         max-size: "10m"
+    networks:
+      - greg-zone
 
-  kiwix-server:
+  kiwix:
     image: ghcr.io/kiwix/kiwix-serve:latest
-    container_name: kiwix-server
+    container_name: kiwix
     ports:
       - "8473:8080"
     volumes:
       - "/Volumes/Elements/Local Vault/media/zim:/data"
     restart: unless-stopped
     command: '**/*.zim'
+    networks:
+      - greg-zone
+
+networks:
+  greg-zone:
+    driver: bridge
