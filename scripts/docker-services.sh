@@ -195,7 +195,9 @@ show_service_urls() {
     echo "  • Copyparty: http://localhost:8080 (via port 3923)"
     echo "  • Copyparty (public): https://copyparty.greglinscheid.com"
     echo "  • FreshRSS: http://localhost:49153"
+    echo "  • FreshRSS (public): https://freshrss.greglinscheid.com"
     echo "  • Kiwix: http://localhost:8473"
+    echo "  • Kiwix (public): https://kiwix.greglinscheid.com"
     echo ""
 }
 

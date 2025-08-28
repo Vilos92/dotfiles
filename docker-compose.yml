@@ -1,4 +1,14 @@
 services:
+  cloudflare-tunnel:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflare-tunnel
+    restart: unless-stopped
+    depends_on:
+      - nginx
+    command: tunnel --no-autoupdate run --token ${COPYPARTY_CLOUDFLARED_TOKEN}
+    networks:
+      - greg-zone
+
   nginx:
     image: nginx:alpine
     container_name: nginx
@@ -30,13 +40,15 @@ services:
     networks:
       - greg-zone
 
-  cloudflare-tunnel:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflare-tunnel
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    container_name: kiwix
+    ports:
+      - "8473:8080"
+    volumes:
+      - "/Volumes/Elements/Local Vault/media/zim:/data"
     restart: unless-stopped
-    depends_on:
-      - nginx
-    command: tunnel --no-autoupdate run --token ${COPYPARTY_CLOUDFLARED_TOKEN}
+    command: '**/*.zim'
     networks:
       - greg-zone
 
@@ -55,18 +67,6 @@ services:
     logging:
       options:
         max-size: "10m"
-    networks:
-      - greg-zone
-
-  kiwix:
-    image: ghcr.io/kiwix/kiwix-serve:latest
-    container_name: kiwix
-    ports:
-      - "8473:8080"
-    volumes:
-      - "/Volumes/Elements/Local Vault/media/zim:/data"
-    restart: unless-stopped
-    command: '**/*.zim'
     networks:
       - greg-zone
 
