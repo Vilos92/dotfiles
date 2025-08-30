@@ -3,56 +3,48 @@
 project_paths_command="find \"$GREG_PROJECTS_PATH\""
 
 if [ -d "$FRONTAPP_DIR" ]; then
-    project_paths_command+=" \"$FRONTAPP_DIR\""
+    project_paths_command="$project_paths_command \"$FRONTAPP_DIR\""
 fi
 
 project_paths=$(eval "$project_paths_command -mindepth 1 -maxdepth 1 -type d")
 project_dirs=$(echo "$project_paths" | xargs -n 1 basename)
-# tmux does not allow `.` in session names. Replace with `_` for nvim projects.
 projects=$(echo "$project_dirs" | sed 's/\.nvim$/_nvim/')
 
-if [[ -n $1 ]]; then
-  if echo "$projects" | grep -qx "$1"; then
-    selected_project_path=$(echo "$project_paths" | grep "/$1$" | head -n 1)
-    attach-tmux-session $1 $selected_project_path
+if [ -n "$1" ]; then
+    if echo "$projects" | grep -qx "$1"; then
+        selected_project_path=$(echo "$project_paths" | grep "/$1$" | head -n 1)
+        attach-tmux-session "$1" "$selected_project_path"
+        exit 0
+    fi
+    attach-tmux-session "$1" "$2"
     exit 0
-  fi
-
-  attach-tmux-session $1 $2
-  exit 0
 fi
 
 sessions=$(tmux list-sessions 2>/dev/null | awk -F: '{ print $1 }')
 
-options=$(echo "$projects\n$sessions" | sort -u | sed '/^$/d')
+# FIXED: Use printf for newlines, which is more portable than echo "\n"
+options=$(printf "%s\n%s\n" "$projects" "$sessions" | sort -u | sed '/^$/d')
 
 current_session=$(tmux list-sessions -F "#{session_name}" -f "#{session_attached}" 2>/dev/null)
 
-select_options=$(echo "$options" | while read project; do
-  if [[ "$project" = "$current_session" ]]; then
-    echo "🟢 $project"
-  elif echo "$sessions" | grep -qx "$project"; then
-    echo "🔵 $project"
-  else
-    echo "🌑 $project"
-  fi
+select_options=$(echo "$options" | while read -r project; do
+    if [ "$project" = "$current_session" ]; then
+        echo "🟢 $project"
+    elif echo "$sessions" | grep -qx "$project"; then
+        echo "🔵 $project"
+    else
+        echo "🌑 $project"
+    fi
 done)
 
-selected_option=$(echo "$select_options" | sort -r |fzf --ansi --tmux 80%)
+selected_option=$(echo "$select_options" | sort -r | fzf --ansi --tmux 80%)
 
-if [[ -z $selected_option ]]; then
-  exit 0
+if [ -z "$selected_option" ]; then
+    exit 0
 fi
 
-selected_project=$(echo "$selected_option" | awk '{print $2}') 
-# Restore the `.` for any nvim projects.
+selected_project=$(echo "$selected_option" | awk '{print $2}')
 selected_project_dir=$(echo "$selected_project" | sed 's/_nvim$/.nvim/')
 selected_project_path=$(echo "$project_paths" | grep "/$selected_project_dir$" | head -n 1)
 
-if [[ -n $selected_project_path ]]; then
-  attach-tmux-session $selected_project $selected_project_path
-  exit 0
-fi
-
-attach-tmux-session $selected_project
-
+attach-tmux-session "$selected_project" "$selected_project_path"

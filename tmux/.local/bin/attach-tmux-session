@@ -6,38 +6,27 @@ shift 2
 command_to_run="$@"
 
 if [ -z "$session_name" ]; then
-  echo "Usage: attach-tmux-session <session-name> [directory] [command...]"
-  exit 1
+    echo "Usage: attach-tmux-session <session-name> [directory] [command...]"
+    exit 1
 fi
 
-tmux_args=("-s" "$session_name")
+set -- -s "$session_name"
 
 if [ -n "$directory" ]; then
-  tmux_args+=("-c" "$directory")
+    set -- "$@" -c "$directory"
 fi
 
-# The command will ONLY be executed by tmux if a new session is created.
 if [ -n "$command_to_run" ]; then
-  tmux_args+=("$command_to_run")
+    set -- "$@" "$command_to_run"
 fi
 
-# We are NOT inside a tmux session.
 if [ -z "$TMUX" ]; then
-  # The -A flag is the key. It does everything:
-  # - If session exists: Attaches to it and IGNORES the [command...].
-  # - If session does NOT exist: Creates it and RUNS the [command...].
-  tmux new-session -A "${tmux_args[@]}"
-  exit 0
+    tmux new-session -A "$@"
+    exit 0
 fi
 
-# We are inside a tmux session.
-# If the target session does not exist...
 if ! tmux has-session -t="$session_name" 2>/dev/null; then
-  # ...create it in the background (-d), passing the command.
-  tmux new-session -d "${tmux_args[@]}"
+    tmux new-session -d "$@"
 fi
 
-# The client either already existed or we just created it.
-# Either way, switch to it and do not run the command.
-tmux switch-client -t "$session_name"
-
+tmux switch-client -t="$session_name"
