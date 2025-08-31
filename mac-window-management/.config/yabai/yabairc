@@ -56,7 +56,6 @@ yabai -m rule --add app=".*" manage=off
 yabai -m rule --add app="^Alacritty$" manage=on
 
 # Browsers
-# Note: I've used 'Zen' as a guess for zen-browser. Use the command above to verify.
 yabai -m rule --add app="^Zen$" manage=on
 
 # Editors & IDEs
