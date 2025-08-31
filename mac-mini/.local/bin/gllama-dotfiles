@@ -1,0 +1,266 @@
+#!/bin/sh
+
+# gllama-dotfiles
+# Dynamic dotfiles AI assistant using llama.cpp
+# 
+# Usage: gllama-dotfiles <search_term> <question>
+# Example: gllama-dotfiles tmux 'How do I use it?'
+
+# =============================================================================
+# Configuration
+# =============================================================================
+
+DOTFILES_ROOT="/Users/greg.linscheid/greg_projects/dotfiles"
+LLM_MODELS="$HOME/Desktop/Mac Vault/llm_models"
+MODEL_NAME="Phi-3-mini-4k-instruct-q4.gguf"
+
+# =============================================================================
+# Utility functions
+# =============================================================================
+
+# Check if model exists
+check_model() {
+    if [ ! -f "$LLM_MODELS/$MODEL_NAME" ]; then
+        echo "❌ Model not found: $LLM_MODELS/$MODEL_NAME"
+        echo "Please download the Phi-3-mini model and place it in: $LLM_MODELS"
+        exit 1
+    fi
+}
+
+# Check if dotfiles directory exists
+check_dotfiles() {
+    if [ ! -d "$DOTFILES_ROOT" ]; then
+        echo "❌ Dotfiles directory not found: $DOTFILES_ROOT"
+        echo "Please update DOTFILES_ROOT in this script."
+        exit 1
+    fi
+}
+
+# Check if file should be included in search
+should_include_file() {
+    local file="$1"
+    local filename=$(basename "$file")
+    
+    # Exclude patterns
+    case "$file" in
+        */.git/*|*/__pycache__/*|*/node_modules/*|*/.DS_Store|*.pyc|*.log|*.tmp|*.swp|*.swo) 
+            return 1 
+            ;;
+    esac
+    
+    # Include patterns
+    case "$file" in
+        *.sh|*.zsh|*.bash|*.fish|*.config|*.conf|*.yml|*.yaml|*.json|*.toml|*.ini|*.md|*.txt|*.vim|*.lua|*.py|*.js|*.ts|*.css|*.html|*.xml) 
+            return 0 
+            ;;
+    esac
+    
+    # Include files in bin directories
+    case "$file" in
+        */bin/*) 
+            return 0 
+            ;;
+    esac
+    
+    # Include specific filenames
+    case "$filename" in
+        .gitignore|.gitmodules|gllama|gllama-dotfiles|gllama-dotfiles-debug|gelements-lacie-backup) 
+            return 0 
+            ;;
+        .*) 
+            return 0 
+            ;;
+        *) 
+            return 1 
+            ;;
+    esac
+}
+
+# =============================================================================
+# File discovery
+# =============================================================================
+
+# Find relevant files using fzf
+find_relevant_files() {
+    local query="$1"
+    local temp_list="/tmp/gllama_file_list.txt"
+    
+    # Create list of all relevant files
+    > "$temp_list"
+    find "$DOTFILES_ROOT" -type f > "/tmp/gllama_all_files.txt"
+    while IFS= read -r file; do
+        if should_include_file "$file"; then
+            local relative_path="${file#$DOTFILES_ROOT/}"
+            echo "$relative_path:$file" >> "$temp_list"
+        fi
+    done < "/tmp/gllama_all_files.txt"
+    rm "/tmp/gllama_all_files.txt"
+    
+    # Use fzf to filter the list and prioritize exact matches
+    if [ -f "$temp_list" ]; then
+        # First, try to find exact filename matches
+        local exact_matches=$(grep -E ":[^/]*$query[^/]*$" "$temp_list" | head -3)
+        
+        # Then get fzf results for fuzzy matching
+        local fuzzy_matches=$(fzf --filter "$query" --select-1 --exit-0 < "$temp_list" | head -5)
+        
+        # Combine exact matches first, then fuzzy matches (avoiding duplicates)
+        {
+            echo "$exact_matches"
+            echo "$fuzzy_matches" | while read -r line; do
+                if ! echo "$exact_matches" | grep -q "$line"; then
+                    echo "$line"
+                fi
+            done
+        } | head -8
+        
+        rm "$temp_list"
+    fi
+}
+
+# =============================================================================
+# Content extraction
+# =============================================================================
+
+# Extract content from relevant files
+extract_relevant_content() {
+    local query="$1"
+    local temp_context="/tmp/gllama_context.txt"
+    
+    # Create context file with system prompt
+    cat > "$temp_context" << 'EOF'
+You are a helpful assistant that knows about the user's dotfiles configuration. Answer the user's question based on the relevant dotfiles content provided below. Be specific and reference actual configuration when possible. Keep responses brief and to the point. IMPORTANT: Keep your response under 200 words and be very concise.
+
+Relevant dotfiles content:
+===============================================
+
+EOF
+    
+    # Find relevant files
+    local relevant_files=$(find_relevant_files "$query")
+    
+    if [ -z "$relevant_files" ]; then
+        echo "No relevant files found for: $query"
+        echo "Try a different search term or be more specific."
+        rm -f "$temp_context"
+        return 1
+    fi
+    
+    # Extract content from each relevant file with total size limit
+    local total_size=0
+    local max_total_size=15000  # 15KB total limit
+    
+    echo "$relevant_files" | while IFS=':' read -r relative_path full_path; do
+        if [ -f "$full_path" ]; then
+            # Extract content (limit to 3000 chars per file)
+            local content=$(cat "$full_path" 2>/dev/null | head -c 3000)
+            if [ -n "$content" ] && [ ${#content} -gt 10 ]; then
+                local file_size=${#content}
+                local new_total=$((total_size + file_size + 200))  # +200 for headers/metadata
+                
+                if [ $new_total -le $max_total_size ]; then
+                    {
+                        echo "=== FILE: $relative_path ==="
+                        echo "LOCATION: $full_path"
+                        echo "$content"
+                        echo ""
+                        echo "---"
+                        echo ""
+                    } >> "$temp_context"
+                    total_size=$new_total
+                else
+                    break
+                fi
+            fi
+        fi
+    done
+    
+    printf "%s" "$temp_context"
+}
+
+# =============================================================================
+# Main query function
+# =============================================================================
+
+# Query dotfiles with dynamic context
+query_dotfiles() {
+    local search_term="$1"
+    local question="$2"
+    
+    if [ -z "$search_term" ] || [ -z "$question" ]; then
+        echo "Usage: gllama-dotfiles <search_term> <question>"
+        echo "Example: gllama-dotfiles tmux 'How do I use it?'"
+        echo "Example: gllama-dotfiles git 'What aliases exist?'"
+        exit 1
+    fi
+    
+    # Validate environment
+    check_model
+    check_dotfiles
+    
+    # Extract relevant content
+    local context_file
+    context_file=$(extract_relevant_content "$search_term")
+    
+    if [ ! -f "$context_file" ]; then
+        echo "❌ Failed to create context file"
+        exit 1
+    fi
+    
+    # Append the question to the context file
+    echo "" >> "$context_file"
+    echo "User question: $question" >> "$context_file"
+    echo "" >> "$context_file"
+    echo "Assistant:" >> "$context_file"
+    
+    # Query the model
+    llama-cli -m "$LLM_MODELS/$MODEL_NAME" \
+        --color \
+        --ctx-size 4096 \
+        --repeat-penalty 1.1 \
+        --temp 0.7 \
+        -f "$context_file" \
+        --n-predict 200
+    
+    # Clean up
+    rm "$context_file"
+}
+
+# =============================================================================
+# Help and usage
+# =============================================================================
+
+# Show usage
+show_usage() {
+    echo "Usage: gllama-dotfiles <search_term> <question>"
+    echo ""
+    echo "Query your dotfiles using a local LLM model."
+    echo "The script will find files matching the search term and answer your question."
+    echo ""
+    echo "Examples:"
+    echo "  gllama-dotfiles tmux 'How do I set it up?'"
+    echo "  gllama-dotfiles git 'What aliases exist?'"
+    echo "  gllama-dotfiles zsh 'Show me my configuration'"
+    echo "  gllama-dotfiles gmux 'How do I use it?'"
+    echo ""
+    echo "Configuration:"
+    echo "  DOTFILES_ROOT: $DOTFILES_ROOT"
+    echo "  MODEL: $MODEL_NAME"
+}
+
+# =============================================================================
+# Main entry point
+# =============================================================================
+
+main() {
+    case "${1:-}" in
+        --help|-h|"")
+            show_usage
+            ;;
+        *)
+            query_dotfiles "$@"
+            ;;
+    esac
+}
+
+main "$@"
