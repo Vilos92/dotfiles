@@ -148,7 +148,7 @@ install_notion() {
 
 # Music.
 install_audio_packages() {
-  prompt_and_install "ffmpeg" 'brew install pillow ffmpeg'
+  prompt_and_install "pillow" 'brew install pillow'
   prompt_and_install "vlc" 'brew install --cask vlc'
   prompt_and_install "spotify" 'brew install --cask spotify'
 }
@@ -157,6 +157,12 @@ install_audio_packages() {
 install_audio_engineering_packages() {
   prompt_and_install "audacity" 'brew install --cask audacity'
   prompt_and_install "ableton" 'brew install --cask ableton-live-suite'
+}
+
+# Video engineering.
+install_video_engineering_packages() {
+  prompt_and_install "ffmpeg" 'brew install ffmpeg'
+  prompt_and_install "handbrake" 'brew install handbrake'
 }
 
 # Archive manager.
@@ -282,6 +288,9 @@ handle_arguments() {
     "audio-engineering-pkgs" )
       install_audio_engineering_packages
       ;;
+    "video-engineering-pkgs" )
+      install_video_engineering_packages
+      ;;
     "keka" )
       install_keka
       ;;
@@ -346,6 +355,7 @@ install_everything() {
   install_notion
   install_audio_packages
   install_audio_engineering_packages
+  install_video_engineering_packages
   install_keka
   install_gimp
   install_coding_packages
