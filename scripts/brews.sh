@@ -124,6 +124,14 @@ install_lua_packages() {
     stylua'
 }
 
+# Python development tools.
+install_python_dev_packages() {
+  prompt_and_install "pipx" 'brew install pipx'
+  prompt_and_install "black" 'pipx install black'
+  prompt_and_install "ruff" 'pipx install ruff'
+  prompt_and_install "mypy" 'pipx install mypy'
+}
+
 # JavaScript/Node.js developement.
 install_javascript_packages() {
   prompt_and_install "JavaScript packages" 'brew install fnm\
@@ -229,6 +237,10 @@ install_ai_packages() {
   prompt_and_install "draw-things" 'brew install --cask draw-things'
 }
 
+
+
+
+
 # Install Kiwix for offline Wikipedia access.
 install_kiwix() {
   prompt_and_install "kiwix" 'brew install --cask kiwix'
@@ -328,6 +340,10 @@ handle_arguments() {
     "ai-pkgs" )
       install_ai_packages
       ;;
+
+    "python-dev-pkgs" )
+      install_python_dev_packages
+      ;;
     "kiwix" )
       install_kiwix
       ;;
@@ -365,6 +381,8 @@ handle_arguments() {
       echo "  yt-dlp           - yt-dlp video downloader"
       echo "  chats            - chat applications"
       echo "  ai-pkgs          - AI and machine learning tools"
+
+      echo "  python-dev-pkgs  - Python development tools (black, ruff, mypy)"
       echo "  kiwix            - Kiwix offline Wikipedia"
       echo "  gaming-pkgs      - gaming tools"
       exit 1
@@ -401,6 +419,8 @@ install_everything() {
   install_yt_dlp
   install_chats
   install_ai_packages
+
+  install_python_dev_packages
   install_kiwix
   install_gaming_packages
 }
