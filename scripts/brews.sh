@@ -41,6 +41,11 @@ install_better_display() {
   prompt_and_install "better-display" 'brew install --cask betterdisplay'
 }
 
+# yabai for window management.
+install_yabai() {
+  prompt_and_install "yabai" 'brew install koekeishiya/formulae/yabai'
+}
+
 # Alt tab window manager.
 install_alt_tab() {
   prompt_and_install "alt-tab" 'brew install --cask alt-tab'
@@ -243,6 +248,9 @@ handle_arguments() {
     "better-display" )
       install_better_display
       ;;
+    "yabai" )
+      install_yabai
+      ;;
     "alt-tab" )
       install_alt_tab
       ;;
@@ -371,6 +379,7 @@ handle_arguments() {
 install_everything() {
   install_dotfile_packages
   install_better_display
+  install_yabai
   install_alt_tab
   install_tiles
   install_mouse_packages

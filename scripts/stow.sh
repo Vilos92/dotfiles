@@ -41,6 +41,9 @@ prompt_and_stow git
 # Dot files related to connecting to remote servers.
 prompt_and_stow remote
 
+# yabai for window management.
+prompt_and_stow yabai
+
 # Mac Mini specific dotfiles.
 prompt_and_stow mac-mini
 
