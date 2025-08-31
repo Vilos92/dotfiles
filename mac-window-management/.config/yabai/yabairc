@@ -57,6 +57,7 @@ yabai -m rule --add app="^Alacritty$" manage=on
 
 # Browsers
 yabai -m rule --add app="^Zen$" manage=on
+yabai -m rule --add app="^Arc$" manage=on
 
 # Editors & IDEs
 yabai -m rule --add app="^Cursor$" manage=on
