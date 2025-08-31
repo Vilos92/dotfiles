@@ -1,0 +1,68 @@
+#!/usr/bin/env sh
+
+#--------------------------------------------------
+# General Settings
+#--------------------------------------------------
+
+# Set how focus is handled. 'on' means focus follows the mouse pointer.
+yabai -m config mouse_follows_focus on
+
+# Set the layout and window placement strategy.
+yabai -m config layout bsp
+yabai -m config window_placement second_child
+
+#--------------------------------------------------
+# Gaps & Padding
+#--------------------------------------------------
+
+# Set padding for the entire display space.
+yabai -m config top_padding     5
+yabai -m config bottom_padding  5
+yabai -m config left_padding    5
+yabai -m config right_padding   5
+
+# Set the gap between individual windows.
+yabai -m config window_gap      5
+
+#--------------------------------------------------
+# Window Border Settings
+#--------------------------------------------------
+
+# Enable and configure window borders.
+yabai -m config window_border on
+yabai -m config window_border_width 2
+yabai -m config active_window_border_color 0xff545454
+yabai -m config normal_window_border_color 0xff333333
+
+#--------------------------------------------------
+# Window Management Rules
+#
+# The logic here is to first set a default rule for ALL apps to be unmanaged (floating).
+# Then, we add specific rules for the apps we want yabai to tile automatically.
+# The '^' and '$' in the app name regex ensure an exact match.
+#
+# To find the correct app name for a rule, focus the app and run this command:
+# yabai -m query --windows --window | jq -r '.app'
+#
+#--------------------------------------------------
+
+# By default, all applications will NOT be tiled by yabai.
+yabai -m rule --add app=".*" manage=off
+
+# --- APPS TO BE TILED ---
+# Add rules for specific applications to be managed (tiled) by yabai.
+
+# Terminals
+yabai -m rule --add app="^Alacritty$" manage=on
+
+# Browsers
+# Note: I've used 'Zen' as a guess for zen-browser. Use the command above to verify.
+yabai -m rule --add app="^Zen$" manage=on
+
+# Editors & IDEs
+yabai -m rule --add app="^Cursor$" manage=on
+# VS Code's app name is typically just 'Code'.
+yabai -m rule --add app="^Code$" manage=on
+
+# Productivity
+yabai -m rule --add app="^Notion$" manage=on

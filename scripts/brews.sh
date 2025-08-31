@@ -41,19 +41,17 @@ install_better_display() {
   prompt_and_install "better-display" 'brew install --cask betterdisplay'
 }
 
-# yabai for window management.
-install_yabai() {
+# Window management packages (yabai, skhd, alt-tab).
+install_window_management_packages() {
   prompt_and_install "yabai" 'brew install koekeishiya/formulae/yabai'
-}
-
-# Alt tab window manager.
-install_alt_tab() {
+  prompt_and_install "skhd" 'brew install koekeishiya/formulae/skhd'
   prompt_and_install "alt-tab" 'brew install --cask alt-tab'
 }
 
-# Tiles snapping window manager.
+# DEPRECATED: Tiles snapping window manager (use yabai instead).
 install_tiles() {
-  prompt_and_install "tiles" 'brew install --cask tiles'
+  echo "WARNING: tiles is deprecated. Consider using yabai for window management instead."
+  prompt_and_install "tiles (deprecated)" 'brew install --cask tiles'
 }
 
 # Mouse packages.
@@ -248,11 +246,8 @@ handle_arguments() {
     "better-display" )
       install_better_display
       ;;
-    "yabai" )
-      install_yabai
-      ;;
-    "alt-tab" )
-      install_alt_tab
+    "window-mgmt-pkgs" )
+      install_window_management_packages
       ;;
     "tiles" )
       install_tiles
@@ -343,8 +338,8 @@ handle_arguments() {
       echo "Available options:"
       echo "  dotfile-pkgs     - stow for dotfile management"
       echo "  better-display   - BetterDisplay for scalable displays"
-      echo "  alt-tab          - Alt-Tab window manager"
-      echo "  tiles            - Tiles window snapping"
+      echo "  window-mgmt-pkgs - Window management tools (yabai, skhd, alt-tab)"
+      echo "  tiles            - Tiles window snapping (DEPRECATED)"
       echo "  mouse-pkgs       - mouse management tools"
       echo "  terminal-pkgs    - terminal emulator and shell tools"
       echo "  host             - hosting and server tools"
@@ -379,9 +374,7 @@ handle_arguments() {
 install_everything() {
   install_dotfile_packages
   install_better_display
-  install_yabai
-  install_alt_tab
-  install_tiles
+  install_window_management_packages
   install_mouse_packages
   install_terminal_packages
   install_host_packages

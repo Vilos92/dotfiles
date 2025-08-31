@@ -1,0 +1,108 @@
+#================================================================================
+# skhd Configuration File
+#
+# This file defines keyboard shortcuts for controlling yabai window manager.
+#
+# Syntax:
+# modifier + key : command
+#
+# Modifiers:
+# alt, cmd, ctrl, shift
+#
+# To start/restart skhd:
+# skhd --start-service
+# skhd --restart-service
+#================================================================================
+
+#--------------------------------------------------
+# Application Launching
+#--------------------------------------------------
+
+# Launch your terminal (Alacritty)
+alt - return : open -a Alacritty
+
+
+#--------------------------------------------------
+# Window Management
+#--------------------------------------------------
+
+# Toggle the tiling/floating state of the focused window (new, better hotkey!)
+# Also toggles the border to give a clear visual cue of the window's state.
+shift + alt - space : yabai -m window --toggle float; \
+                      yabai -m window --toggle border
+
+# --- Focus & Movement ---
+
+# Focus windows using vim keys
+alt - h : yabai -m window --focus west
+alt - j : yabai -m window --focus south
+alt - k : yabai -m window --focus north
+alt - l : yabai -m window --focus east
+
+# Swap/move windows using vim keys
+alt + shift - h : yabai -m window --swap west
+alt + shift - j : yabai -m window --swap south
+alt + shift - k : yabai -m window --swap north
+alt + shift - l : yabai -m window --swap east
+
+# --- Resizing Windows ---
+
+alt + ctrl - h : yabai -m window --resize left:-50:0
+alt + ctrl - j : yabai -m window --resize bottom:0:50
+alt + ctrl - k : yabai -m window --resize top:0:-50
+alt + ctrl - l : yabai -m window --resize right:50:0
+
+# --- Fullscreen Toggles ---
+
+# Toggle yabai's "zoom" fullscreen
+alt - f : yabai -m window --toggle zoom-fullscreen
+
+# Toggle native macOS fullscreen
+alt + shift - f : yabai -m window --toggle native-fullscreen
+
+
+#--------------------------------------------------
+# Space & Layout Management
+#--------------------------------------------------
+#
+# NOTE: Moving and focusing spaces requires partially disabling System Integrity
+# Protection (SIP) to install the yabai scripting-addition. These hotkeys
+# are commented out to prevent errors. If you disable SIP in the future,
+# you can safely uncomment them.
+#
+
+# --- Moving Windows to Spaces ---
+# This focuses the space after you send a window to it.
+
+# alt + shift - 1 : yabai -m window --space 1; yabai -m space --focus 1
+# alt + shift - 2 : yabai -m window --space 2; yabai -m space --focus 2
+# alt + shift - 3 : yabai -m window --space 3; yabai -m space --focus 3
+# alt + shift - 4 : yabai -m window --space 4; yabai -m space --focus 4
+# alt + shift - 5 : yabai -m window --space 5; yabai -m space --focus 5
+
+# --- Focusing Spaces ---
+
+# alt - 1 : yabai -m space --focus 1
+# alt - 2 : yabai -m space --focus 2
+# alt - 3 : yabai -m space --focus 3
+# alt - 4 : yabai -m space --focus 4
+# alt - 5 : yabai -m space --focus 5
+
+# --- Layout Manipulation ---
+
+# Balance the size of all windows in the current space
+alt + ctrl - e : yabai -m space --balance
+
+# Rotate the layout of windows
+alt - r : yabai -m space --rotate 270
+
+# Toggle gaps between windows
+alt + ctrl - g : yabai -m space --toggle gap
+
+
+#--------------------------------------------------
+# Services
+#--------------------------------------------------
+
+# Restart yabai and skhd services
+cmd + alt - r : yabai --restart-service && skhd --restart-service
