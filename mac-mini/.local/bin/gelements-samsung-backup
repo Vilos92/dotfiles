@@ -17,7 +17,7 @@
 #   - /Volumes/Elements/Upload Vault/
 #
 # Data flows TO:
-#   - /Volumes/T7/Elements Backup/
+#   - /Volumes/T7/Backups/
 #
 # Because this script uses the --delete flag, any file that exists on the
 # Samsung T7 drive but NOT on the source Elements drive will be PERMANENTLY
@@ -62,7 +62,7 @@ echo "===================================================="
 echo "▶️  Starting Stage 1: Local Vault Backup"
 # --- Configuration for Stage 1 ---
 LV_SOURCE_DRIVE="/Volumes/Elements/Local Vault"
-LV_DEST_DRIVE="/Volumes/T7/Elements Backup/Local Vault"
+LV_DEST_DRIVE="/Volumes/T7/Backups/Local Vault"
 LV_DIRS_TO_SYNC=( "ableton packs" "media" )
 
 # --- Logic for Stage 1 ---
@@ -83,7 +83,7 @@ echo "----------------------------------------------------"
 echo "▶️  Starting Stage 2: Cloud Vault Backup"
 # --- Configuration for Stage 2 ---
 CV_SOURCE_DRIVE="/Volumes/Elements/Cloud Vault"
-CV_DEST_DRIVE="/Volumes/T7/Elements Backup/Cloud Vault"
+CV_DEST_DRIVE="/Volumes/T7/Backups/Cloud Vault"
 CV_DIRS_TO_SYNC=( "GoPro" "media" "video renders" )
 
 # --- Logic for Stage 2 ---
@@ -104,7 +104,7 @@ echo "----------------------------------------------------"
 echo "▶️  Starting Stage 3: Cold Local Vault Backup"
 # --- Configuration for Stage 3 ---
 CLV_SOURCE_DRIVE="/Volumes/Elements/Cold Local Vault"
-CLV_DEST_DRIVE="/Volumes/T7/Elements Backup/Cold Local Vault"
+CLV_DEST_DRIVE="/Volumes/T7/Backups/Cold Local Vault"
 
 # --- Logic for Stage 3 ---
 if [ -d "$CLV_SOURCE_DRIVE" ]; then
@@ -120,7 +120,7 @@ echo "----------------------------------------------------"
 echo "▶️  Starting Stage 4: Public Vault Backup"
 # --- Configuration for Stage 4 ---
 PV_SOURCE_DRIVE="/Volumes/Elements/Public Vault"
-PV_DEST_DRIVE="/Volumes/T7/Elements Backup/Public Vault"
+PV_DEST_DRIVE="/Volumes/T7/Backups/Public Vault"
 
 # --- Logic for Stage 4 ---
 if [ -d "$PV_SOURCE_DRIVE" ]; then
@@ -136,7 +136,7 @@ echo "----------------------------------------------------"
 echo "▶️  Starting Stage 5: Upload Vault Backup"
 # --- Configuration for Stage 5 ---
 UV_SOURCE_DRIVE="/Volumes/Elements/Upload Vault"
-UV_DEST_DRIVE="/Volumes/T7/Elements Backup/Upload Vault"
+UV_DEST_DRIVE="/Volumes/T7/Backups/Upload Vault"
 
 # --- Logic for Stage 5 ---
 if [ -d "$UV_SOURCE_DRIVE" ]; then
@@ -145,6 +145,27 @@ if [ -d "$UV_SOURCE_DRIVE" ]; then
 else
     echo "⚠️  Skipping, not found: $UV_SOURCE_DRIVE"
 fi
+echo "----------------------------------------------------"
+
+
+# --- Stage 6: Mac Vault Backup (Desktop -> T7) ---
+echo "▶️  Starting Stage 6: Mac Vault Backup"
+# --- Configuration for Stage 6 ---
+MV_SOURCE_BASE="$HOME/Desktop/Mac Vault"
+MV_DEST_BASE="/Volumes/T7/Backups/Mac Vault"
+MV_DIRS_TO_SYNC=( "Music Production" "llm_models" "Greg News" )
+
+# --- Logic for Stage 6 ---
+for dir in "${MV_DIRS_TO_SYNC[@]}"; do
+    SOURCE_PATH="$MV_SOURCE_BASE/$dir/"
+    DEST_PATH="$MV_DEST_BASE/$dir/"
+    if [ -d "$SOURCE_PATH" ]; then
+        echo "🔄 Syncing: $dir"
+        rsync $RSYNC_OPTS "$SOURCE_PATH" "$DEST_PATH"
+    else
+        echo "⚠️  Skipping, not found: $SOURCE_PATH"
+    fi
+done
 echo "----------------------------------------------------"
 
 echo "✅ All backup stages finished."

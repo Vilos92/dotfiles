@@ -95,18 +95,23 @@ echo "----------------------------------------------------"
 
 
 # --- Stage 3: Mac Vault Backup (Desktop -> LaCie Small) ---
-echo "▶️  Starting Stage 3: Mac Music Production Backup"
+echo "▶️  Starting Stage 3: Mac Vault Backup"
 # --- Configuration for Stage 3 ---
-MV_SOURCE_PATH="$HOME/Desktop/Mac Vault/Music Production/"
-MV_DEST_PATH="/Volumes/LaCie Small/Mac Vault/Music Production/"
+MV_SOURCE_BASE="$HOME/Desktop/Mac Vault"
+MV_DEST_BASE="/Volumes/LaCie Small/Mac Vault"
+MV_DIRS_TO_SYNC=( "Music Production" "llm_models" "Greg News" )
 
 # --- Logic for Stage 3 ---
-if [ -d "$MV_SOURCE_PATH" ]; then
-    echo "🔄 Syncing: Music Production"
-    rsync $RSYNC_OPTS "$MV_SOURCE_PATH" "$MV_DEST_PATH"
-else
-    echo "⚠️  Skipping, not found: $MV_SOURCE_PATH"
-fi
+for dir in "${MV_DIRS_TO_SYNC[@]}"; do
+    SOURCE_PATH="$MV_SOURCE_BASE/$dir/"
+    DEST_PATH="$MV_DEST_BASE/$dir/"
+    if [ -d "$SOURCE_PATH" ]; then
+        echo "🔄 Syncing: $dir"
+        rsync $RSYNC_OPTS "$SOURCE_PATH" "$DEST_PATH"
+    else
+        echo "⚠️  Skipping, not found: $SOURCE_PATH"
+    fi
+done
 echo "----------------------------------------------------"
 
 echo "✅ All backup stages finished."
