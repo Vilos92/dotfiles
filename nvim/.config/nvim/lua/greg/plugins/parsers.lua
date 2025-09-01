@@ -1,15 +1,4 @@
 return {
-  -- Markdown editing
-  {
-    "OXY2DEV/markview.nvim",
-    lazy = false, -- Recommended
-    -- ft = "markdown" -- If you decide to lazy-load anyway
-
-    dependencies = {
-      "nvim-tree/nvim-web-devicons",
-    },
-  },
-
   -- Tree sitter
   {
     "nvim-treesitter/nvim-treesitter",
@@ -46,10 +35,25 @@ return {
       "OXY2DEV/markview.nvim",
     },
     lazy = false,
+    -- Ensure this loads before `markview.nvim`.
+    priority = 50,
   },
 
   -- Tree sitter playground
   { "nvim-treesitter/playground" },
+
+  -- Markdown editing
+  {
+    "OXY2DEV/markview.nvim",
+    lazy = false, -- Recommended
+    -- Ensure this loads after `nvim-treesitter`.
+    priority = 49,
+    -- ft = "markdown" -- If you decide to lazy-load anyway
+
+    dependencies = {
+      "nvim-tree/nvim-web-devicons",
+    },
+  },
 
   -- lsp-zero
   {
