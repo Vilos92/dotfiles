@@ -26,7 +26,7 @@ This repository uses GNU Stow for dotfile management. Run `scripts/stow.sh` to i
 Each stowable directory can include a `.local/bin/` directory that gets symlinked to `~/.local/bin/` via stow:
 
 **Available Commands:**
-- **mac-mini:** `gelements-lacie-backup`, `gllama`
+- **mac-mini:** `gelements-lacie-backup`, `gelements-samsung-backup`, `gllama`
 - **alacritty:** `alacritty-theme`, `alacritty-theme-select`
 - **tmux:** `attach-tmux-session`, `gmux`
 - **zsh:** `compress-video-hevc`, `download-media`, `fuzzy-find`, `fuzzy-ripgrep`, `remux-video`

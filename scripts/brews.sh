@@ -249,6 +249,7 @@ install_kiwix() {
 # Install gaming packages.
 install_gaming_packages() {
   prompt_and_install "openemu" 'brew install --cask openemu'
+  prompt_and_install "mame" 'brew install mame'
 }
 
 handle_arguments() {
