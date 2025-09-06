@@ -1,0 +1,310 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+	<key>bundleid</key>
+	<string>me.kalus.tailscale</string>
+	<key>category</key>
+	<string>Internet</string>
+	<key>connections</key>
+	<dict>
+		<key>34E9E759-A25B-49D3-B123-17B5BB37D9F2</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>8519BAA1-C489-453D-9C3A-5F29AD9F0386</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+			<dict>
+				<key>destinationuid</key>
+				<string>A44270EC-60A5-4A96-8FFC-FC250FDF1CC1</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>8519BAA1-C489-453D-9C3A-5F29AD9F0386</key>
+		<array>
+			<dict>
+				<key>destinationuid</key>
+				<string>5B179D3C-7A32-400B-8732-12B2BEF28117</string>
+				<key>modifiers</key>
+				<integer>0</integer>
+				<key>modifiersubtext</key>
+				<string></string>
+				<key>vitoclose</key>
+				<false/>
+			</dict>
+		</array>
+		<key>A44270EC-60A5-4A96-8FFC-FC250FDF1CC1</key>
+		<array/>
+	</dict>
+	<key>createdby</key>
+	<string>Michael Kalus</string>
+	<key>description</key>
+	<string>Control taislcale and copy the ip adress of selected devices</string>
+	<key>disabled</key>
+	<false/>
+	<key>name</key>
+	<string>Tailscale</string>
+	<key>objects</key>
+	<array>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>lastpathcomponent</key>
+				<false/>
+				<key>onlyshowifquerypopulated</key>
+				<false/>
+				<key>removeextension</key>
+				<false/>
+				<key>text</key>
+				<string></string>
+				<key>title</key>
+				<string>Action performed</string>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.notification</string>
+			<key>uid</key>
+			<string>5B179D3C-7A32-400B-8732-12B2BEF28117</string>
+			<key>version</key>
+			<integer>1</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>alfredfiltersresults</key>
+				<true/>
+				<key>alfredfiltersresultsmatchmode</key>
+				<integer>0</integer>
+				<key>argumenttreatemptyqueryasnil</key>
+				<true/>
+				<key>argumenttrimmode</key>
+				<integer>0</integer>
+				<key>argumenttype</key>
+				<integer>2</integer>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>keyword</key>
+				<string>tailscale</string>
+				<key>queuedelaycustom</key>
+				<integer>3</integer>
+				<key>queuedelayimmediatelyinitially</key>
+				<true/>
+				<key>queuedelaymode</key>
+				<integer>0</integer>
+				<key>queuemode</key>
+				<integer>1</integer>
+				<key>runningsubtext</key>
+				<string></string>
+				<key>script</key>
+				<string>#!/bin/bash
+
+# Capture the Tailscale status output
+status=$(/Applications/Tailscale.app/Contents/MacOS/Tailscale status 2&gt;&amp;1)
+
+# Function to escape JSON special characters
+escape_json() {
+    echo "$1" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read()))'
+}
+
+icon_path="icon.png" # Change this to the correct path if needed
+
+# Function to generate device list items
+generate_device_list_items() {
+    devices_output=$(echo "$status" | tail -n +2)  # Skip the first line of the output
+    device_items=""
+
+    while IFS= read -r line; do
+        ip_address=$(echo "$line" | awk '{print $1}')
+        device_name=$(echo "$line" | awk '{print $2}')
+        # Construct JSON item for each device
+        device_items+=$(cat &lt;&lt;-EOF
+            {
+                "title": "$device_name",
+                "subtitle": "$ip_address",
+                "arg": "$ip_address",
+                "icon": {"path": "device.png"}
+            },
+EOF
+        )
+    done &lt;&lt;&lt; "$devices_output"
+
+    # Remove trailing comma from the last item
+    device_items=$(echo "$device_items" | sed '$ s/,$//')
+    echo "$device_items"
+}
+
+# Check if Tailscale is disconnected
+if [[ "$status" == *"Tailscale is stopped"* ]]; then
+    echo '{
+        "items": [
+            {
+                "title": "Tailscale disconnected ❌",
+                "subtitle": "Tailscale is not running.",
+                "arg": "disconnected",
+                "icon": {"path": "disconnected.svg"}
+            },
+            {
+                "title": "Connect Tailscale",
+                "subtitle": "Run Tailscale up command.",
+                "arg": "connect",
+                "icon": {"path": "tailscale-up.svg"}
+            }
+        ]
+    }'
+    exit 0
+fi
+
+# If Tailscale is connected, escape the status output for JSON
+escaped_status=$(escape_json "$status")
+
+# Check if Tailscale is connected
+if [[ "$status" != *"Tailscale is stopped"* ]]; then
+    # Generate list of device entries
+    device_list_items=$(generate_device_list_items)
+
+    echo '{
+        "items": [
+            {
+                "title": "Tailscale connected ✅",
+                "subtitle": "Tailscale is up and running.",
+                "arg": "connected",
+                "icon": {"path": "connected.svg"}
+            },
+            {
+                "title": "Disconnect Tailscale",
+                "subtitle": "Run Tailscale down command.",
+                "arg": "disconnect",
+                "icon": {"path": "tailscale-down.svg"}
+            }
+
+        
+        ]
+    }' | python3 -c '
+import sys, json
+data = json.load(sys.stdin)
+device_items = json.loads(f"[{sys.argv[1]}]" if sys.argv[1] else "[]")
+data["items"].extend(device_items)
+print(json.dumps(data, ensure_ascii=False))
+' "$device_list_items"
+    exit 0
+fi</string>
+				<key>scriptargtype</key>
+				<integer>0</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>subtext</key>
+				<string></string>
+				<key>title</key>
+				<string>Tailscale Manager</string>
+				<key>type</key>
+				<integer>0</integer>
+				<key>withspace</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.input.scriptfilter</string>
+			<key>uid</key>
+			<string>34E9E759-A25B-49D3-B123-17B5BB37D9F2</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>concurrently</key>
+				<false/>
+				<key>escaping</key>
+				<integer>102</integer>
+				<key>script</key>
+				<string>if [ "$1" = "connect" ]; then
+    /Applications/Tailscale.app/Contents/MacOS/Tailscale up
+elif [ "$1" = "disconnect" ]; then
+    /Applications/Tailscale.app/Contents/MacOS/Tailscale down
+fi</string>
+				<key>scriptargtype</key>
+				<integer>1</integer>
+				<key>scriptfile</key>
+				<string></string>
+				<key>type</key>
+				<integer>11</integer>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.action.script</string>
+			<key>uid</key>
+			<string>8519BAA1-C489-453D-9C3A-5F29AD9F0386</string>
+			<key>version</key>
+			<integer>2</integer>
+		</dict>
+		<dict>
+			<key>config</key>
+			<dict>
+				<key>autopaste</key>
+				<false/>
+				<key>clipboardtext</key>
+				<string>{query}</string>
+				<key>ignoredynamicplaceholders</key>
+				<false/>
+				<key>transient</key>
+				<false/>
+			</dict>
+			<key>type</key>
+			<string>alfred.workflow.output.clipboard</string>
+			<key>uid</key>
+			<string>A44270EC-60A5-4A96-8FFC-FC250FDF1CC1</string>
+			<key>version</key>
+			<integer>3</integer>
+		</dict>
+	</array>
+	<key>readme</key>
+	<string></string>
+	<key>uidata</key>
+	<dict>
+		<key>34E9E759-A25B-49D3-B123-17B5BB37D9F2</key>
+		<dict>
+			<key>xpos</key>
+			<real>215</real>
+			<key>ypos</key>
+			<real>270</real>
+		</dict>
+		<key>5B179D3C-7A32-400B-8732-12B2BEF28117</key>
+		<dict>
+			<key>xpos</key>
+			<real>645</real>
+			<key>ypos</key>
+			<real>270</real>
+		</dict>
+		<key>8519BAA1-C489-453D-9C3A-5F29AD9F0386</key>
+		<dict>
+			<key>xpos</key>
+			<real>465</real>
+			<key>ypos</key>
+			<real>270</real>
+		</dict>
+		<key>A44270EC-60A5-4A96-8FFC-FC250FDF1CC1</key>
+		<dict>
+			<key>xpos</key>
+			<real>465</real>
+			<key>ypos</key>
+			<real>425</real>
+		</dict>
+	</dict>
+	<key>userconfigurationconfig</key>
+	<array/>
+	<key>variablesdontexport</key>
+	<array/>
+	<key>version</key>
+	<string>1.0.0</string>
+	<key>webaddress</key>
+	<string>kalus.me</string>
+</dict>
+</plist>
