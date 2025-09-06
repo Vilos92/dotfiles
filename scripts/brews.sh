@@ -153,6 +153,11 @@ install_browserosaurus() {
   prompt_and_install "browserosaurus" 'brew install --cask browserosaurus'
 }
 
+# Alfred.
+install_alfred() {
+  prompt_and_install "alfred" 'brew install --cask alfred'
+}
+
 # Notes.
 install_notion() {
   prompt_and_install "notion" 'brew install --cask notion'
@@ -237,10 +242,6 @@ install_ai_packages() {
   prompt_and_install "draw-things" 'brew install --cask draw-things'
 }
 
-
-
-
-
 # Install Kiwix for offline Wikipedia access.
 install_kiwix() {
   prompt_and_install "kiwix" 'brew install --cask kiwix'
@@ -295,6 +296,9 @@ handle_arguments() {
       ;;
     "browserosaurus" )
       install_browserosaurus
+      ;;
+    "alfred" )
+      install_alfred
       ;;
     "notion" )
       install_notion
@@ -368,6 +372,7 @@ handle_arguments() {
       echo "  javascript-pkgs  - Node.js and JavaScript tools"
       echo "  gleam            - Gleam programming language"
       echo "  browserosaurus   - Browserosaurus browser picker"
+      echo "  alfred           - Alfred productivity launcher"
       echo "  notion           - Notion note-taking app"
       echo "  audio-pkgs       - audio and video utilities"
       echo "  audio-engineering-pkgs - audio engineering tools"
