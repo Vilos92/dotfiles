@@ -41,8 +41,8 @@ prompt_and_stow git
 # Dot files related to connecting to remote servers.
 prompt_and_stow remote
 
-# Mac window management configurations.
-prompt_and_stow mac-window-management
+# Mac productivity configurations.
+prompt_and_stow mac-productivity
 
 # Mac Mini specific dotfiles.
 prompt_and_stow mac-mini
