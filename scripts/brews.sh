@@ -148,8 +148,10 @@ install_gleam() {
   prompt_and_install "gleam" 'brew install gleam'
 }
 
-# Browserosaurus.
-install_browserosaurus() {
+# Browsers.
+install_browsers() {
+  prompt_and_install "zen browser" 'brew install --cask zen'
+  prompt_and_install "firefox" 'brew install --cask firefox'
   prompt_and_install "browserosaurus" 'brew install --cask browserosaurus'
 }
 
@@ -294,8 +296,8 @@ handle_arguments() {
     "gleam" )
       install_gleam
       ;;
-    "browserosaurus" )
-      install_browserosaurus
+    "browsers" )
+      install_browsers
       ;;
     "alfred" )
       install_alfred
@@ -371,7 +373,7 @@ handle_arguments() {
       echo "  lua-pkgs         - Lua development tools"
       echo "  javascript-pkgs  - Node.js and JavaScript tools"
       echo "  gleam            - Gleam programming language"
-      echo "  browserosaurus   - Browserosaurus browser picker"
+      echo "  browsers         - Zen, Firefox, and Browserosaurus browsers"
       echo "  alfred           - Alfred productivity launcher"
       echo "  notion           - Notion note-taking app"
       echo "  audio-pkgs       - audio and video utilities"
@@ -409,7 +411,7 @@ install_everything() {
   install_lua_packages
   install_javascript_packages
   install_gleam
-  install_browserosaurus
+  install_browsers
   install_notion
   install_audio_packages
   install_audio_engineering_packages
