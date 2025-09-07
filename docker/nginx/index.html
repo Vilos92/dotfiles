@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GregZone</title>
-    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>">
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🏯</text></svg>">
     <style>
         @import url("https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap");
         
@@ -189,6 +189,342 @@
             background: #553c9a;
         }
         
+        .system-stats-compact {
+            margin: 30px 0;
+            padding: 20px;
+            background: rgba(139, 92, 246, 0.1);
+            border-radius: 15px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+        }
+        
+        .stats-header {
+            text-align: center;
+            margin-bottom: 15px;
+        }
+        
+        .stats-header-link {
+            color: #8b5cf6;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 16px;
+            transition: color 0.1s ease;
+        }
+        
+        .stats-header-link:hover {
+            color: #7c3aed;
+            text-decoration: underline;
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+            gap: 15px;
+            margin: 20px 0;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.8);
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            transition: transform 0.2s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-2px);
+            border-color: rgba(139, 92, 246, 0.5);
+        }
+        
+        .stat-label {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 5px;
+            font-weight: 700;
+        }
+        
+        .stat-value {
+            font-size: 18px;
+            font-weight: 700;
+            color: #8b5cf6;
+        }
+        
+        .stats-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .grafana-link {
+            color: #8b5cf6;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 14px;
+            transition: color 0.2s ease;
+        }
+        
+        .grafana-link:hover {
+            color: #7c3aed;
+            text-decoration: underline;
+        }
+        
+        /* Clickable stat item */
+        .stat-item-clickable {
+            cursor: pointer;
+            transition: all 0.1s ease;
+            position: relative;
+        }
+        
+        .stat-item-clickable:hover {
+            background: rgba(139, 92, 246, 0.15);
+            transform: translateY(-1px);
+        }
+        
+        .dropdown-arrow {
+            font-size: 10px;
+            margin-left: 5px;
+            transition: transform 0.1s ease;
+        }
+        
+        .stat-item-clickable.expanded .dropdown-arrow {
+            transform: rotate(180deg);
+        }
+        
+        /* Container list dropdown */
+        .container-list {
+            margin-top: 10px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            border: 2px solid rgba(139, 92, 246, 0.3);
+            overflow: hidden;
+            animation: slideDown 0.15s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                max-height: 0;
+            }
+            to {
+                opacity: 1;
+                max-height: 300px;
+            }
+        }
+        
+        .container-list-header {
+            background: rgba(139, 92, 246, 0.1);
+            padding: 10px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.2);
+        }
+        
+        .container-list-title-section {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .container-metrics-link {
+            color: #8b5cf6;
+            text-decoration: none;
+            font-weight: 700;
+            font-size: 12px;
+            transition: color 0.1s ease;
+            padding: 4px 8px;
+            border-radius: 4px;
+            background: rgba(139, 92, 246, 0.1);
+        }
+        
+        .container-metrics-link:hover {
+            color: #7c3aed;
+            background: rgba(139, 92, 246, 0.2);
+        }
+        
+        .container-list-title {
+            font-weight: 700;
+            color: #8b5cf6;
+            font-size: 14px;
+        }
+        
+        .container-list-count {
+            background: #8b5cf6;
+            color: white;
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 12px;
+            font-weight: 700;
+        }
+        
+        .container-items {
+            max-height: 200px;
+            overflow-y: auto;
+        }
+        
+        .container-item {
+            padding: 8px 15px;
+            border-bottom: 1px solid rgba(139, 92, 246, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: background 0.1s ease;
+        }
+        
+        .container-item:hover {
+            background: rgba(139, 92, 246, 0.05);
+        }
+        
+        .container-item:last-child {
+            border-bottom: none;
+        }
+        
+        .container-name {
+            font-weight: 700;
+            color: #8b5cf6;
+            font-size: 13px;
+        }
+        
+        .container-status {
+            font-size: 11px;
+            color: #666;
+            background: rgba(34, 197, 94, 0.1);
+            color: #16a34a;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-weight: 700;
+        }
+        
+        .container-item-loading {
+            padding: 15px;
+            text-align: center;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* Header compact styling */
+        .header-compact {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+        
+        .castle {
+            font-size: 64px;
+            margin: 10px 0;
+            line-height: 1;
+        }
+        
+        .header-compact h1 {
+            font-size: 24px;
+            margin: 10px 0;
+        }
+        
+        .marquee {
+            font-size: 12px;
+            margin: 5px 0;
+        }
+        
+        /* Services compact styling */
+        .services-compact h2 {
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+            text-align: center;
+        }
+        
+        .services-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .service-card {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #8b5cf6;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            transition: all 0.1s ease;
+        }
+        
+        .service-card:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateX(5px);
+        }
+        
+        .service-icon {
+            font-size: 16px;
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .service-name {
+            font-weight: 700;
+            flex: 1;
+        }
+        
+        .service-desc {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+        }
+        
+        /* External links styling */
+        .external-links h2 {
+            font-size: 18px;
+            margin: 20px 0 10px 0;
+            text-align: center;
+        }
+        
+        .external-grid {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        
+        .external-card {
+            display: flex;
+            align-items: center;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.8);
+            border-radius: 8px;
+            text-decoration: none;
+            color: #8b5cf6;
+            border: 2px solid rgba(139, 92, 246, 0.2);
+            transition: all 0.1s ease;
+        }
+        
+        .external-card:hover {
+            background: rgba(139, 92, 246, 0.1);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateX(5px);
+        }
+        
+        .external-icon {
+            font-size: 16px;
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+        
+        .external-name {
+            font-weight: 700;
+            flex: 1;
+        }
+        
+        .external-desc {
+            font-size: 12px;
+            color: #666;
+            font-style: italic;
+        }
+        
         .footer {
             text-align: center;
             margin-top: 30px;
@@ -205,62 +541,312 @@
 </head>
 <body>
     <div class="container">
-        <h1>🚀 <span class="greg">Greg</span><span class="zone">Zone</span> 🚀</h1>
-        <div style="text-align: center; margin: 10px 0;">
-            <span style="font-size: 48px;">🏯</span>
+        <!-- Header -->
+        <div class="header-compact">
+            <div class="castle">🏯</div>
+            <h1>🚀 <span class="greg">Greg</span><span class="zone">Zone</span> 🚀</h1>
+            <div class="marquee">
+                <marquee behavior="scroll" direction="left" scrollamount="6">
+                    🎉 Get in the GregZone - Sponsored by Milo! 🐈
+                </marquee>
+            </div>
         </div>
         
-        <div class="marquee">
-            <marquee behavior="scroll" direction="left" scrollamount="6">
-                🎉 Get in the GregZone - Sponsored by Milo! 🐈
-            </marquee>
+        <!-- Compact System Stats at Top -->
+        <div class="system-stats-compact">
+            <div class="stats-header">
+                <a href="//greg-zone:9006/d/gregzone-system/gregzone-system-overview?orgId=1&from=now-1h&to=now&timezone=browser&var-instance=$__all" class="stats-header-link" target="_blank">
+                    📊 Monitoring & Stats
+                </a>
+            </div>
+            
+            <div class="stats-row">
+                <div class="stat-item">
+                    <span class="stat-icon">⚡</span>
+                    <span class="stat-value" id="cpu-usage">Loading...</span>
+                    <span class="stat-label">CPU</span>
+                </div>
+                <div class="stat-item stat-item-clickable" id="memory-stat" onclick="toggleMemoryDisplay()">
+                    <span class="stat-icon">🧠</span>
+                    <span class="stat-value" id="memory-usage">Loading...</span>
+                    <span class="stat-label" id="memory-label">VM RAM</span>
+                    <span class="dropdown-arrow">🔄</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">💾</span>
+                    <span class="stat-value" id="disk-usage">Loading...</span>
+                    <span class="stat-label">Disk</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-icon">🕐</span>
+                    <span class="stat-value" id="last-updated">Never</span>
+                    <span class="stat-label">Updated</span>
+                </div>
+                <div class="stat-item stat-item-clickable" id="container-stat" onclick="toggleContainerList()">
+                    <span class="stat-icon">🐳</span>
+                    <span class="stat-value" id="container-count">Loading...</span>
+                    <span class="stat-label">Containers</span>
+                    <span class="dropdown-arrow">▼</span>
+                </div>
+            </div>
+            
+            <!-- Container List Dropdown -->
+            <div class="container-list" id="container-list" style="display: none;">
+                <div class="container-list-header">
+                    <div class="container-list-title-section">
+                        <span class="container-list-title">🐳 Containers</span>
+                        <span class="container-list-count" id="container-list-count">0</span>
+                    </div>
+                    <a href="//greg-zone:9006/d/gregzone-containers/gregzone-container-metrics?orgId=1&from=now-1h&to=now&timezone=browser&var-container=$__all" class="container-metrics-link" target="_blank">
+                        📊 Detailed Metrics
+                    </a>
+                </div>
+                <div class="container-items" id="container-items">
+                    <div class="container-item-loading">Loading containers...</div>
+                </div>
+            </div>
         </div>
         
-        <nav class="services" role="navigation" aria-label="Available services">
-            <a href="http://greg-zone:9001" class="service-button" role="button">
-                📁 copyparty
-                <div class="service-description">File sharing service</div>
-            </a>
-            
-            <a href="http://greg-zone:9002" class="service-button" role="button">
-                📰 FreshRSS
-                <div class="service-description">RSS reader</div>
-            </a>
-            
-            <a href="http://greg-zone:9003" class="service-button" role="button">
-                📚 Kiwix
-                <div class="service-description">Offline wikis</div>
-            </a>
-            
-            <a href="http://greg-zone:9004" class="service-button" role="button">
-                ⬇️ Transmission
-                <div class="service-description">Torrent client</div>
-            </a>
-        </nav>
+        <!-- Compact Services Grid -->
+        <div class="services-compact">
+            <h2>🏠 Services</h2>
+            <div class="services-grid">
+                <a href="//greg-zone:9001" class="service-card" role="button" target="_blank">
+                    <span class="service-icon">📁</span>
+                    <span class="service-name">Copyparty</span>
+                    <span class="service-desc">Files</span>
+                </a>
+                
+                <a href="//greg-zone:9002" class="service-card" role="button" target="_blank">
+                    <span class="service-icon">📰</span>
+                    <span class="service-name">FreshRSS</span>
+                    <span class="service-desc">RSS</span>
+                </a>
+                
+                <a href="//greg-zone:9003" class="service-card" role="button" target="_blank">
+                    <span class="service-icon">📚</span>
+                    <span class="service-name">Kiwix</span>
+                    <span class="service-desc">Wiki</span>
+                </a>
+                
+                <a href="//greg-zone:9004" class="service-card" role="button" target="_blank">
+                    <span class="service-icon">⬇️</span>
+                    <span class="service-name">Transmission</span>
+                    <span class="service-desc">Torrents</span>
+                </a>
+            </div>
+        </div>
         
-        <div class="other-links">
-            <h2>🌍 Out-of-Zone 🌍</h2>
-            <nav class="services" role="navigation" aria-label="Other links">
-                <a href="https://greglinscheid.com" class="service-button" role="button" target="_blank">
-                    👤 Greg's Personal Site
-                    <div class="service-description">The official Greg Linscheid experience</div>
+        <!-- External Links -->
+        <div class="external-links">
+            <h2>🌍 External</h2>
+            <div class="external-grid">
+                <a href="https://greglinscheid.com" class="external-card" target="_blank">
+                    <span class="external-icon">👤</span>
+                    <span class="external-name">Personal Site</span>
+                    
+                    <span class="external-desc">My site</span>
                 </a>
                 
-                <a href="https://lambdafunk.art" class="service-button" role="button" target="_blank">
-                    🎵 Lambda Funk
-                    <div class="service-description">Greg's musical universe</div>
+                <a href="https://lambdafunk.art" class="external-card" target="_blank">
+                    <span class="external-icon">🎵</span>
+                    <span class="external-name">Lambda Funk</span>
+                    <span class="external-desc">My music</span>
                 </a>
                 
-                <a href="https://github.com/vilos92" class="service-button" role="button" target="_blank">
-                    💻 GitHub
-                    <div class="service-description">Code, projects, and digital adventures</div>
+                <a href="https://github.com/vilos92" class="external-card" target="_blank">
+                    <span class="external-icon">💻</span>
+                    <span class="external-name">GitHub</span>
+                    <span class="external-desc">My code</span>
                 </a>
-            </nav>
+            </div>
         </div>
         
         <div class="footer">
             Made with ❤️ and Comic Sans
         </div>
     </div>
+    
+    <script>
+        // System stats updater
+        async function updateSystemStats() {
+            try {
+                // Fetch data from Prometheus API (via Grafana's proxy)
+                const prometheusUrl = 'http://greg-zone:9005/api/v1/query';
+                
+                // Get CPU usage
+                const cpuResponse = await fetch(`${prometheusUrl}?query=100%20-%20(avg%20by%20(instance)%20(rate(node_cpu_seconds_total{mode="idle"}[5m]))%20*%20100)`);
+                const cpuData = await cpuResponse.json();
+                const cpuUsage = cpuData.data?.result?.[0]?.value?.[1] || '0';
+                document.getElementById('cpu-usage').textContent = `${parseFloat(cpuUsage).toFixed(1)}%`;
+                
+                // Update memory display (handles both VM and host modes)
+                await updateMemoryDisplay();
+                
+                // Get container count with deduplication (same logic as container list)
+                const containerResponse = await fetch(`${prometheusUrl}?query=container_memory_usage_bytes{job="docker-stats"}`);
+                const containerData = await containerResponse.json();
+                
+                if (containerData.data?.result && containerData.data.result.length > 0) {
+                    // Group containers by name and keep only the one with the highest memory usage (most recent/active)
+                    const containerMap = new Map();
+                    
+                    containerData.data.result.forEach(container => {
+                        const name = container.metric.name || 'Unknown';
+                        const memoryUsage = parseFloat(container.value[1]) || 0;
+                        
+                        if (!containerMap.has(name) || containerMap.get(name).memoryUsage < memoryUsage) {
+                            containerMap.set(name, {
+                                name: name,
+                                memoryUsage: memoryUsage,
+                                id: container.metric.id
+                            });
+                        }
+                    });
+                    
+                    const uniqueContainerCount = containerMap.size;
+                    document.getElementById('container-count').textContent = uniqueContainerCount;
+                } else {
+                    document.getElementById('container-count').textContent = '0';
+                }
+                
+                // Get disk usage
+                const diskResponse = await fetch(`${prometheusUrl}?query=(1%20-%20(node_filesystem_avail_bytes{mountpoint="/"}%20/%20node_filesystem_size_bytes{mountpoint="/"}))%20*%20100`);
+                const diskData = await diskResponse.json();
+                const diskUsage = diskData.data?.result?.[0]?.value?.[1] || '0';
+                document.getElementById('disk-usage').textContent = `${parseFloat(diskUsage).toFixed(1)}%`;
+                
+                // Update timestamp
+                document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
+                
+            } catch (error) {
+                console.error('Error fetching system stats:', error);
+                // Show error state
+                document.getElementById('cpu-usage').textContent = 'Error';
+                document.getElementById('memory-usage').textContent = 'Error';
+                document.getElementById('container-count').textContent = 'Error';
+                document.getElementById('disk-usage').textContent = 'Error';
+                document.getElementById('last-updated').textContent = 'Error';
+            }
+        }
+        
+        // Memory display toggle
+        let showHostMemory = false;
+        const HOST_TOTAL_RAM_GB = 24; // M4 Mac Mini with 24GB RAM
+        
+        function toggleMemoryDisplay() {
+            showHostMemory = !showHostMemory;
+            updateMemoryDisplay();
+        }
+        
+        async function updateMemoryDisplay() {
+            try {
+                const prometheusUrl = 'http://greg-zone:9005/api/v1/query';
+                
+                if (showHostMemory) {
+                    // Show GB usage and percentage of host RAM (24GB)
+                    const memUsedResponse = await fetch(`${prometheusUrl}?query=node_memory_MemTotal_bytes%20-%20node_memory_MemAvailable_bytes`);
+                    const memUsedData = await memUsedResponse.json();
+                    const memUsedBytes = memUsedData.data?.result?.[0]?.value?.[1] || '0';
+                    const memUsedGB = parseFloat(memUsedBytes) / (1024 * 1024 * 1024);
+                    const hostPercentage = (memUsedGB / HOST_TOTAL_RAM_GB) * 100; 
+                    
+                    document.getElementById('memory-usage').textContent = `${memUsedGB.toFixed(1)}GB (${hostPercentage.toFixed(1)}%)`;
+                    document.getElementById('memory-label').textContent = 'Host RAM';
+                } else {
+                    // Show VM RAM (current behavior)
+                    const memUsedResponse = await fetch(`${prometheusUrl}?query=node_memory_MemTotal_bytes%20-%20node_memory_MemAvailable_bytes`);
+                    const memTotalResponse = await fetch(`${prometheusUrl}?query=node_memory_MemTotal_bytes`);
+                    const memUsedData = await memUsedResponse.json();
+                    const memTotalData = await memTotalResponse.json();
+                    
+                    const memUsedBytes = memUsedData.data?.result?.[0]?.value?.[1] || '0';
+                    const memTotalBytes = memTotalData.data?.result?.[0]?.value?.[1] || '1';
+                    
+                    const memUsedGB = parseFloat(memUsedBytes) / (1024 * 1024 * 1024);
+                    const memPercentage = (parseFloat(memUsedBytes) / parseFloat(memTotalBytes)) * 100;
+                    
+                    document.getElementById('memory-usage').textContent = `${memUsedGB.toFixed(1)}GB (${memPercentage.toFixed(0)}%)`;
+                    document.getElementById('memory-label').textContent = 'VM RAM';
+                }
+            } catch (error) {
+                console.error('Error updating memory display:', error);
+                document.getElementById('memory-usage').textContent = 'Error';
+            }
+        }
+        
+        // Container list functionality
+        let containerListExpanded = false;
+        
+        function toggleContainerList() {
+            const containerList = document.getElementById('container-list');
+            const containerStat = document.getElementById('container-stat');
+            
+            if (containerListExpanded) {
+                containerList.style.display = 'none';
+                containerStat.classList.remove('expanded');
+                containerListExpanded = false;
+            } else {
+                containerList.style.display = 'block';
+                containerStat.classList.add('expanded');
+                containerListExpanded = true;
+                loadContainerList();
+            }
+        }
+        
+        async function loadContainerList() {
+            try {
+                const prometheusUrl = 'http://greg-zone:9005/api/v1/query';
+                const response = await fetch(`${prometheusUrl}?query=container_memory_usage_bytes{job="docker-stats"}`);
+                const data = await response.json();
+                
+                const containerItems = document.getElementById('container-items');
+                const containerCount = document.getElementById('container-list-count');
+                
+                if (data.data?.result && data.data.result.length > 0) {
+                    // Group containers by name and keep only the one with the highest memory usage (most recent/active)
+                    const containerMap = new Map();
+                    
+                    data.data.result.forEach(container => {
+                        const name = container.metric.name || 'Unknown';
+                        const memoryUsage = parseFloat(container.value[1]) || 0;
+                        
+                        if (!containerMap.has(name) || containerMap.get(name).memoryUsage < memoryUsage) {
+                            containerMap.set(name, {
+                                name: name,
+                                memoryUsage: memoryUsage,
+                                id: container.metric.id
+                            });
+                        }
+                    });
+                    
+                    // Convert map to array and sort by name
+                    const uniqueContainers = Array.from(containerMap.values()).sort((a, b) => a.name.localeCompare(b.name));
+                    
+                    containerCount.textContent = uniqueContainers.length;
+                    // Also update the main container count stat to match
+                    document.getElementById('container-count').textContent = uniqueContainers.length;
+                    
+                    containerItems.innerHTML = uniqueContainers.map(container => {
+                        return `
+                            <div class="container-item">
+                                <span class="container-name">${container.name}</span>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    containerItems.innerHTML = '<div class="container-item-loading">No containers found</div>';
+                    containerCount.textContent = '0';
+                }
+            } catch (error) {
+                console.error('Error loading container list:', error);
+                document.getElementById('container-items').innerHTML = '<div class="container-item-loading">Error loading containers</div>';
+            }
+        }
+        
+        // Update stats on page load and every 30 seconds
+        updateSystemStats();
+        setInterval(updateSystemStats, 30000);
+    </script>
 </body>
 </html>
