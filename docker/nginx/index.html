@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GregZone</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🐱</text></svg>">
+    <style>
+        @import url("https://fonts.googleapis.com/css2?family=Comic+Neue:wght@400;700&display=swap");
+        
+        * {
+            box-sizing: border-box;
+        }
+        
+        body { 
+            font-family: "Comic Neue", "Comic Sans MS", cursive; 
+            margin: 0; 
+            padding: 20px;
+            background: linear-gradient(45deg, #8b5cf6, #a855f7, #c084fc, #d8b4fe, #e9d5ff);
+            background-size: 400% 400%;
+            animation: gradientShift 3s ease infinite;
+            min-height: 100vh;
+        }
+        
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        
+        .container { 
+            max-width: 600px; 
+            margin: 0 auto; 
+            background: rgba(255,255,255,0.95); 
+            padding: 40px; 
+            border-radius: 20px; 
+            box-shadow: 0 0 30px rgba(0,0,0,0.3);
+            border: 3px solid #8b5cf6;
+        }
+        
+        @media (max-width: 768px) {
+            body {
+                padding: 10px;
+            }
+            
+            .container {
+                padding: 20px;
+                border-radius: 15px;
+                border: 2px solid #8b5cf6;
+            }
+            
+            h1 {
+                font-size: 28px;
+            }
+            
+            .marquee {
+                font-size: 16px;
+                padding: 12px;
+            }
+            
+            .service-button {
+                padding: 15px;
+                font-size: 16px;
+            }
+            
+            .other-links h2 {
+                font-size: 20px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+                border-radius: 10px;
+                border: 1px solid #8b5cf6;
+                box-shadow: 0 0 15px rgba(0,0,0,0.2);
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .marquee {
+                font-size: 14px;
+                padding: 10px;
+            }
+            
+            .service-button {
+                padding: 12px;
+                font-size: 15px;
+                border-radius: 10px;
+            }
+            
+            .other-links {
+                margin-top: 30px;
+                padding-top: 20px;
+            }
+            
+            .other-links h2 {
+                font-size: 18px;
+            }
+        }
+        
+        h1 { 
+            text-align: center; 
+            font-size: 36px;
+            margin: 0 0 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .greg { color: #ffc72c; }
+        .zone { color: #990000; }
+        
+        .marquee {
+            background: #8b5cf6;
+            color: white;
+            padding: 15px;
+            margin: 0 0 30px 0;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+        }
+        
+        .services {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+        }
+        
+        .service-button {
+            display: block;
+            background: #8b5cf6;
+            color: white;
+            text-decoration: none;
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            font-size: 18px;
+            font-weight: bold;
+            transition: none;
+            border: 2px solid #8b5cf6;
+        }
+        
+        .service-button:hover,
+        .service-button:focus {
+            background: #8b1538;
+            outline: none;
+        }
+        
+        .service-button:active {
+            transform: translateY(0);
+        }
+        
+        .service-description {
+            font-size: 14px;
+            color: #fff;
+            margin-top: 5px;
+            font-weight: normal;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+        
+        .other-links {
+            margin-top: 40px;
+            padding-top: 30px;
+            border-top: 2px solid #8b5cf6;
+        }
+        
+        .other-links h2 {
+            color: #8b5cf6;
+            text-align: center;
+            font-size: 24px;
+            margin: 0 0 20px 0;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .other-links .services {
+            gap: 15px;
+        }
+        
+        .other-links .service-button {
+            background: #6b46c1;
+            border: 2px solid #6b46c1;
+        }
+        
+        .other-links .service-button:hover,
+        .other-links .service-button:focus {
+            background: #553c9a;
+        }
+        
+        .footer {
+            text-align: center;
+            margin-top: 30px;
+            font-size: 14px;
+            color: #666;
+            animation: blink 1s linear infinite;
+        }
+        
+        @keyframes blink {
+            0%, 50% { opacity: 1; }
+            51%, 100% { opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🚀 <span class="greg">Greg</span><span class="zone">Zone</span> 🚀</h1>
+        <div style="text-align: center; margin: 10px 0;">
+            <span style="font-size: 48px;">🏯</span>
+        </div>
+        
+        <div class="marquee">
+            <marquee behavior="scroll" direction="left" scrollamount="6">
+                🎉 Get in the GregZone - Sponsored by Milo! 🐈
+            </marquee>
+        </div>
+        
+        <nav class="services" role="navigation" aria-label="Available services">
+            <a href="http://greg-zone:9001" class="service-button" role="button">
+                📁 copyparty
+                <div class="service-description">File sharing service</div>
+            </a>
+            
+            <a href="http://greg-zone:9002" class="service-button" role="button">
+                📰 FreshRSS
+                <div class="service-description">RSS reader</div>
+            </a>
+            
+            <a href="http://greg-zone:9003" class="service-button" role="button">
+                📚 Kiwix
+                <div class="service-description">Offline wikis</div>
+            </a>
+        </nav>
+        
+        <div class="other-links">
+            <h2>🌍 Out-of-Zone 🌍</h2>
+            <nav class="services" role="navigation" aria-label="Other links">
+                <a href="https://greglinscheid.com" class="service-button" role="button" target="_blank">
+                    👤 Greg's Personal Site
+                    <div class="service-description">The official Greg Linscheid experience</div>
+                </a>
+                
+                <a href="https://lambdafunk.art" class="service-button" role="button" target="_blank">
+                    🎵 Lambda Funk
+                    <div class="service-description">Greg's musical universe</div>
+                </a>
+                
+                <a href="https://github.com/vilos92" class="service-button" role="button" target="_blank">
+                    💻 GitHub
+                    <div class="service-description">Code, projects, and digital adventures</div>
+                </a>
+            </nav>
+        </div>
+        
+        <div class="footer">
+            Made with ❤️ and Comic Sans
+        </div>
+    </div>
+</body>
+</html>

@@ -1,21 +1,56 @@
 services:
-  cloudflare-tunnel:
-    image: cloudflare/cloudflared:latest
-    container_name: cloudflare-tunnel
+  # Tailscale services
+  tailscale:
+    image: tailscale/tailscale:latest
+    container_name: tailscale
+    hostname: greg-zone
+    restart: unless-stopped
+    volumes:
+      - "tailscale-state:/var/lib/tailscale"
+      - "/dev/net/tun:/dev/net/tun"
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    environment:
+      - TS_AUTHKEY=${TAILSCALE_AUTH_KEY}
+      - TS_STATE_DIR=/var/lib/tailscale
+      - TS_USERSPACE=false
+    networks:
+      - greg-zone-tailscale
+
+  nginx-tailscale:
+    image: nginx:alpine
+    container_name: nginx-tailscale
+    volumes:
+      - "./docker/nginx/nginx-tailscale.conf:/etc/nginx/nginx.conf:ro"
+      - "./docker/nginx/auth:/etc/nginx/auth:ro"
+      - "./docker/nginx/index.html:/usr/share/nginx/html/index.html:ro"
     restart: unless-stopped
     depends_on:
-      - nginx
+      - copyparty
+      - freshrss
+      - kiwix
+    network_mode: service:tailscale
+
+  # Cloudflare services
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: unless-stopped
+    depends_on:
+      - nginx-cloudflared
     command: tunnel --no-autoupdate run --token ${COPYPARTY_CLOUDFLARED_TOKEN}
     networks:
-      - greg-zone
+      - greg-zone-cloudflare
+      - greg-zone-tailscale
 
-  nginx:
+  nginx-cloudflared:
     image: nginx:alpine
-    container_name: nginx
+    container_name: nginx-cloudflared
     ports:
       - "9847:80"
     volumes:
-      - "./docker/nginx/nginx.conf:/etc/nginx/nginx.conf:ro"
+      - "./docker/nginx/nginx-cloudflare.conf:/etc/nginx/nginx.conf:ro"
       - "./docker/nginx/auth:/etc/nginx/auth:ro"
     restart: unless-stopped
     depends_on:
@@ -23,8 +58,10 @@ services:
       - freshrss
       - kiwix
     networks:
-      - greg-zone
+      - greg-zone-cloudflare
+      - greg-zone-tailscale
 
+  # Application services
   copyparty:
     image: copyparty/ac:latest
     container_name: copyparty
@@ -38,7 +75,8 @@ services:
     restart: unless-stopped
     command: ["--rproxy", "-1", "-c", "/app/copyparty.conf"]
     networks:
-      - greg-zone
+      - greg-zone-cloudflare
+      - greg-zone-tailscale
 
   kiwix:
     image: ghcr.io/kiwix/kiwix-serve:latest
@@ -50,7 +88,8 @@ services:
     restart: unless-stopped
     command: '**/*.zim'
     networks:
-      - greg-zone
+      - greg-zone-cloudflare
+      - greg-zone-tailscale
 
   freshrss:
     image: freshrss/freshrss:latest
@@ -68,8 +107,15 @@ services:
       options:
         max-size: "10m"
     networks:
-      - greg-zone
+      - greg-zone-cloudflare
+      - greg-zone-tailscale
 
 networks:
-  greg-zone:
+  greg-zone-cloudflare:
     driver: bridge
+  greg-zone-tailscale:
+    driver: bridge
+
+volumes:
+  tailscale-state:
+    driver: local
