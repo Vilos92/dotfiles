@@ -1,0 +1,220 @@
+#!/bin/sh
+
+# GregZone Services Management
+# Smart wrapper around docker-compose for GregZone services
+# Usage: gzone-services [docker-compose-command] [options]
+
+set -e
+
+# Use the GREG_DOTFILES_PATH environment variable if available, otherwise fall back to relative path
+if [ -n "$GREG_DOTFILES_PATH" ]; then
+    DOTFILES_ROOT="$GREG_DOTFILES_PATH"
+else
+    # Fallback: Get the directory where this script is located and navigate to dotfiles root
+    SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+    DOTFILES_ROOT="$(cd "$SCRIPT_DIR/../.." && pwd)"
+fi
+
+# Change to dotfiles root where docker-compose.yml is located
+cd "$DOTFILES_ROOT"
+
+# Color codes for output
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+NC='\033[0m' # No Color
+
+# Function to print colored output
+print_status() {
+    printf "${BLUE}[INFO]${NC} %s\n" "$1"
+}
+
+print_success() {
+    printf "${GREEN}[SUCCESS]${NC} %s\n" "$1"
+}
+
+print_warning() {
+    printf "${YELLOW}[WARNING]${NC} %s\n" "$1"
+}
+
+print_error() {
+    printf "${RED}[ERROR]${NC} %s\n" "$1"
+}
+
+# Function to check prerequisites (only for certain commands)
+check_prerequisites() {
+    print_status "Checking prerequisites..."
+    
+    # Check if docker-compose.yml exists
+    if [ ! -f "docker-compose.yml" ]; then
+        print_error "docker-compose.yml not found in $DOTFILES_ROOT"
+        exit 1
+    fi
+    
+    # Check if .env file exists
+    if [ ! -f ".env" ]; then
+        print_error ".env file not found. Please create it with your environment variables."
+        print_error "Copy .env.example and set COPYPARTY_CLOUDFLARED_TOKEN"
+        exit 1
+    fi
+    
+    # Source .env file to check for required variables
+    set -a
+    source .env
+    set +a
+    
+    if [ -z "$COPYPARTY_CLOUDFLARED_TOKEN" ] || [ "$COPYPARTY_CLOUDFLARED_TOKEN" = "your_token_here" ]; then
+        print_error "COPYPARTY_CLOUDFLARED_TOKEN is not set in .env file"
+        print_error "Please set it to your actual Cloudflare tunnel token"
+        exit 1
+    fi
+    
+    # Check external dependencies
+    if [ ! -d "/Volumes/Elements" ]; then
+        print_error "/Volumes/Elements directory does not exist"
+        print_error "Please make sure your external drive is mounted"
+        exit 1
+    fi
+    
+    if [ ! -d "/Users/greg.linscheid/Desktop/Mac Vault" ]; then
+        print_error "/Users/greg.linscheid/Desktop/Mac Vault directory does not exist"
+        exit 1
+    fi
+    
+    ZIM_DIR="/Volumes/Elements/Local Vault/media/zim"
+    if [ ! -d "$ZIM_DIR" ]; then
+        print_warning "ZIM directory does not exist at '$ZIM_DIR'"
+        print_warning "Kiwix service may not work properly"
+    elif [ ! "$(find "$ZIM_DIR" -name "*.zim" -type f | head -n 1)" ]; then
+        print_warning "No .zim files found in '$ZIM_DIR'"
+        print_warning "Kiwix service will start but won't serve any content"
+    fi
+    
+    print_success "Prerequisites check completed"
+}
+
+# Function to show service URLs
+show_service_urls() {
+    echo ""
+    print_success "Services are available at:"
+    echo ""
+    echo "🏠 GregZone Homepage (Tailscale):"
+    echo "  • http://greg-zone"
+    echo ""
+    echo "📱 Local Access:"
+    echo "  • Copyparty: http://localhost:8080 (via port 3923)"
+    echo "  • FreshRSS: http://localhost:49153"
+    echo "  • Kiwix: http://localhost:8473"
+    echo ""
+    echo "🌐 Public Access (Cloudflare):"
+    echo "  • Copyparty: https://copyparty.greglinscheid.com"
+    echo "  • FreshRSS: https://freshrss.greglinscheid.com"
+    echo "  • Kiwix: https://kiwix.greglinscheid.com"
+    echo ""
+    echo "🔒 Tailscale Access:"
+    echo "  • Copyparty: http://greg-zone:9001"
+    echo "  • FreshRSS: http://greg-zone:9002"
+    echo "  • Kiwix: http://greg-zone:9003"
+    echo ""
+}
+
+# Function to show usage
+show_usage() {
+    echo "GregZone Services Management"
+    echo "Smart wrapper around docker-compose for GregZone services"
+    echo ""
+    echo "Usage: gzone-services [docker-compose-command] [options]"
+    echo ""
+    echo "Common commands:"
+    echo "  up -d                    Start all services in background"
+    echo "  up -d [service]          Start specific service in background"
+    echo "  down                     Stop and remove all services"
+    echo "  stop                     Stop all services"
+    echo "  stop [service]           Stop specific service"
+    echo "  restart                  Restart all services"
+    echo "  restart [service]        Restart specific service"
+    echo "  ps                       Show status of all services"
+    echo "  logs [service]           Show logs (add -f for follow)"
+    echo "  pull                     Pull latest images"
+    echo "  build [service]          Build specific service"
+    echo ""
+    echo "Available services:"
+    echo "  tailscale, nginx-tailscale, cloudflared, nginx-cloudflared"
+    echo "  copyparty, kiwix, freshrss"
+    echo ""
+    echo "Examples:"
+    echo "  gzone-services up -d"
+    echo "  gzone-services up -d copyparty"
+    echo "  gzone-services logs -f tailscale"
+    echo "  gzone-services ps"
+    echo ""
+    echo "Special commands:"
+    echo "  urls                     Show service URLs"
+    echo "  check                    Check prerequisites"
+    echo "  help                     Show this help"
+}
+
+# Handle special commands and no arguments
+case "$1" in
+    "urls")
+        show_service_urls
+        exit 0
+        ;;
+    "check")
+        check_prerequisites
+        exit 0
+        ;;
+    "help"|"-h"|"--help")
+        show_usage
+        exit 0
+        ;;
+    "")
+        # No arguments - show quick tips
+        echo "🚀 GregZone Services - Quick Tips"
+        echo ""
+        echo "Common commands:"
+        echo "  gzone-services up -d          # Start all services"
+        echo "  gzone-services stop           # Stop all services"
+        echo "  gzone-services restart        # Restart all services"
+        echo "  gzone-services pull           # Update images"
+        echo "  gzone-services ps             # Show status"
+        echo "  gzone-services logs -f        # Follow logs"
+        echo ""
+        echo "Service-specific:"
+        echo "  gzone-services up -d copyparty    # Start just copyparty"
+        echo "  gzone-services logs tailscale     # Tailscale logs"
+        echo "  gzone-services stop freshrss      # Stop just freshrss"
+        echo ""
+        echo "Special commands:"
+        echo "  gzone-services urls           # Show all service URLs"
+        echo "  gzone-services check          # Check prerequisites"
+        echo "  gzone-services help           # Full help"
+        echo ""
+        echo "💡 Tip: Any docker-compose command works! Try:"
+        echo "  gzone-services build copyparty"
+        echo "  gzone-services exec tailscale sh"
+        echo "  gzone-services down"
+        exit 0
+        ;;
+esac
+
+# Check prerequisites for commands that start services
+case "$1" in
+    "up"|"start")
+        check_prerequisites
+        ;;
+esac
+
+# Execute docker-compose with all arguments
+print_status "Executing: docker-compose $*"
+docker-compose "$@"
+
+# Show URLs after successful start commands
+case "$1" in
+    "up"|"start")
+        if [ "$2" = "-d" ] || [ -z "$2" ]; then
+            show_service_urls
+        fi
+        ;;
+esac
