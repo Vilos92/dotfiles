@@ -106,6 +106,7 @@ show_service_urls() {
     echo "  • Copyparty: http://localhost:8080 (via port 3923)"
     echo "  • FreshRSS: http://localhost:49153"
     echo "  • Kiwix: http://localhost:8473"
+    echo "  • Transmission: http://localhost:9091"
     echo ""
     echo "🌐 Public Access (Cloudflare):"
     echo "  • Copyparty: https://copyparty.greglinscheid.com"
@@ -116,6 +117,7 @@ show_service_urls() {
     echo "  • Copyparty: http://greg-zone:9001"
     echo "  • FreshRSS: http://greg-zone:9002"
     echo "  • Kiwix: http://greg-zone:9003"
+    echo "  • Transmission: http://greg-zone:9004"
     echo ""
 }
 

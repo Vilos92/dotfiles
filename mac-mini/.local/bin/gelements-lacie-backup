@@ -46,25 +46,13 @@ echo "▶️  Starting Stage 1: Local Vault Backup"
 # --- Configuration for Stage 1 ---
 LV_SOURCE_DRIVE="/Volumes/Elements/Local Vault/media"
 LV_DEST_DRIVE="/Volumes/Lacie/Local Vault/media"
-LV_DIRS_TO_SYNC=( "concerts" "audio books" "music" "zim" "software" "roms" )
-LV_SHOWS_TO_SYNC=( "HarmonQuest" "The Vietnam War 2017" "Samurai Jack" "Documentary Now!" )
-
+LV_DIRS_TO_SYNC=( "concerts" "audio books" "music" "zim" "software" )
 # --- Logic for Stage 1 ---
 for dir in "${LV_DIRS_TO_SYNC[@]}"; do
     SOURCE_PATH="$LV_SOURCE_DRIVE/$dir/"
     DEST_PATH="$LV_DEST_DRIVE/$dir/"
     if [ -d "$SOURCE_PATH" ]; then
         echo "🔄 Syncing: $dir"
-        rsync $RSYNC_OPTS "$SOURCE_PATH" "$DEST_PATH"
-    else
-        echo "⚠️  Skipping, not found: $SOURCE_PATH"
-    fi
-done
-for show in "${LV_SHOWS_TO_SYNC[@]}"; do
-    SOURCE_PATH="$LV_SOURCE_DRIVE/shows/$show/"
-    DEST_PATH="$LV_DEST_DRIVE/shows/$show/"
-    if [ -d "$SOURCE_PATH" ]; then
-        echo "🔄 Syncing show: $show"
         rsync $RSYNC_OPTS "$SOURCE_PATH" "$DEST_PATH"
     else
         echo "⚠️  Skipping, not found: $SOURCE_PATH"
