@@ -106,9 +106,13 @@ def get_container_stats():
                 memory_limit = stats["memory_stats"]["limit"]
 
                 # Parse network stats
-                network_stats = stats["networks"]
-                rx_bytes = sum(net["rx_bytes"] for net in network_stats.values())
-                tx_bytes = sum(net["tx_bytes"] for net in network_stats.values())
+                network_stats = stats.get("networks", {})
+                if network_stats:
+                    rx_bytes = sum(net["rx_bytes"] for net in network_stats.values())
+                    tx_bytes = sum(net["tx_bytes"] for net in network_stats.values())
+                else:
+                    rx_bytes = 0
+                    tx_bytes = 0
 
                 # Parse disk I/O stats
                 blkio_stats = stats.get("blkio_stats", {})
@@ -116,11 +120,13 @@ def get_container_stats():
                 write_bytes = 0
 
                 if blkio_stats and "io_service_bytes_recursive" in blkio_stats:
-                    for entry in blkio_stats["io_service_bytes_recursive"]:
-                        if entry["op"] == "Read":
-                            read_bytes += entry["value"]
-                        elif entry["op"] == "Write":
-                            write_bytes += entry["value"]
+                    io_entries = blkio_stats["io_service_bytes_recursive"]
+                    if io_entries:  # Check if not None
+                        for entry in io_entries:
+                            if entry.get("op") == "Read":
+                                read_bytes += entry.get("value", 0)
+                            elif entry.get("op") == "Write":
+                                write_bytes += entry.get("value", 0)
 
 
                 # Update Prometheus metrics
