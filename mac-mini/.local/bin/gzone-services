@@ -47,21 +47,21 @@ check_prerequisites() {
     print_status "Checking prerequisites..."
     
     # Check if docker-compose.yml exists
-    if [ ! -f "docker-compose.yml" ]; then
-        print_error "docker-compose.yml not found in $DOTFILES_ROOT"
+    if [ ! -f "greg-zone/docker-compose.yml" ]; then
+        print_error "docker-compose.yml not found in $DOTFILES_ROOT/greg-zone"
         exit 1
     fi
     
     # Check if .env file exists
-    if [ ! -f ".env" ]; then
+    if [ ! -f "greg-zone/.env" ]; then
         print_error ".env file not found. Please create it with your environment variables."
-        print_error "Copy .env.example and set COPYPARTY_CLOUDFLARED_TOKEN"
+        print_error "Copy greg-zone/.env.example and set COPYPARTY_CLOUDFLARED_TOKEN"
         exit 1
     fi
     
     # Source .env file to check for required variables
     set -a
-    source .env
+    source greg-zone/.env
     set +a
     
     if [ -z "$COPYPARTY_CLOUDFLARED_TOKEN" ] || [ "$COPYPARTY_CLOUDFLARED_TOKEN" = "your_token_here" ]; then
@@ -212,7 +212,7 @@ esac
 
 # Execute docker-compose with all arguments
 print_status "Executing: docker-compose $*"
-docker-compose "$@"
+docker-compose -f greg-zone/docker-compose.yml "$@"
 
 # Show URLs after successful start commands
 case "$1" in

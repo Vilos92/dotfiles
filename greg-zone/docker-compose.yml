@@ -16,15 +16,15 @@ services:
       - TS_STATE_DIR=/var/lib/tailscale
       - TS_USERSPACE=false
     networks:
-      - greg-zone-tailscale
+      - tailscale
 
   nginx-tailscale:
     image: nginx:alpine
     container_name: nginx-tailscale
     volumes:
-      - "./docker/nginx/nginx-tailscale.conf:/etc/nginx/nginx.conf:ro"
-      - "./docker/nginx/auth:/etc/nginx/auth:ro"
-      - "./docker/nginx/index.html:/usr/share/nginx/html/index.html:ro"
+      - "./nginx/nginx-tailscale.conf:/etc/nginx/nginx.conf:ro"
+      - "./nginx/auth:/etc/nginx/auth:ro"
+      - "./nginx/index.html:/usr/share/nginx/html/index.html:ro"
     restart: unless-stopped
     depends_on:
       - copyparty
@@ -43,8 +43,8 @@ services:
       - nginx-cloudflared
     command: tunnel --no-autoupdate run --token ${COPYPARTY_CLOUDFLARED_TOKEN}
     networks:
-      - greg-zone-cloudflare
-      - greg-zone-tailscale
+      - cloudflare
+      - tailscale
 
   nginx-cloudflared:
     image: nginx:alpine
@@ -52,16 +52,16 @@ services:
     ports:
       - "9847:80"
     volumes:
-      - "./docker/nginx/nginx-cloudflare.conf:/etc/nginx/nginx.conf:ro"
-      - "./docker/nginx/auth:/etc/nginx/auth:ro"
+      - "./nginx/nginx-cloudflare.conf:/etc/nginx/nginx.conf:ro"
+      - "./nginx/auth:/etc/nginx/auth:ro"
     restart: unless-stopped
     depends_on:
       - copyparty
       - freshrss
       - kiwix
     networks:
-      - greg-zone-cloudflare
-      - greg-zone-tailscale
+      - cloudflare
+      - tailscale
 
   # External services (accessible via Cloudflare)
   copyparty:
@@ -71,14 +71,14 @@ services:
       - "3923:3923"
     user: "1000"
     volumes:
-      - "./docker/copyparty/copyparty.conf:/app/copyparty.conf:ro"
+      - "./copyparty/copyparty.conf:/app/copyparty.conf:ro"
       - "/Volumes/Elements:/Volumes/Elements"
       - "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault"
     restart: unless-stopped
     command: ["--rproxy", "-1", "-c", "/app/copyparty.conf"]
     networks:
-      - greg-zone-cloudflare
-      - greg-zone-tailscale
+      - cloudflare
+      - tailscale
 
   kiwix:
     image: ghcr.io/kiwix/kiwix-serve:latest
@@ -90,8 +90,8 @@ services:
     restart: unless-stopped
     command: '**/*.zim'
     networks:
-      - greg-zone-cloudflare
-      - greg-zone-tailscale
+      - cloudflare
+      - tailscale
 
   freshrss:
     image: freshrss/freshrss:latest
@@ -110,8 +110,8 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - greg-zone-cloudflare
-      - greg-zone-tailscale
+      - cloudflare
+      - tailscale
 
   # Internal services (Tailscale only)
   transmission:
@@ -132,7 +132,7 @@ services:
       - "/Volumes/Elements/Local Vault/torrent:/downloads"
     restart: unless-stopped
     networks:
-      - greg-zone-tailscale
+      - tailscale
 
   # Monitoring Stack
   prometheus:
@@ -143,7 +143,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./docker/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -157,7 +157,7 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - greg-zone-tailscale
+      - tailscale
 
   grafana:
     image: grafana/grafana:latest
@@ -172,13 +172,13 @@ services:
       - GF_USERS_ALLOW_SIGN_UP=false
     volumes:
       - grafana-data:/var/lib/grafana
-      - ./docker/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./grafana/provisioning:/etc/grafana/provisioning:ro
     logging:
       options:
         max-size: "10m"
         max-file: "3"
     networks:
-      - greg-zone-tailscale
+      - tailscale
 
   node-exporter:
     image: prom/node-exporter:latest
@@ -201,10 +201,10 @@ services:
         max-size: "10m"
         max-file: "2"
     networks:
-      - greg-zone-tailscale
+      - tailscale
 
   docker-stats-exporter:
-    build: ./docker/docker-stats-exporter
+    build: ./docker-stats-exporter
     container_name: docker-stats-exporter
     hostname: greg-zone-docker-stats
     restart: unless-stopped
@@ -217,7 +217,7 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - greg-zone-tailscale
+      - tailscale
 
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
@@ -247,12 +247,12 @@ services:
         max-size: "10m"
         max-file: "3"
     networks:
-      - greg-zone-tailscale
+      - tailscale
 
 networks:
-  greg-zone-cloudflare:
+  cloudflare:
     driver: bridge
-  greg-zone-tailscale:
+  tailscale:
     driver: bridge
 
 volumes:

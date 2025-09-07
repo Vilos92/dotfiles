@@ -36,15 +36,15 @@ print_header() {
 # Function to show service status
 show_status() {
     print_header "Docker Services Status"
-    docker-compose ps
+    docker-compose -f greg-zone/docker-compose.yml ps
 }
 
 # Function to start all services
 start_services() {
     print_header "Starting GregZone Services"
     print_status "Starting all Docker services..."
-    docker-compose up -d
-    print_status "Services started! Use 'docker-compose logs -f' to follow logs"
+    docker-compose -f greg-zone/docker-compose.yml up -d
+    print_status "Services started! Use 'docker-compose -f greg-zone/docker-compose.yml logs -f' to follow logs"
     
     echo
     print_header "🚀 Quick Access Links"
@@ -76,7 +76,7 @@ start_services() {
 stop_services() {
     print_header "Stopping GregZone Services"
     print_status "Stopping all Docker services..."
-    docker-compose down
+    docker-compose -f greg-zone/docker-compose.yml down
     print_status "Services stopped!"
 }
 
@@ -84,7 +84,7 @@ stop_services() {
 restart_services() {
     print_header "Restarting GregZone Services"
     print_status "Restarting all Docker services..."
-    docker-compose restart
+    docker-compose -f greg-zone/docker-compose.yml restart
     print_status "Services restarted!"
 }
 
@@ -93,10 +93,10 @@ show_logs() {
     local service=${1:-""}
     if [ -n "$service" ]; then
         print_header "Logs for $service"
-        docker-compose logs -f "$service"
+        docker-compose -f greg-zone/docker-compose.yml logs -f "$service"
     else
         print_header "All Services Logs"
-        docker-compose logs -f
+        docker-compose -f greg-zone/docker-compose.yml logs -f
     fi
 }
 
