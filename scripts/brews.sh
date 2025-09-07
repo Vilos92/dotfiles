@@ -78,6 +78,11 @@ install_terminal_packages() {
   prompt_and_install "neofetch" 'brew install neofetch'
 }
 
+# Password manager.
+install_1password() {
+  prompt_and_install "1password" 'brew install --cask 1password'
+}
+
 # Hosting.
 install_host_packages() {
   # install cloudflared to allow exposing the copyparty instance.
@@ -275,6 +280,9 @@ handle_arguments() {
     "terminal-pkgs" )
       install_terminal_packages
       ;;
+    "1password" )
+      install_1password
+      ;;
     "host" )
       install_host_packages
       ;;
@@ -404,6 +412,7 @@ install_everything() {
   install_window_management_packages
   install_mouse_packages
   install_terminal_packages
+  install_1password
   install_host_packages
   install_dev_packages
   install_gh
