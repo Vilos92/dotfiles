@@ -71,9 +71,9 @@ check_prerequisites() {
     fi
     
     # Check external dependencies
-    if [ ! -d "/Volumes/Elements" ]; then
-        print_error "/Volumes/Elements directory does not exist"
-        print_error "Please make sure your external drive is mounted"
+    if [ ! -d "/Volumes/T7" ]; then
+        print_error "/Volumes/T7 directory does not exist"
+        print_error "Please make sure your T7 drive is mounted"
         exit 1
     fi
     
@@ -82,7 +82,7 @@ check_prerequisites() {
         exit 1
     fi
     
-    ZIM_DIR="/Volumes/Elements/Local Vault/media/zim"
+    ZIM_DIR="/Volumes/T7/Vaults/Local Vault/media/zim"
     if [ ! -d "$ZIM_DIR" ]; then
         print_warning "ZIM directory does not exist at '$ZIM_DIR'"
         print_warning "Kiwix service may not work properly"

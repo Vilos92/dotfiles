@@ -26,7 +26,7 @@ This repository uses GNU Stow for dotfile management. Run `scripts/stow.sh` to i
 Each stowable directory can include a `.local/bin/` directory that gets symlinked to `~/.local/bin/` via stow:
 
 **Available Commands:**
-- **mac-mini:** `gelements-lacie-backup`, `gelements-samsung-backup`, `gllama`
+- **mac-mini:** `gbackup-lacie`, `gbackup-t7`, `gllama`
 - **alacritty:** `alacritty-theme`, `alacritty-theme-select`
 - **tmux:** `attach-tmux-session`, `gmux`
 - **zsh:** `compress-video-hevc`, `download-media`, `fuzzy-find`, `fuzzy-ripgrep`, `remux-video`
@@ -96,7 +96,7 @@ All services include:
 - Comprehensive error handling
 
 ### Service Dependencies
-- External drive: `/Volumes/Elements` (required for copyparty, kiwix)
+- External drive: `/Volumes/T7/Vaults` (required for copyparty, kiwix) - T7 is now the main data hub
 - Mac Vault: `~/Desktop/Mac Vault` (required for copyparty, freshrss)
 - Environment variables: `COPYPARTY_CLOUDFLARED_TOKEN` (required for copyparty)
 
@@ -150,7 +150,7 @@ Most configurations (nvim, tmux, zsh, git) work across all devices.
 - **front/**: Work laptop specific configurations (private submodule)
 
 ### External Dependencies
-- `/Volumes/Elements` - External drive for media and backups
+- `/Volumes/T7/Vaults` - Main external drive for media and backups (data hub)
 - Tailscale network for secure remote access
 - Cloudflare tunnel for public copyparty access
 

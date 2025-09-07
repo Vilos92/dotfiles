@@ -64,7 +64,7 @@ should_include_file() {
     
     # Include specific filenames
     case "$filename" in
-        .gitignore|.gitmodules|gllama|gllama-dotfiles|gllama-dotfiles-debug|gelements-lacie-backup) 
+        .gitignore|.gitmodules|gllama|gllama-dotfiles|gllama-dotfiles-debug|gbackup-lacie) 
             return 0 
             ;;
         .*) 

@@ -1,0 +1,68 @@
+#!/bin/sh
+
+# ==============================================================================
+#
+#                            !!! IMPORTANT !!!
+#
+# This script performs a ONE-WAY MIRROR backup.
+#
+# The T7 drive is the DESTINATION. It is intended to be an exact copy
+# of the source Mac Vault files.
+#
+# Data flows FROM:
+#   - ~/Desktop/Mac Vault/
+#
+# Data flows TO:
+#   - /Volumes/T7/Vaults/Mac Vault/
+#
+# Because this script uses the --delete flag, any file that exists on the
+# T7 drive but NOT in the source Mac Vault will be PERMANENTLY DELETED from
+# the T7 drive during the sync.
+#
+# DO NOT STORE UNIQUE FILES IN THE T7 MAC VAULT DIRECTORY.
+#
+# ==============================================================================
+
+# --- 🛡️ Safety Check & Global Options ---
+# This script is in DRY-RUN mode by default.
+# Pass the --execute flag as the first argument to make real changes.
+RSYNC_OPTS="-av --progress --delete --stats" # Base options
+if [ "$1" == "--execute" ]; then
+    echo "✅ --execute flag detected. Live backup mode engaged."
+else
+    echo "🛡️ SAFE MODE: Running in simulation (dry-run) mode."
+    RSYNC_OPTS="$RSYNC_OPTS --dry-run"
+fi
+echo "===================================================="
+
+
+# --- Safety Checks ---
+if [ ! -d "/Volumes/T7" ]; then
+    echo "❌ ERROR: Samsung T7 drive not found at /Volumes/T7"
+    echo "   Please ensure your Samsung T7 drive is connected and mounted"
+    exit 1
+fi
+
+if [ ! -d "$HOME/Desktop/Mac Vault" ]; then
+    echo "❌ ERROR: Mac Vault not found at $HOME/Desktop/Mac Vault"
+    echo "   Please ensure your Mac Vault directory exists"
+    exit 1
+fi
+
+echo "✅ Source Mac Vault found: $HOME/Desktop/Mac Vault"
+echo "✅ Target Samsung T7 drive found: /Volumes/T7"
+echo "===================================================="
+
+
+# --- Mac Vault Backup (Desktop -> T7) ---
+echo "▶️  Starting Mac Vault Backup"
+# --- Configuration ---
+MV_SOURCE_BASE="$HOME/Desktop/Mac Vault"
+MV_DEST_BASE="/Volumes/T7/Vaults/Mac Vault"
+
+# --- Logic ---
+echo "🔄 Syncing: Entire Mac Vault"
+rsync $RSYNC_OPTS "$MV_SOURCE_BASE/" "$MV_DEST_BASE/"
+echo "----------------------------------------------------"
+
+echo "✅ All backup stages finished."

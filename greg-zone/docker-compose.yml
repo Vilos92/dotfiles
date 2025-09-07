@@ -72,7 +72,7 @@ services:
     user: "1000"
     volumes:
       - "./copyparty/copyparty.conf:/app/copyparty.conf:ro"
-      - "/Volumes/Elements:/Volumes/Elements"
+      - "/Volumes/T7:/Volumes/T7"
       - "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault"
     restart: unless-stopped
     command: ["--rproxy", "-1", "-c", "/app/copyparty.conf"]
@@ -86,7 +86,7 @@ services:
     ports:
       - "8473:8080"
     volumes:
-      - "/Volumes/Elements/Local Vault/media/zim:/data"
+      - "/Volumes/T7/Vaults/Local Vault/media/zim:/data"
     restart: unless-stopped
     command: '**/*.zim'
     networks:
@@ -129,7 +129,7 @@ services:
       - PASS=${TRANSMISSION_PASSWORD}
     volumes:
       - "/Users/greg.linscheid/Desktop/Mac Vault/transmission-config:/config"
-      - "/Volumes/Elements/Local Vault/torrent:/downloads"
+      - "/Volumes/T7/Vaults/Local Vault/torrent:/downloads"
     restart: unless-stopped
     networks:
       - tailscale

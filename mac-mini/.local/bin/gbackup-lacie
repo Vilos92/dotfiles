@@ -7,19 +7,20 @@
 # This script performs a ONE-WAY MIRROR backup.
 #
 # The LaCie drives ("Lacie" and "LaCie Small") are the DESTINATION. They are
-# intended to be an exact copy of the source files.
+# intended to be an exact copy of the source files from the T7 drive.
 #
 # Data flows FROM:
-#   - /Volumes/Elements/
-#   - ~/Desktop/Mac Vault/
+#   - /Volumes/T7/Vaults/Local Vault/media/
+#   - /Volumes/T7/Vaults/Cloud Vault/
+#   - /Volumes/T7/Vaults/Mac Vault/
 #
 # Data flows TO:
 #   - /Volumes/Lacie/
 #   - /Volumes/LaCie Small/
 #
 # Because this script uses the --delete flag, any file that exists on the
-# LaCie drives but NOT on the source drives will be PERMANENTLY DELETED
-# from the LaCie drives during the sync.
+# LaCie drives but NOT on the T7 drive will be PERMANENTLY DELETED from
+# the LaCie drives during the sync.
 #
 # DO NOT STORE UNIQUE FILES IN THE LACIE DRIVE VAULTS.
 #
@@ -41,12 +42,38 @@ fi
 echo "===================================================="
 
 
-# --- Stage 1: Local Vault Backup (Elements -> LaCie) ---
+# --- Safety Checks ---
+if [ ! -d "/Volumes/T7" ]; then
+    echo "❌ ERROR: Samsung T7 drive not found at /Volumes/T7"
+    echo "   Please ensure your Samsung T7 drive is connected and mounted"
+    exit 1
+fi
+
+if [ ! -d "/Volumes/Lacie" ]; then
+    echo "❌ ERROR: LaCie drive not found at /Volumes/Lacie"
+    echo "   Please ensure your LaCie drive is connected and mounted"
+    exit 1
+fi
+
+if [ ! -d "/Volumes/LaCie Small" ]; then
+    echo "❌ ERROR: LaCie Small drive not found at /Volumes/LaCie Small"
+    echo "   Please ensure your LaCie Small drive is connected and mounted"
+    exit 1
+fi
+
+echo "✅ Source Samsung T7 drive found: /Volumes/T7"
+echo "✅ Target LaCie drive found: /Volumes/Lacie"
+echo "✅ Target LaCie Small drive found: /Volumes/LaCie Small"
+echo "===================================================="
+
+
+# --- Stage 1: Local Vault Backup (T7 -> LaCie) ---
 echo "▶️  Starting Stage 1: Local Vault Backup"
 # --- Configuration for Stage 1 ---
-LV_SOURCE_DRIVE="/Volumes/Elements/Local Vault/media"
+LV_SOURCE_DRIVE="/Volumes/T7/Vaults/Local Vault/media"
 LV_DEST_DRIVE="/Volumes/Lacie/Local Vault/media"
 LV_DIRS_TO_SYNC=( "concerts" "audio books" "music" "zim" "software" )
+
 # --- Logic for Stage 1 ---
 for dir in "${LV_DIRS_TO_SYNC[@]}"; do
     SOURCE_PATH="$LV_SOURCE_DRIVE/$dir/"
@@ -61,10 +88,10 @@ done
 echo "----------------------------------------------------"
 
 
-# --- Stage 2: Cloud Vault Backup (Elements -> LaCie Small) ---
+# --- Stage 2: Cloud Vault Backup (T7 -> LaCie Small) ---
 echo "▶️  Starting Stage 2: Cloud Vault Backup"
 # --- Configuration for Stage 2 ---
-CV_SOURCE_DRIVE="/Volumes/Elements/Cloud Vault"
+CV_SOURCE_DRIVE="/Volumes/T7/Vaults/Cloud Vault"
 CV_DEST_DRIVE="/Volumes/LaCie Small/Cloud Vault"
 CV_DIRS_TO_SYNC=( "GoPro" "video renders" )
 
@@ -82,24 +109,15 @@ done
 echo "----------------------------------------------------"
 
 
-# --- Stage 3: Mac Vault Backup (Desktop -> LaCie Small) ---
+# --- Stage 3: Mac Vault Backup (T7 -> LaCie Small) ---
 echo "▶️  Starting Stage 3: Mac Vault Backup"
 # --- Configuration for Stage 3 ---
-MV_SOURCE_BASE="$HOME/Desktop/Mac Vault"
+MV_SOURCE_BASE="/Volumes/T7/Vaults/Mac Vault"
 MV_DEST_BASE="/Volumes/LaCie Small/Mac Vault"
-MV_DIRS_TO_SYNC=( "Music Production" "llm_models" "Greg News" )
 
 # --- Logic for Stage 3 ---
-for dir in "${MV_DIRS_TO_SYNC[@]}"; do
-    SOURCE_PATH="$MV_SOURCE_BASE/$dir/"
-    DEST_PATH="$MV_DEST_BASE/$dir/"
-    if [ -d "$SOURCE_PATH" ]; then
-        echo "🔄 Syncing: $dir"
-        rsync $RSYNC_OPTS "$SOURCE_PATH" "$DEST_PATH"
-    else
-        echo "⚠️  Skipping, not found: $SOURCE_PATH"
-    fi
-done
+echo "🔄 Syncing: Entire Mac Vault"
+rsync $RSYNC_OPTS "$MV_SOURCE_BASE/" "$MV_DEST_BASE/"
 echo "----------------------------------------------------"
 
 echo "✅ All backup stages finished."
