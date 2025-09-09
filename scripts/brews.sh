@@ -141,6 +141,7 @@ install_python_dev_packages() {
 install_javascript_packages() {
   prompt_and_install "JavaScript packages" 'brew install fnm\
       oven-sh/bun/bun\
+      pnpm\
     fsouza/prettierd/prettierd &&
     fnm install 22 &&
     npm install -g eslint_d\
