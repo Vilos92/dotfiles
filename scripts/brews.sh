@@ -49,12 +49,6 @@ install_window_management_packages() {
   prompt_and_install "alt-tab" 'brew install --cask alt-tab'
 }
 
-# DEPRECATED: Tiles snapping window manager (use yabai instead).
-install_tiles() {
-  echo "WARNING: tiles is deprecated. Consider using yabai for window management instead."
-  prompt_and_install "tiles (deprecated)" 'brew install --cask tiles'
-}
-
 # Mouse packages.
 install_mouse_packages() {
   prompt_and_install "mos" 'brew install mos'
@@ -182,6 +176,7 @@ install_audio_packages() {
 install_audio_engineering_packages() {
   prompt_and_install "audacity" 'brew install --cask audacity'
   prompt_and_install "ableton" 'brew install --cask ableton-live-suite'
+  prompt_and_install "xld" 'brew install --cask xld'
 }
 
 # Video engineering.
@@ -271,9 +266,6 @@ handle_arguments() {
       ;;
     "window-mgmt-pkgs" )
       install_window_management_packages
-      ;;
-    "tiles" )
-      install_tiles
       ;;
     "mouse-pkgs" )
       install_mouse_packages
@@ -372,9 +364,9 @@ handle_arguments() {
       echo "  dotfile-pkgs     - stow for dotfile management"
       echo "  better-display   - BetterDisplay for scalable displays"
       echo "  window-mgmt-pkgs - Window management tools (yabai, skhd, alt-tab)"
-      echo "  tiles            - Tiles window snapping (DEPRECATED)"
       echo "  mouse-pkgs       - mouse management tools"
       echo "  terminal-pkgs    - terminal emulator and shell tools"
+      echo "  1password       - 1Password password manager"
       echo "  host             - hosting and server tools"
       echo "  dev-pkgs         - development tools and utilities"
       echo "  gh               - GitHub CLI"
@@ -387,6 +379,7 @@ handle_arguments() {
       echo "  notion           - Notion note-taking app"
       echo "  audio-pkgs       - audio and video utilities"
       echo "  audio-engineering-pkgs - audio engineering tools"
+      echo "  video-engineering-pkgs - video engineering tools"
       echo "  keka             - Keka archive manager"
       echo "  gimp             - GIMP image editor"
       echo "  coding-pkgs      - code editors and IDEs"
