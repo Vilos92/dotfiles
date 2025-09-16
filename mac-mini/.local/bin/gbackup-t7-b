@@ -1,0 +1,90 @@
+#!/bin/sh
+
+# ==============================================================================
+#
+#                            !!! IMPORTANT !!!
+#
+# This script performs a ONE-WAY MIRROR backup from T7 to T7-B.
+#
+# The T7-B drive is the DESTINATION. It is intended to be an exact copy
+# of the source T7 Vaults files.
+#
+# Data flows FROM:
+#   - /Volumes/T7/Vaults/
+#
+# Data flows TO:
+#   - /Volumes/T7-B/Vaults/
+#
+# Because this script uses the --delete flag, any file that exists on the
+# T7-B drive but NOT in the source T7 Vaults will be PERMANENTLY DELETED from
+# the T7-B drive during the sync.
+#
+# DO NOT STORE UNIQUE FILES IN THE T7-B VAULTS DIRECTORY.
+#
+# ==============================================================================
+
+# --- 🛡️ Safety Check & Global Options ---
+# This script is in DRY-RUN mode by default.
+# Pass the --execute flag as the first argument to make real changes.
+RSYNC_OPTS="-av --progress --delete --stats" # Base options
+if [ "$1" == "--execute" ]; then
+    echo "✅ --execute flag detected. Live backup mode engaged."
+else
+    echo "🛡️ SAFE MODE: Running in simulation (dry-run) mode."
+    RSYNC_OPTS="$RSYNC_OPTS --dry-run"
+fi
+echo "===================================================="
+
+
+# --- Safety Checks ---
+if [ ! -d "/Volumes/T7" ]; then
+    echo "❌ ERROR: Samsung T7 drive not found at /Volumes/T7"
+    echo "   Please ensure your Samsung T7 drive is connected and mounted"
+    exit 1
+fi
+
+if [ ! -d "/Volumes/T7-B" ]; then
+    echo "❌ ERROR: Samsung T7-B drive not found at /Volumes/T7-B"
+    echo "   Please ensure your Samsung T7-B drive is connected and mounted"
+    exit 1
+fi
+
+if [ ! -d "/Volumes/T7/Vaults" ]; then
+    echo "❌ ERROR: Vaults directory not found at /Volumes/T7/Vaults"
+    echo "   Please ensure the T7 drive has the Vaults directory"
+    exit 1
+fi
+
+echo "✅ Source T7 drive found: /Volumes/T7"
+echo "✅ Target T7-B drive found: /Volumes/T7-B"
+echo "✅ Source Vaults directory found: /Volumes/T7/Vaults"
+echo "===================================================="
+
+
+# --- Create destination Vaults directory if it doesn't exist ---
+if [ ! -d "/Volumes/T7-B/Vaults" ]; then
+    echo "📁 Creating Vaults directory on T7-B..."
+    if [ "$1" == "--execute" ]; then
+        mkdir -p "/Volumes/T7-B/Vaults"
+        echo "✅ Vaults directory created on T7-B"
+    else
+        echo "🛡️ DRY-RUN: Would create Vaults directory on T7-B"
+    fi
+    echo "----------------------------------------------------"
+fi
+
+
+# --- Complete Vaults Backup (T7 -> T7-B) ---
+echo "▶️  Starting Complete Vaults Backup"
+# --- Configuration ---
+VAULTS_SOURCE="/Volumes/T7/Vaults"
+VAULTS_DEST="/Volumes/T7-B/Vaults"
+
+# --- Logic ---
+echo "🔄 Syncing: Entire Vaults directory"
+echo "   From: $VAULTS_SOURCE/"
+echo "   To:   $VAULTS_DEST/"
+rsync $RSYNC_OPTS "$VAULTS_SOURCE/" "$VAULTS_DEST/"
+echo "----------------------------------------------------"
+
+echo "✅ All backup stages finished."
