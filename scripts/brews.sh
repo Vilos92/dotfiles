@@ -45,7 +45,6 @@ install_better_display() {
 install_window_management_packages() {
   prompt_and_install "yabai" 'brew install koekeishiya/formulae/yabai'
   prompt_and_install "skhd" 'brew install koekeishiya/formulae/skhd'
-  prompt_and_install "borders" 'brew install FelixKratz/formulae/borders'
   prompt_and_install "alt-tab" 'brew install --cask alt-tab'
 }
 

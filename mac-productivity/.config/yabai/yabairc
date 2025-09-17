@@ -66,6 +66,3 @@ yabai -m rule --add app="^Code$" manage=on
 
 # Productivity
 yabai -m rule --add app="^Notion$" manage=on
-
-# JankyBorders (github.com/FelixKratz/JankyBorders)
- borders active_color=0xff8A2BE2 inactive_color=0x00000000 width=5.0 &

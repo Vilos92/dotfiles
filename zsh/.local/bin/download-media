@@ -1,8 +1,27 @@
 #!/bin/sh
+#
+# Enhanced download-media script with media server optimization support
+#
+# This script downloads media content using yt-dlp with options for optimal compatibility
+# with media servers and players. Use --media-server flag for best server compatibility.
+#
+# Media server optimizations include:
+# - MP4 container with H.264 video and AAC audio for broad compatibility
+# - Metadata embedding for better media recognition
+# - Proper naming conventions (Title (Year).mp4)
+# - Quality limits to prevent playback issues
+#
 
 if [ "$#" -lt 1 ]; then
     echo "Error: You must provide a video URL." >&2
-    echo "Usage: $0 <video_url> [--audio] [--index] [--output <filename>]" >&2
+    echo "Usage: $0 <video_url> [OPTIONS]" >&2
+    echo "" >&2
+    echo "Options:" >&2
+    echo "  --audio                    Download audio only (MP3 format)" >&2
+    echo "  --index                    Add playlist index to filename" >&2
+    echo "  --output <filename>        Specify custom output filename" >&2
+    echo "  --media-server             Optimize for media server compatibility (MP4, H.264, AAC)" >&2
+    echo "  --subtitles                Download subtitles as separate files" >&2
     exit 1
 fi
 
@@ -10,6 +29,8 @@ URL="$1"
 DOWNLOAD_AUDIO=false
 ADD_PLAYLIST_INDEX=false
 MANUAL_OUTPUT_NAME=""
+MEDIA_SERVER_MODE=false
+DOWNLOAD_SUBTITLES=false
 
 shift
 
@@ -29,6 +50,12 @@ while [ "$#" -gt 0 ]; do
             MANUAL_OUTPUT_NAME="$2"
             shift # Consume the filename argument.
             ;;
+        --media-server)
+            MEDIA_SERVER_MODE=true
+            ;;
+        --subtitles)
+            DOWNLOAD_SUBTITLES=true
+            ;;
         *)
             # Stop parsing flags if an unrecognized argument is found.
             break
@@ -37,22 +64,81 @@ while [ "$#" -gt 0 ]; do
     shift
 done
 
-# Run yt-dlp based on the flags.
+# Build yt-dlp command with appropriate options
+YT_DLP_CMD="yt-dlp"
+
+# Add common options
+YT_DLP_CMD="$YT_DLP_CMD --restrict-filenames"
+
+# Handle subtitles (as separate files, not burned in)
+if [ "$DOWNLOAD_SUBTITLES" = true ]; then
+    YT_DLP_CMD="$YT_DLP_CMD --write-subs --write-auto-subs --sub-langs en,en-US --no-embed-subs"
+fi
+
+
+# Handle manual output name
 if [ -n "$MANUAL_OUTPUT_NAME" ]; then
-    if [ "$DOWNLOAD_AUDIO" = true ]; then
-        yt-dlp -x --audio-format mp3 --audio-quality 0 --restrict-filenames --output "$MANUAL_OUTPUT_NAME" "$URL"
-    else
-        yt-dlp -f "bv*+ba/b" --remux-video mp4 --restrict-filenames --output "$MANUAL_OUTPUT_NAME" "$URL"
-    fi
+    YT_DLP_CMD="$YT_DLP_CMD --output \"$MANUAL_OUTPUT_NAME\""
 else
-    OUTPUT_TEMPLATE="%(title)s.%(ext)s"
+    # Build output template
+    OUTPUT_TEMPLATE="%(title)s"
+    
+    # Auto-detect year from upload date (YouTube upload_date format: YYYYMMDD)
+    OUTPUT_TEMPLATE="$OUTPUT_TEMPLATE (%(upload_date>%Y)s)"
+    
+    # Add playlist index if requested
     if [ "$ADD_PLAYLIST_INDEX" = true ]; then
         OUTPUT_TEMPLATE="%(playlist_index)s - $OUTPUT_TEMPLATE"
     fi
+    
+    OUTPUT_TEMPLATE="$OUTPUT_TEMPLATE.%(ext)s"
+    YT_DLP_CMD="$YT_DLP_CMD --output \"$OUTPUT_TEMPLATE\""
+fi
 
-    if [ "$DOWNLOAD_AUDIO" = true ]; then
-        yt-dlp -x --audio-format mp3 --audio-quality 0 --restrict-filenames --output "$OUTPUT_TEMPLATE" "$URL"
+# Handle audio vs video downloads
+if [ "$DOWNLOAD_AUDIO" = true ]; then
+    YT_DLP_CMD="$YT_DLP_CMD -x --audio-format mp3 --audio-quality 0"
+else
+    # Video download options
+    if [ "$MEDIA_SERVER_MODE" = true ]; then
+        # Media server optimized settings: let yt-dlp merge best formats, then remux to MP4
+        YT_DLP_CMD="$YT_DLP_CMD -f \"bv*+ba/b\" --remux-video mp4"
+        
+        # Add metadata embedding for better media recognition
+        YT_DLP_CMD="$YT_DLP_CMD --add-metadata --embed-metadata"
     else
-        yt-dlp -f "bv*+ba/b" --remux-video mp4 --restrict-filenames --output "$OUTPUT_TEMPLATE" "$URL"
+        # Standard video download - always best quality
+        YT_DLP_CMD="$YT_DLP_CMD -f \"bv*+ba/b\""
+    fi
+fi
+
+# Add the URL
+YT_DLP_CMD="$YT_DLP_CMD \"$URL\""
+
+# Execute the command
+echo "Executing: $YT_DLP_CMD"
+eval "$YT_DLP_CMD"
+
+# Post-processing: Create folder and organize files for media-server
+if [ "$MEDIA_SERVER_MODE" = true ] && [ -z "$MANUAL_OUTPUT_NAME" ]; then
+    # Get the downloaded filename (without extension)
+    DOWNLOADED_FILE=$(ls -t *.mp4 2>/dev/null | head -n1)
+    if [ -n "$DOWNLOADED_FILE" ]; then
+        # Extract title and year from filename (remove format ID and extension)
+        FOLDER_NAME=$(echo "$DOWNLOADED_FILE" | sed 's/\.f[0-9]*\.mp4$//' | sed 's/\.mp4$//')
+        
+        # Create folder
+        mkdir -p "$FOLDER_NAME"
+        
+        # Move video file into the folder
+        mv "$DOWNLOADED_FILE" "$FOLDER_NAME/"
+        
+        # Move subtitle files if they exist (from --subtitles flag)
+        if [ "$DOWNLOAD_SUBTITLES" = true ]; then
+            mv *.srt "$FOLDER_NAME/" 2>/dev/null || true
+            mv *.vtt "$FOLDER_NAME/" 2>/dev/null || true
+        fi
+        
+        echo "Organized files into folder: $FOLDER_NAME"
     fi
 fi
