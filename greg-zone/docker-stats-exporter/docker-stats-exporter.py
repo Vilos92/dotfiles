@@ -16,29 +16,29 @@ logger = logging.getLogger(__name__)
 
 # Prometheus metrics
 container_cpu_usage = Gauge(
-    "container_cpu_usage_percent", "Container CPU usage percentage", ["name", "id"]
+    "container_cpu_usage_percent", "Container CPU usage percentage", ["name"]
 )
 container_memory_usage = Gauge(
-    "container_memory_usage_bytes", "Container memory usage in bytes", ["name", "id"]
+    "container_memory_usage_bytes", "Container memory usage in bytes", ["name"]
 )
 container_memory_limit = Gauge(
-    "container_memory_limit_bytes", "Container memory limit in bytes", ["name", "id"]
+    "container_memory_limit_bytes", "Container memory limit in bytes", ["name"]
 )
 container_network_rx = Gauge(
-    "container_network_receive_bytes", "Container network receive bytes", ["name", "id"]
+    "container_network_receive_bytes", "Container network receive bytes", ["name"]
 )
 container_network_tx = Gauge(
     "container_network_transmit_bytes",
     "Container network transmit bytes",
-    ["name", "id"],
+    ["name"],
 )
 container_disk_read = Gauge(
-    "container_fs_reads_bytes_total", "Container disk read bytes total", ["name", "id"]
+    "container_fs_reads_bytes_total", "Container disk read bytes total", ["name"]
 )
 container_disk_write = Gauge(
     "container_fs_writes_bytes_total",
     "Container disk write bytes total",
-    ["name", "id"],
+    ["name"],
 )
 
 
@@ -72,10 +72,14 @@ def get_container_stats():
         client = docker.from_env()
         containers = client.containers.list()
 
+        # Track which containers we've seen to clean up old metrics
+        current_containers = set()
+
         for container in containers:
             # Get container info
             name = container.name
             container_id = container.id
+            current_containers.add(name)
 
             try:
                 stats = container.stats(stream=False)
@@ -130,25 +134,51 @@ def get_container_stats():
 
 
                 # Update Prometheus metrics
-                container_cpu_usage.labels(name=name, id=container_id).set(cpu_percent)
-                container_memory_usage.labels(name=name, id=container_id).set(
-                    memory_usage
-                )
-                container_memory_limit.labels(name=name, id=container_id).set(
-                    memory_limit
-                )
-                container_network_rx.labels(name=name, id=container_id).set(rx_bytes)
-                container_network_tx.labels(name=name, id=container_id).set(tx_bytes)
-                container_disk_read.labels(name=name, id=container_id).set(read_bytes)
-                container_disk_write.labels(name=name, id=container_id).set(write_bytes)
+                container_cpu_usage.labels(name=name).set(cpu_percent)
+                container_memory_usage.labels(name=name).set(memory_usage)
+                container_memory_limit.labels(name=name).set(memory_limit)
+                container_network_rx.labels(name=name).set(rx_bytes)
+                container_network_tx.labels(name=name).set(tx_bytes)
+                container_disk_read.labels(name=name).set(read_bytes)
+                container_disk_write.labels(name=name).set(write_bytes)
 
                 logger.info(f"Updated metrics for {name} ({container_id})")
 
             except Exception as e:
                 logger.error(f"Error getting stats for container {container.name}: {e}")
 
+        # Clean up metrics for containers that no longer exist
+        cleanup_old_metrics(current_containers)
+
     except Exception as e:
         logger.error(f"Error connecting to Docker: {e}")
+
+
+def cleanup_old_metrics(current_containers):
+    """Remove metrics for containers that no longer exist"""
+    try:
+        # Get all current metric labels
+        all_metrics = [
+            container_cpu_usage,
+            container_memory_usage,
+            container_memory_limit,
+            container_network_rx,
+            container_network_tx,
+            container_disk_read,
+            container_disk_write,
+        ]
+        
+        for metric in all_metrics:
+            # Get all current labels for this metric
+            for sample in metric.collect()[0].samples:
+                if sample.name == metric._name and 'name' in sample.labels:
+                    container_name = sample.labels['name']
+                    if container_name not in current_containers:
+                        # Remove the metric for this container
+                        metric.remove(container_name)
+                        logger.info(f"Cleaned up metrics for removed container: {container_name}")
+    except Exception as e:
+        logger.error(f"Error cleaning up old metrics: {e}")
 
 
 def main():
