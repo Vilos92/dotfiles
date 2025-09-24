@@ -60,9 +60,9 @@ start_services() {
     echo -e "   • Transmission:  http://greg-zone:9004"
     echo
     echo -e "${PURPLE}🌍 Public Access:${NC}"
-    echo -e "   • copyparty:     https://your-domain.com"
-    echo -e "   • FreshRSS:      https://your-domain.com"
-    echo -e "   • Kiwix:         https://your-domain.com"
+    echo -e "   • copyparty:     https://copyparty.greglinscheid.com"
+    echo -e "   • FreshRSS:      https://freshrss.greglinscheid.com"
+    echo -e "   • Kiwix:         https://kiwix.greglinscheid.com"
     echo
     echo -e "${CYAN}💻 Local Access:${NC}"
     echo -e "   • Prometheus:    http://greg-zone:9090"
@@ -88,15 +88,53 @@ restart_services() {
     print_status "Services restarted!"
 }
 
-# Function to show logs
+# Function to pull latest images
+pull_services() {
+    print_header "Pulling Latest Images"
+    print_status "Pulling latest images for all services..."
+    docker-compose -f greg-zone/docker-compose.yml pull
+    print_status "Images pulled!"
+}
+
+# Function to update services (pull + restart)
+update_services() {
+    print_header "Updating GregZone Services"
+    print_status "Pulling latest images..."
+    docker-compose -f greg-zone/docker-compose.yml pull
+    print_status "Restarting services with new images..."
+    docker-compose -f greg-zone/docker-compose.yml up -d
+    print_status "Services updated!"
+}
+
+# Function to build services (for local builds)
+build_services() {
+    print_header "Building GregZone Services"
+    print_status "Building all Docker services..."
+    docker-compose -f greg-zone/docker-compose.yml build
+    print_status "Services built!"
+}
+
+# Function to show service logs with follow
+follow_logs() {
+    local service=${1:-""}
+    if [ -n "$service" ]; then
+        print_header "Following logs for $service"
+        docker-compose -f greg-zone/docker-compose.yml logs -f "$service"
+    else
+        print_header "Following All Services Logs"
+        docker-compose -f greg-zone/docker-compose.yml logs -f
+    fi
+}
+
+# Function to show logs without follow
 show_logs() {
     local service=${1:-""}
     if [ -n "$service" ]; then
         print_header "Logs for $service"
-        docker-compose -f greg-zone/docker-compose.yml logs -f "$service"
+        docker-compose -f greg-zone/docker-compose.yml logs --tail=100 "$service"
     else
         print_header "All Services Logs"
-        docker-compose -f greg-zone/docker-compose.yml logs -f
+        docker-compose -f greg-zone/docker-compose.yml logs --tail=100
     fi
 }
 
@@ -117,9 +155,9 @@ show_access_info() {
     echo -e "   • cAdvisor:      http://greg-zone:9007 (Container metrics)"
     echo
     echo -e "${PURPLE}🌍 Public Access (via Cloudflare):${NC}"
-    echo -e "   • copyparty:     https://your-domain.com (File sharing)"
-    echo -e "   • FreshRSS:      https://your-domain.com (RSS reader)"
-    echo -e "   • Kiwix:         https://your-domain.com (Offline wikis)"
+    echo -e "   • copyparty:     https://copyparty.greglinscheid.com (File sharing)"
+    echo -e "   • FreshRSS:      https://freshrss.greglinscheid.com (RSS reader)"
+    echo -e "   • Kiwix:         https://kiwix.greglinscheid.com (Offline wikis)"
     echo
     echo -e "${CYAN}💻 Local Access (Direct Ports):${NC}"
     echo -e "   • Node Exporter: http://greg-zone:9100 (System metrics)"
@@ -166,38 +204,57 @@ show_help() {
     echo "Usage: $0 [COMMAND] [OPTIONS]"
     echo
     echo "Commands:"
-    echo "  start                 Start all services"
-    echo "  stop                  Stop all services"
-    echo "  restart               Restart all services"
-    echo "  status                Show service status"
-    echo "  logs [service]        Show logs (optionally for specific service)"
-    echo "  access                Show service access information"
-    echo "  monitoring            Show monitoring setup information"
-    echo "  help                  Show this help message"
+    echo "  up                     Start all services (docker-compose up -d)"
+    echo "  down                   Stop all services (docker-compose down)"
+    echo "  restart                Restart all services (docker-compose restart)"
+    echo "  ps                     Show service status (docker-compose ps)"
+    echo "  logs [service]         Show recent logs (docker-compose logs --tail=100)"
+    echo "  logs -f [service]      Follow logs (docker-compose logs -f)"
+    echo "  pull                   Pull latest images (docker-compose pull)"
+    echo "  build                  Build services (docker-compose build)"
+    echo "  update                 Pull latest images and restart (pull + up)"
+    echo "  access                 Show service access information"
+    echo "  monitoring             Show monitoring setup information"
+    echo "  help                   Show this help message"
     echo
     echo "Examples:"
-    echo "  $0 start              # Start all services"
-    echo "  $0 logs copyparty     # Show copyparty logs"
+    echo "  $0 up                 # Start all services"
+    echo "  $0 logs copyparty     # Show recent copyparty logs"
+    echo "  $0 logs -f copyparty  # Follow copyparty logs"
+    echo "  $0 update             # Pull latest images and restart"
     echo "  $0 access             # Show all service URLs"
     echo "  $0 monitoring         # Show monitoring information"
 }
 
 # Main script logic
 case "${1:-help}" in
-    start)
+    up)
         start_services
         ;;
-    stop)
+    down)
         stop_services
         ;;
     restart)
         restart_services
         ;;
-    status)
+    ps)
         show_status
         ;;
     logs)
-        show_logs "$2"
+        if [ "$2" = "-f" ]; then
+            follow_logs "$3"
+        else
+            show_logs "$2"
+        fi
+        ;;
+    pull)
+        pull_services
+        ;;
+    build)
+        build_services
+        ;;
+    update)
+        update_services
         ;;
     access)
         show_access_info

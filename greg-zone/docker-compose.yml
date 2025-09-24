@@ -65,13 +65,16 @@ services:
 
   # External services (accessible via Cloudflare)
   copyparty:
-    image: copyparty/ac:latest
+    image: copyparty/dj:latest
     container_name: copyparty
     ports:
       - "3923:3923"
     user: "1000"
+    environment:
+      - LD_PRELOAD=/usr/lib/libmimalloc-secure.so.2
     volumes:
       - "./copyparty/copyparty.conf:/app/copyparty.conf:ro"
+      - "copyparty-hists:/cfg/hists"
       - "/Volumes/T7:/Volumes/T7"
       - "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault"
     restart: unless-stopped
@@ -261,4 +264,6 @@ volumes:
   prometheus-data:
     driver: local
   grafana-data:
+    driver: local
+  copyparty-hists:
     driver: local
