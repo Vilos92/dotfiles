@@ -127,11 +127,10 @@ def get_container_stats():
                     io_entries = blkio_stats["io_service_bytes_recursive"]
                     if io_entries:  # Check if not None
                         for entry in io_entries:
-                            if entry.get("op") == "Read":
+                            if entry.get("op") == "read":
                                 read_bytes += entry.get("value", 0)
-                            elif entry.get("op") == "Write":
+                            elif entry.get("op") == "write":
                                 write_bytes += entry.get("value", 0)
-
 
                 # Update Prometheus metrics
                 container_cpu_usage.labels(name=name).set(cpu_percent)
