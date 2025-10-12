@@ -1,5 +1,4 @@
 services:
-  # Tailscale services
   tailscale:
     image: tailscale/tailscale:latest
     container_name: tailscale
@@ -34,7 +33,6 @@ services:
       - grafana
     network_mode: service:tailscale
 
-  # Cloudflare services
   cloudflared:
     image: cloudflare/cloudflared:latest
     container_name: cloudflared
@@ -63,7 +61,6 @@ services:
       - cloudflare
       - tailscale
 
-  # External services (accessible via Cloudflare)
   copyparty:
     image: copyparty/dj:latest
     container_name: copyparty
@@ -116,7 +113,6 @@ services:
       - cloudflare
       - tailscale
 
-  # Internal services (Tailscale only)
   transmission:
     image: lscr.io/linuxserver/transmission:latest
     container_name: transmission
@@ -137,7 +133,6 @@ services:
     networks:
       - tailscale
 
-  # Monitoring Stack
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
@@ -288,11 +283,65 @@ services:
     networks:
       - tailscale
 
+  minecraft:
+    image: itzg/minecraft-bedrock-server:latest
+    container_name: minecraft
+    hostname: greg-zone-minecraft
+    restart: unless-stopped
+    environment:
+      - EULA=TRUE
+      - MEMORY=2G
+      - AUTO_PAUSE=TRUE
+      - AUTO_PAUSE_DELAY=10
+      - GAMEMODE=survival
+      - DIFFICULTY=normal
+    volumes:
+      - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania:/data"
+    ports:
+      - "19132:19132/udp"
+    deploy:
+      resources:
+        limits:
+          memory: 2.5G
+        reservations:
+          memory: 1G
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      playit:
+        ipv4_address: 172.20.0.10
+
+  playit:
+    image: ghcr.io/playit-cloud/playit-agent:0.16
+    container_name: playit
+    hostname: greg-zone-playit
+    restart: unless-stopped
+    environment:
+      - SECRET_KEY=${PLAYIT_SECRET_KEY}
+    deploy:
+      resources:
+        limits:
+          memory: 128M
+    logging:
+      options:
+        max-size: "5m"
+        max-file: "2"
+    networks:
+      playit:
+        ipv4_address: 172.20.0.11
+
 networks:
   cloudflare:
     driver: bridge
   tailscale:
     driver: bridge
+  playit:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.20.0.0/24
 
 volumes:
   tailscale-state:
