@@ -190,8 +190,9 @@
         }
         
         .system-stats-compact {
+            position: relative;
             margin: 30px 0;
-            padding: 20px;
+            padding: 20px 0;
             background: rgba(139, 92, 246, 0.1);
             border-radius: 15px;
             border: 2px solid rgba(139, 92, 246, 0.3);
@@ -200,6 +201,89 @@
         .stats-header {
             text-align: center;
             margin-bottom: 15px;
+            position: relative;
+        }
+        
+        .nav-side {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 30px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            z-index: 10;
+            background: rgba(139, 92, 246, 0.15);
+            display: none;
+        }
+        
+        .nav-side:hover {
+            background: rgba(139, 92, 246, 0.25);
+        }
+        
+        .nav-side-left {
+            top: -1px;
+            bottom: -1px;
+            left: -1px;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-left: none;
+            border-radius: 15px 0 0 15px;
+        }
+        
+        .nav-side-left:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            border-left: none;
+        }
+        
+        .nav-side-right {
+            top: -1px;
+            bottom: -1px;
+            right: -1px;
+            border: 1px solid rgba(139, 92, 246, 0.4);
+            border-right: none;
+            border-radius: 0 15px 15px 0;
+            z-index: 20;
+        }
+        
+        .nav-side-right:hover {
+            border-color: rgba(139, 92, 246, 0.6);
+            border-right: none;
+        }
+        
+        /* Hide navigation buttons on mobile */
+        @media (max-width: 768px) {
+            .nav-side {
+                display: none !important;
+            }
+            
+            /* Make stats rows wider on mobile - minimal side padding */
+            .stats-row {
+                padding: 0 8px 0 8px !important;
+            }
+            
+            /* Make docker containers box match stats rows width on mobile */
+            .container-list {
+                margin: 10px 8px 0 8px !important;
+            }
+            
+            /* Reduce main container padding on mobile */
+            .container {
+                padding: 10px !important;
+            }
+            
+            /* Reduce system stats compact padding on mobile */
+            .system-stats-compact {
+                padding: 10px 0 !important;
+            }
+        }
+        
+        /* Show left button only when on right view (minecraft) */
+        .system-stats-compact.view-minecraft .nav-side-left {
+            display: block;
+        }
+        
+        /* Show right button only when on left view (system) */
+        .system-stats-compact:not(.view-minecraft) .nav-side-right {
+            display: block;
         }
         
         .stats-header-link {
@@ -207,7 +291,7 @@
             text-decoration: none;
             font-weight: 700;
             font-size: 16px;
-            transition: color 0.1s ease;
+            transition: all 0.3s ease;
         }
         
         .stats-header-link:hover {
@@ -236,17 +320,89 @@
             border-color: rgba(139, 92, 246, 0.5);
         }
         
-        .stat-label {
-            font-size: 12px;
-            color: #666;
-            margin-bottom: 5px;
-            font-weight: 700;
+        
+        /* Stats container with sliding animation */
+        .stats-container {
+            position: relative;
+            overflow: hidden;
+            margin: 20px 0;
+            min-height: 300px;
         }
         
-        .stat-value {
+        /* Stats row layout - vertical list */
+        .stats-row {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            transition: transform 0.5s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            position: absolute;
+            width: 100%;
+            top: 0;
+            left: 0;
+            min-height: 300px;
+            padding: 0 50px 0 50px;
+            box-sizing: border-box;
+        }
+        
+        .stats-row#system-stats-view {
+            transform: translateX(0);
+        }
+        
+        .stats-row#minecraft-stats-view {
+            transform: translateX(100%);
+        }
+        
+        .stats-container.view-minecraft #system-stats-view {
+            transform: translateX(-100%);
+        }
+        
+        .stats-container.view-minecraft #minecraft-stats-view {
+            transform: translateX(0);
+        }
+        
+        .stats-row .stat-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 6px;
+            border: 1px solid rgba(139, 92, 246, 0.1);
+            transition: background-color 0.2s ease;
+        }
+        
+        .stats-row .stat-item:hover {
+            background: rgba(255, 255, 255, 0.5);
+        }
+        
+        .stats-row .stat-item.stat-item-clickable {
+            background: rgba(255, 255, 255, 0.6);
+            border: 1px solid rgba(139, 92, 246, 0.3);
+            cursor: pointer;
+        }
+        
+        .stats-row .stat-item.stat-item-clickable:hover {
+            background: rgba(255, 255, 255, 0.8);
+            border-color: rgba(139, 92, 246, 0.5);
+            transform: translateY(-1px);
+        }
+        
+        .stats-row .stat-item .stat-icon {
             font-size: 18px;
+            margin-right: 10px;
+        }
+        
+        .stats-row .stat-item .stat-value {
+            font-size: 16px;
             font-weight: 700;
             color: #8b5cf6;
+            margin-right: auto;
+        }
+        
+        .stats-row .stat-item .stat-label {
+            font-size: 12px;
+            color: #666;
+            font-weight: 600;
         }
         
         .stats-footer {
@@ -554,39 +710,86 @@
         
         <!-- Compact System Stats at Top -->
         <div class="system-stats-compact">
+            <div class="nav-side nav-side-left" onclick="switchView('prev')"></div>
+            <div class="nav-side nav-side-right" onclick="switchView('next')"></div>
+            
             <div class="stats-header">
-                <a href="//greg-zone:9006/d/gregzone-system/gregzone-system-overview?orgId=1&from=now-1h&to=now&timezone=browser&var-instance=$__all" class="stats-header-link" target="_blank">
+                <a href="//greg-zone:9006/d/gregzone-system/gregzone-system-overview?orgId=1&from=now-1h&to=now&timezone=browser&var-instance=$__all" class="stats-header-link" target="_blank" id="stats-header-link">
                     📊 Monitoring & Stats
                 </a>
             </div>
             
-            <div class="stats-row">
-                <div class="stat-item">
-                    <span class="stat-icon">⚡</span>
-                    <span class="stat-value" id="cpu-usage">Loading...</span>
-                    <span class="stat-label">CPU</span>
+            <!-- Stats Container with Sliding Animation -->
+            <div class="stats-container">
+                <!-- System Stats View -->
+                <div class="stats-row" id="system-stats-view">
+                    <div class="stat-item">
+                        <span class="stat-icon">⚡</span>
+                        <span class="stat-value" id="cpu-usage">Loading...</span>
+                        <span class="stat-label">CPU</span>
+                    </div>
+                    <div class="stat-item stat-item-clickable" id="memory-stat" onclick="toggleMemoryDisplay()">
+                        <span class="stat-icon">🧠</span>
+                        <span class="stat-value" id="memory-usage">Loading...</span>
+                        <span class="stat-label" id="memory-label">VM RAM</span>
+                        <span class="dropdown-arrow">🔄</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">💾</span>
+                        <span class="stat-value" id="disk-usage">Loading...</span>
+                        <span class="stat-label">Disk</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🕐</span>
+                        <span class="stat-value" id="last-updated">Never</span>
+                        <span class="stat-label">Updated</span>
+                    </div>
+                    <div class="stat-item stat-item-clickable" id="container-stat" onclick="toggleContainerList()">
+                        <span class="stat-icon">🐳</span>
+                        <span class="stat-value" id="container-count">Loading...</span>
+                        <span class="stat-label">Containers</span>
+                        <span class="dropdown-arrow">▼</span>
+                    </div>
                 </div>
-                <div class="stat-item stat-item-clickable" id="memory-stat" onclick="toggleMemoryDisplay()">
-                    <span class="stat-icon">🧠</span>
-                    <span class="stat-value" id="memory-usage">Loading...</span>
-                    <span class="stat-label" id="memory-label">VM RAM</span>
-                    <span class="dropdown-arrow">🔄</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-icon">💾</span>
-                    <span class="stat-value" id="disk-usage">Loading...</span>
-                    <span class="stat-label">Disk</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-icon">🕐</span>
-                    <span class="stat-value" id="last-updated">Never</span>
-                    <span class="stat-label">Updated</span>
-                </div>
-                <div class="stat-item stat-item-clickable" id="container-stat" onclick="toggleContainerList()">
-                    <span class="stat-icon">🐳</span>
-                    <span class="stat-value" id="container-count">Loading...</span>
-                    <span class="stat-label">Containers</span>
-                    <span class="dropdown-arrow">▼</span>
+                
+                <!-- Minecraft Stats View -->
+                <div class="stats-row" id="minecraft-stats-view">
+                    <div class="stat-item">
+                        <span class="stat-icon">🎮</span>
+                        <span class="stat-value" id="minecraft-status">Loading...</span>
+                        <span class="stat-label">Server Status</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">👥</span>
+                        <span class="stat-value" id="minecraft-players">Loading...</span>
+                        <span class="stat-label">Players</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">📊</span>
+                        <span class="stat-value" id="minecraft-version">Loading...</span>
+                        <span class="stat-label">Version</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">⚡</span>
+                        <span class="stat-value" id="minecraft-response">Loading...</span>
+                        <span class="stat-label">Response Time</span>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-icon">🧠</span>
+                        <span class="stat-value" id="minecraft-memory">Loading...</span>
+                        <span class="stat-label">Memory Usage</span>
+                    </div>
+                    <div class="stat-item stat-item-clickable" onclick="copyToClipboard('cheap-instructor.gl.at.ply.gg:11627')">
+                        <span class="stat-icon">🌐</span>
+                        <span class="stat-value">cheap-instructor.gl.at.ply.gg:11627</span>
+                        <span class="dropdown-arrow">📋</span>
+                    </div>
+                    <div class="stat-item stat-item-clickable" onclick="window.open('//greg-zone:9006/d/minecraft-monitoring/minecraft-server-monitoring?orgId=1&from=now-1h&to=now&timezone=browser', '_blank')">
+                        <span class="stat-icon">📈</span>
+                        <span class="stat-value">Monitoring</span>
+                        <span class="stat-label">Dashboard</span>
+                        <span class="dropdown-arrow">🔗</span>
+                    </div>
                 </div>
             </div>
             
@@ -844,9 +1047,203 @@
             }
         }
         
-        // Update stats on page load and every 30 seconds
+        // View switching functionality
+        let currentView = 0;
+        const views = [
+            { name: '📊 Monitoring & Stats', link: '//greg-zone:9006/d/gregzone-system/gregzone-system-overview?orgId=1&from=now-1h&to=now&timezone=browser&var-instance=$__all' },
+            { name: '⛏️ Minecraft (Jordania)', link: '//greg-zone:9006/d/minecraft-monitoring/minecraft-server-monitoring?orgId=1&from=now-1h&to=now&timezone=browser' }
+        ];
+        
+        function switchView(direction) {
+            if (isAnimating) return;
+            isAnimating = true;
+            
+            if (direction === 'next') {
+                currentView = (currentView + 1) % views.length;
+            } else if (direction === 'prev') {
+                currentView = (currentView - 1 + views.length) % views.length;
+            }
+            
+            updateViewDisplay();
+            
+            // Reset animation lock after animation completes
+            setTimeout(() => {
+                isAnimating = false;
+            }, 600);
+        }
+        
+        function updateViewDisplay() {
+            const headerLink = document.getElementById('stats-header-link');
+            const statsContainer = document.querySelector('.stats-container');
+            const systemStatsCompact = document.querySelector('.system-stats-compact');
+            
+            // Update header
+            headerLink.textContent = views[currentView].name;
+            headerLink.href = views[currentView].link;
+            
+            // Update container class to trigger CSS animation
+            if (currentView === 0) {
+                statsContainer.classList.remove('view-minecraft');
+                systemStatsCompact.classList.remove('view-minecraft');
+            } else {
+                statsContainer.classList.add('view-minecraft');
+                systemStatsCompact.classList.add('view-minecraft');
+            }
+        }
+        
+        // Minecraft stats updater
+        async function updateMinecraftStats() {
+            try {
+                const prometheusUrl = 'http://greg-zone:9005/api/v1/query';
+                
+                // Get server health status
+                const healthResponse = await fetch(`${prometheusUrl}?query=minecraft_status_healthy`);
+                const healthData = await healthResponse.json();
+                
+                // Get player count
+                const playersResponse = await fetch(`${prometheusUrl}?query=minecraft_status_players_online_count`);
+                const playersData = await playersResponse.json();
+                
+                // Get max players
+                const maxPlayersResponse = await fetch(`${prometheusUrl}?query=minecraft_status_players_max_count`);
+                const maxPlayersData = await maxPlayersResponse.json();
+                
+                // Get server version
+                const versionResponse = await fetch(`${prometheusUrl}?query=minecraft_status_healthy`);
+                const versionData = await versionResponse.json();
+                
+                // Get response time
+                const responseTimeResponse = await fetch(`${prometheusUrl}?query=minecraft_status_response_time_seconds`);
+                const responseTimeData = await responseTimeResponse.json();
+                
+                // Update server status
+                const healthValue = healthData.data?.result?.[0]?.value?.[1] || '0';
+                const statusElement = document.getElementById('minecraft-status');
+                if (healthValue === '1') {
+                    statusElement.textContent = 'Online';
+                    statusElement.style.color = '#10b981';
+                } else {
+                    statusElement.textContent = 'Offline';
+                    statusElement.style.color = '#ef4444';
+                }
+                
+                // Update player count
+                const onlinePlayers = playersData.data?.result?.[0]?.value?.[1] || '0';
+                const maxPlayers = maxPlayersData.data?.result?.[0]?.value?.[1] || '0';
+                document.getElementById('minecraft-players').textContent = `${onlinePlayers}/${maxPlayers}`;
+                
+                // Update version
+                const version = versionData.data?.result?.[0]?.metric?.server_version || 'Unknown';
+                document.getElementById('minecraft-version').textContent = version;
+                
+                // Update response time
+                const responseTime = responseTimeData.data?.result?.[0]?.value?.[1] || '0';
+                const responseTimeMs = (parseFloat(responseTime) * 1000).toFixed(1);
+                document.getElementById('minecraft-response').textContent = `${responseTimeMs}ms`;
+                
+                // Get Minecraft container memory usage
+                const memoryResponse = await fetch(`${prometheusUrl}?query=container_memory_usage_bytes{name="minecraft"}`);
+                const memoryData = await memoryResponse.json();
+                
+                // Update memory usage
+                const memoryBytes = memoryData.data?.result?.[0]?.value?.[1] || '0';
+                const memoryMB = (parseFloat(memoryBytes) / (1024 * 1024)).toFixed(0);
+                document.getElementById('minecraft-memory').textContent = `${memoryMB}MB`;
+                
+            } catch (error) {
+                console.error('Error updating Minecraft stats:', error);
+                document.getElementById('minecraft-status').textContent = 'Error';
+                document.getElementById('minecraft-players').textContent = 'Error';
+                document.getElementById('minecraft-version').textContent = 'Error';
+                document.getElementById('minecraft-response').textContent = 'Error';
+                document.getElementById('minecraft-memory').textContent = 'Error';
+            }
+        }
+        
+        // Touch/swipe support for mobile
+        let touchStartX = 0;
+        let touchEndX = 0;
+        let isAnimating = false;
+        
+        document.addEventListener('touchstart', function(e) {
+            if (isAnimating) return;
+            touchStartX = e.changedTouches[0].screenX;
+        });
+        
+        document.addEventListener('touchend', function(e) {
+            if (isAnimating) return;
+            touchEndX = e.changedTouches[0].screenX;
+            handleSwipe();
+        });
+        
+        function handleSwipe() {
+            const swipeThreshold = 50;
+            const diff = touchStartX - touchEndX;
+            
+            if (Math.abs(diff) > swipeThreshold) {
+                if (diff > 0) {
+                    // Swipe left - next view
+                    switchView('next');
+                } else {
+                    // Swipe right - previous view
+                    switchView('prev');
+                }
+            }
+        }
+        
+        // Keyboard navigation
+        document.addEventListener('keydown', function(e) {
+            if (e.key === 'ArrowLeft') {
+                switchView('prev');
+            } else if (e.key === 'ArrowRight') {
+                switchView('next');
+            }
+        });
+        
+        // Copy to clipboard function
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(function() {
+                // Show a brief success message
+                const originalText = event.target.closest('.stat-item').querySelector('.stat-value').textContent;
+                const valueElement = event.target.closest('.stat-item').querySelector('.stat-value');
+                valueElement.textContent = 'Copied!';
+                valueElement.style.color = '#10b981';
+                
+                setTimeout(() => {
+                    valueElement.textContent = originalText;
+                    valueElement.style.color = '#8b5cf6';
+                }, 1500);
+            }).catch(function(err) {
+                console.error('Failed to copy: ', err);
+                // Fallback for older browsers
+                const textArea = document.createElement('textarea');
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                
+                const valueElement = event.target.closest('.stat-item').querySelector('.stat-value');
+                const originalText = valueElement.textContent;
+                valueElement.textContent = 'Copied!';
+                valueElement.style.color = '#10b981';
+                
+                setTimeout(() => {
+                    valueElement.textContent = originalText;
+                    valueElement.style.color = '#8b5cf6';
+                }, 1500);
+            });
+        }
+        
+        // Update stats on page load and continuously in background
         updateSystemStats();
+        updateMinecraftStats();
+        
+        // Update system stats every 30 seconds
         setInterval(updateSystemStats, 30000);
+        
+        // Update Minecraft stats every 30 seconds
+        setInterval(updateMinecraftStats, 30000);
     </script>
 </body>
 </html>
