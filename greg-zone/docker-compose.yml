@@ -285,26 +285,29 @@ services:
 
   minecraft:
     image: itzg/minecraft-bedrock-server:latest
+    platform: linux/amd64
     container_name: minecraft
     hostname: greg-zone-minecraft
     restart: unless-stopped
     environment:
       - EULA=TRUE
-      - MEMORY=2G
       - AUTO_PAUSE=TRUE
       - AUTO_PAUSE_DELAY=10
       - GAMEMODE=survival
       - DIFFICULTY=normal
-    volumes:
-      - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania:/data"
+      - ENABLE_SSH=true
     ports:
       - "19132:19132/udp"
+    expose:
+      - "2222"
+    volumes:
+      - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania:/data"
+    stdin_open: true
+    tty: true
     deploy:
       resources:
         limits:
-          memory: 2.5G
-        reservations:
-          memory: 1G
+          memory: 4G
     logging:
       options:
         max-size: "10m"
@@ -313,11 +316,34 @@ services:
       playit:
         ipv4_address: 172.20.0.10
 
+  minecraft-backup:
+    image: kaiede/minecraft-bedrock-backup
+    container_name: minecraft-backup
+    hostname: greg-zone-minecraft-backup
+    restart: unless-stopped
+    environment:
+      - TZ=America/Los_Angeles
+    volumes:
+      - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania_backups:/data"
+      - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania:/jordania"
+      - "./minecraft-backup/config.yml:/config/config.yml:ro"
+    depends_on:
+      - minecraft
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      playit:
+        ipv4_address: 172.20.0.11
+
   playit:
     image: ghcr.io/playit-cloud/playit-agent:0.16
     container_name: playit
     hostname: greg-zone-playit
     restart: unless-stopped
+    depends_on:
+      - minecraft
     environment:
       - SECRET_KEY=${PLAYIT_SECRET_KEY}
     deploy:
@@ -330,7 +356,7 @@ services:
         max-file: "2"
     networks:
       playit:
-        ipv4_address: 172.20.0.11
+        ipv4_address: 172.20.0.12
 
 networks:
   cloudflare:
