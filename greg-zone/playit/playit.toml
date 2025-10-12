@@ -1,3 +1,0 @@
-refresh_from_api = true
-secret_key = "put-secret-here"
-mappings = []
