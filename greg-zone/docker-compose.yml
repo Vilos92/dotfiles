@@ -141,7 +141,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - ./prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus:/etc/prometheus:ro
       - prometheus-data:/prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -156,6 +156,40 @@ services:
         max-file: "3"
     networks:
       - tailscale
+
+  minecraft-webhook:
+    build: ./minecraft/webhook
+    container_name: minecraft-webhook
+    hostname: greg-zone-minecraft-webhook
+    restart: unless-stopped
+    ports:
+      - "8083:8080"
+    environment:
+      - DISCORD_JORDANIA_WEBHOOK_URL=${DISCORD_JORDANIA_WEBHOOK_URL}
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - tailscale
+
+  alert-monitor:
+    build: ./log-alerts
+    container_name: alert-monitor
+    hostname: greg-zone-alert-monitor
+    restart: unless-stopped
+    environment:
+      - LOKI_URL=http://loki:3100
+      - WEBHOOK_URL=http://minecraft-webhook:8080/webhook
+      - CHECK_INTERVAL=5
+    networks:
+      - tailscale
+    volumes:
+      - alert-monitor-state:/tmp
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   grafana:
     image: grafana/grafana:latest
@@ -282,6 +316,7 @@ services:
         max-file: "3"
     networks:
       - tailscale
+      - playit
 
   minecraft:
     image: itzg/minecraft-bedrock-server:latest
@@ -315,6 +350,7 @@ services:
     networks:
       playit:
         ipv4_address: 172.20.0.10
+      tailscale:
 
   minecraft-backup:
     image: kaiede/minecraft-bedrock-backup
@@ -326,7 +362,7 @@ services:
     volumes:
       - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania_backups:/data"
       - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania:/jordania"
-      - "./minecraft-backup/config.yml:/config/config.yml:ro"
+      - "./minecraft/backup/config.yml:/config/config.yml:ro"
     depends_on:
       - minecraft
     logging:
@@ -399,6 +435,8 @@ volumes:
   grafana-data:
     driver: local
   loki-data:
+    driver: local
+  alert-monitor-state:
     driver: local
   copyparty-hists:
     driver: local

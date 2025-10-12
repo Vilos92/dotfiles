@@ -50,6 +50,27 @@ scrape_configs:
       - labels:
           stream:
           container_name:
+      # Minecraft-specific parsing for minecraft container - only player events
+      - match:
+          selector: '{container_name="minecraft"} |= "Player connected:" |= "Player disconnected:"'
+          stages:
+            - regex:
+                expression: '\[(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}:\d{3} \w+)\] (?P<message>.*)'
+                source: output
+            - regex:
+                expression: 'Player connected: (?P<player_name>\w+), xuid: (?P<xuid>\d+)'
+                source: message
+            - regex:
+                expression: 'Player disconnected: (?P<player_name>\w+), xuid: (?P<xuid>\d+)'
+                source: message
+            - labels:
+                player_name:
+                xuid:
+            - template:
+                source: event_type
+                template: '{{ if contains .message "connected" }}joined{{ else if contains .message "disconnected" }}left{{ end }}'
+            - labels:
+                event_type:
       - output:
           source: output
 

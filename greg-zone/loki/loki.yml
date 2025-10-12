@@ -9,12 +9,12 @@ common:
   storage:
     filesystem:
       chunks_directory: /loki/chunks
-      rules_directory: /loki/rules
+      rules_directory: /etc/loki/rules
   replication_factor: 1
   ring:
     instance_addr: 127.0.0.1
     kvstore:
-      store: inmemory
+      store: memberlist
 
 query_scheduler:
   max_outstanding_requests_per_tenant: 2048
@@ -29,8 +29,22 @@ schema_config:
         prefix: index_
         period: 24h
 
-ruler:
-  alertmanager_url: http://localhost:9093
+# Ruler disabled - using custom log-alerts service instead
+# ruler:
+#   alertmanager_url: http://minecraft-webhook:8080/webhook
+#   rule_path: /etc/loki/rules-temp
+#   storage:
+#     type: local
+#     local:
+#       directory: /etc/loki/rules
+#   ring:
+#     kvstore:
+#       store: memberlist
+#   enable_api: true
+#   enable_alertmanager_v2: true
+#   external_url: http://loki:3100
+#   evaluation_interval: 30s
+#   poll_interval: 10s
 
 # Simple limits config without retention for now
 limits_config:
