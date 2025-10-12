@@ -67,21 +67,27 @@ def webhook():
             if status != 'firing':
                 continue
             
-            # Extract player information
+            # Extract information
             player_name = labels.get('player_name', 'Unknown Player')
             xuid = labels.get('xuid', 'Unknown XUID')
             event_type = labels.get('event_type', 'unknown')
+            alert_type = labels.get('alert_type', 'unknown')
+            current_state = labels.get('current_state', 'unknown')
             
-            # Get Discord message from annotations and add XUID
+            # Get Discord message from annotations
             discord_title = annotations.get('discord_title', 'Minecraft Alert')
             base_message = annotations.get('discord_message', 'A Minecraft event occurred')
-            # Replace any hardcoded player name with the actual player name from labels
-            base_message = base_message.replace('**vilos5099**', f"**{player_name}**")
-            # Format the message with XUID
-            discord_message = f"{base_message}\n**XUID:** `{xuid}`"
             
-            # Set color based on event type
-            color = 0x00ff00 if event_type == 'joined' else 0xff6b6b
+            # Handle different alert types
+            if alert_type == 'server_health_change':
+                # Server health alerts - use state-based colors
+                discord_message = base_message
+                color = 0x00ff00 if current_state == 'online' else 0xff0000
+            else:
+                # Player activity alerts - add XUID and use event-based colors
+                base_message = base_message.replace('**vilos5099**', f"**{player_name}**")
+                discord_message = f"{base_message}\n**XUID:** `{xuid}`"
+                color = 0x00ff00 if event_type == 'joined' else 0xff6b6b
             
             # Send to Discord with XUID in the message
             success = send_discord_message(discord_title, discord_message, color)

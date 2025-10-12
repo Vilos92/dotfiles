@@ -8,7 +8,9 @@ Prevents duplicate alerts by tracking processed log entries.
 import os
 import json
 import time
+import socket
 import requests
+import subprocess
 from datetime import datetime, timedelta
 from typing import Dict, List
 import logging
@@ -33,17 +35,31 @@ class LogAlertMonitor:
         
         # Alert configurations - easily extensible for different services
         self.alert_configs = [
-            # Minecraft server state monitoring
+            # Minecraft server health monitoring (up/down)
             {
-                'name': 'minecraft_server_state',
+                'name': 'minecraft_server_health',
+                'service': 'minecraft',
+                'check_type': 'health_check',  # Special type for health checks
+                'host': 'minecraft',
+                'port': 19132,
+                'alert_type': 'server_health_change',
+                'discord_title': '🎮 Server Health Changed',
+                'discord_message': 'Minecraft server is now {state}!',
+                'color_online': 0x00ff00,  # Green for online
+                'color_offline': 0xff0000,  # Red for offline
+                'track_state': True
+            },
+            # Minecraft server activity monitoring (player activity)
+            {
+                'name': 'minecraft_server_activity',
                 'service': 'minecraft',
                 'query': '{container_name="minecraft"} |~ "Player (connected|disconnected):"',
                 'pattern': r'(?:Player connected: (?P<player_name>\w+), xuid: (?P<xuid>\d+))|(?:Player disconnected: (?P<player_name>\w+), xuid: (?P<xuid>\d+))',
-                'alert_type': 'server_state_change',
-                'discord_title': '🎮 Server Status Changed',
-                'discord_message': 'Minecraft server is now {state}!',
-                'color': 0x00ff00,
-                'track_state': True  # This alert tracks server state
+                'alert_type': 'server_activity_change',
+                'discord_title': '🎮 Server Activity Changed',
+                'discord_message': 'Minecraft server activity: {state}!',
+                'color': 0x0099ff,
+                'track_state': True
             },
             # TODO: Add more alert types as needed
             # {
@@ -97,6 +113,40 @@ class LogAlertMonitor:
                 }, f)
         except Exception as e:
             logger.warning(f"Could not save state file: {e}")
+    
+    def check_server_health(self, host: str, port: int, timeout: int = 5) -> bool:
+        """Check if a server is responding on the given host:port"""
+        try:
+            # For Minecraft, use mc-monitor metrics endpoint
+            if host == 'minecraft':
+                try:
+                    response = requests.get('http://mc-monitor:8080/metrics', timeout=timeout)
+                    if response.status_code == 200:
+                        # Check if minecraft_status_healthy metric exists and is 1
+                        metrics_text = response.text
+                        for line in metrics_text.split('\n'):
+                            if line.startswith('minecraft_status_healthy') and '1' in line:
+                                logger.debug(f"mc-monitor reports minecraft as healthy")
+                                return True
+                        logger.debug(f"mc-monitor reports minecraft as unhealthy")
+                        return False
+                    else:
+                        logger.debug(f"mc-monitor returned status {response.status_code}")
+                        return False
+                except Exception as e:
+                    logger.debug(f"Failed to check mc-monitor: {e}")
+                    return False
+            else:
+                # For other hosts, use TCP connection
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(timeout)
+                result = sock.connect_ex((host, port))
+                sock.close()
+                return result == 0
+                
+        except Exception as e:
+            logger.debug(f"Health check failed for {host}:{port}: {e}")
+            return False
     
     def query_loki(self, query: str, start_time: datetime, end_time: datetime) -> List[Dict]:
         """Query Loki for log entries"""
@@ -172,10 +222,10 @@ class LogAlertMonitor:
             # Choose appropriate emoji and color based on state
             if current_state == 'online':
                 discord_title = '🟢 Server Online'
-                color = 0x00ff00
+                color = config.get('color_online', 0x00ff00)
             else:
                 discord_title = '🔴 Server Offline'
-                color = 0xff0000
+                color = config.get('color_offline', 0xff0000)
             
             payload = {
                 "alerts": [{
@@ -201,9 +251,42 @@ class LogAlertMonitor:
         except Exception as e:
             logger.error(f"Error sending state alert: {e}")
     
+    def process_health_check_alert(self, config: Dict):
+        """Process health check alerts"""
+        service = config['service']
+        host = config['host']
+        port = config['port']
+        
+        logger.info(f"Running health check for {service} at {host}:{port}")
+        
+        # Check if server is responding
+        is_healthy = self.check_server_health(host, port)
+        current_state = 'online' if is_healthy else 'offline'
+        
+        logger.info(f"Health check result for {service}: {current_state} (healthy: {is_healthy})")
+        
+        # Check if state has changed
+        previous_state = self.server_states.get(service, 'offline')
+        
+        if current_state != previous_state:
+            logger.info(f"Server health changed for {service}: {previous_state} -> {current_state}")
+            
+            # Send alert for state transition
+            self.send_state_alert(config, current_state, previous_state)
+            
+            # Update state
+            self.server_states[service] = current_state
+        else:
+            logger.info(f"Server health unchanged for {service}: {current_state}")
+    
     def process_alert_config(self, config: Dict, start_time: datetime, end_time: datetime):
         """Process a single alert configuration"""
         import re
+        
+        # Handle health checks differently
+        if config.get('check_type') == 'health_check':
+            self.process_health_check_alert(config)
+            return
         
         # Query Loki for matching logs
         logs = self.query_loki(config['query'], start_time, end_time)
