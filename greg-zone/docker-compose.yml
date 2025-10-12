@@ -358,6 +358,28 @@ services:
       playit:
         ipv4_address: 172.20.0.12
 
+  mc-monitor:
+    image: itzg/mc-monitor:latest
+    container_name: mc-monitor
+    hostname: greg-zone-mc-monitor
+    restart: unless-stopped
+    ports:
+      - "8082:8080"
+    environment:
+      - EXPORT_BEDROCK_SERVERS=172.20.0.10:19132
+      - EXPORT_PORT=8080
+      - TIMEOUT=30s
+    command: export-for-prometheus
+    depends_on:
+      - minecraft
+    logging:
+      options:
+        max-size: "5m"
+        max-file: "2"
+    networks:
+      - tailscale
+      - playit
+
 networks:
   cloudflare:
     driver: bridge

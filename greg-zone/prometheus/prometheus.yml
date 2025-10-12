@@ -47,3 +47,10 @@ scrape_configs:
           - 'transmission:9091'
     metrics_path: /health
     scrape_interval: 30s
+
+  # Minecraft server monitoring via mc-monitor
+  - job_name: 'minecraft-monitor'
+    static_configs:
+      - targets: ['mc-monitor:8080']
+    scrape_interval: 15s
+    metrics_path: /metrics
