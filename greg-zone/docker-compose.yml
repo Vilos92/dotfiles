@@ -71,11 +71,12 @@ services:
       - LD_PRELOAD=/usr/lib/libmimalloc-secure.so.2
     volumes:
       - "./copyparty/copyparty.conf:/app/copyparty.conf:ro"
+      - "./copyparty/copyparty-discord-hook.py:/app/copyparty-discord-hook.py:ro"
       - "copyparty-hists:/cfg/hists"
       - "/Volumes/T7:/Volumes/T7"
       - "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault"
     restart: unless-stopped
-    command: ["--rproxy", "-1", "-c", "/app/copyparty.conf"]
+    command: ["--rproxy", "-1", "-c", "/app/copyparty.conf", "--xau", "f,t5,j,python3,/app/copyparty-discord-hook.py,--"]
     networks:
       - cloudflare
       - tailscale

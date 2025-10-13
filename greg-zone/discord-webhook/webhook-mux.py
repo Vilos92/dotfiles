@@ -301,6 +301,34 @@ def plex_webhook():
         logger.error(f"Error processing Plex webhook: {e}")
         return jsonify({"status": "error", "message": str(e)}), 500
 
+@app.route('/copyparty-upload', methods=['POST'])
+def copyparty_upload():
+    """Handle copyparty file upload notifications"""
+    try:
+        data = request.get_json()
+        if not data:
+            return jsonify({"status": "error", "message": "No JSON data provided"}), 400
+        
+        # Get the copyparty webhook URL
+        webhook_url = os.getenv('DISCORD_COPYPARTY_WEBHOOK_URL')
+        if not webhook_url:
+            logger.error("DISCORD_COPYPARTY_WEBHOOK_URL not configured")
+            return jsonify({"status": "error", "message": "Discord webhook not configured"}), 500
+        
+        # Forward the embed data to Discord
+        response = requests.post(webhook_url, json=data, timeout=10)
+        
+        if response.status_code in [200, 204]:
+            logger.info(f"Copyparty upload notification sent successfully")
+            return jsonify({"status": "success"}), 200
+        else:
+            logger.error(f"Discord webhook returned status {response.status_code}: {response.text}")
+            return jsonify({"status": "error", "message": f"Discord webhook failed: {response.status_code}"}), 500
+            
+    except Exception as e:
+        logger.error(f"Error processing copyparty upload: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
@@ -308,7 +336,7 @@ def health():
         "status": "healthy", 
         "service": "webhook-mux",
         "configured_services": list(DISCORD_WEBHOOKS.keys()),
-        "endpoints": ["/webhook", "/plex-webhook", "/health"]
+        "endpoints": ["/webhook", "/plex-webhook", "/copyparty-upload", "/health"]
     })
 
 if __name__ == '__main__':
