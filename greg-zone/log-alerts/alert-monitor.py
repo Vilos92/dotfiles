@@ -22,7 +22,7 @@ logger = logging.getLogger(__name__)
 class LogAlertMonitor:
     def __init__(self):
         self.loki_url = os.getenv('LOKI_URL', 'http://loki:3100')
-        self.webhook_url = os.getenv('WEBHOOK_URL', 'http://minecraft-webhook:8080/webhook')
+        self.webhook_url = os.getenv('WEBHOOK_URL', 'http://discord-webhook:8080/webhook')
         self.check_interval = int(os.getenv('CHECK_INTERVAL', '5'))  # seconds
         self.state_file = '/tmp/alert_monitor_state.json'
         self.last_check_time = None
@@ -43,49 +43,40 @@ class LogAlertMonitor:
                 'host': 'minecraft',
                 'port': 19132,
                 'alert_type': 'server_health_change',
-                'discord_title': '🎮 Server Health Changed',
+                'discord_title': '🎮 Minecraft Alert Monitor',
                 'discord_message': 'Minecraft server is now {state}!',
                 'color_online': 0x00ff00,  # Green for online
                 'color_offline': 0xff0000,  # Red for offline
                 'track_state': True
             },
-            # Minecraft server activity monitoring (player activity)
+            # Minecraft player join/leave monitoring
             {
-                'name': 'minecraft_server_activity',
+                'name': 'minecraft_player_activity',
                 'service': 'minecraft',
                 'query': '{container_name="minecraft"} |~ "Player (connected|disconnected):"',
-                'pattern': r'(?:Player connected: (?P<player_name>\w+), xuid: (?P<xuid>\d+))|(?:Player disconnected: (?P<player_name>\w+), xuid: (?P<xuid>\d+))',
-                'alert_type': 'server_activity_change',
-                'discord_title': '🎮 Server Activity Changed',
-                'discord_message': 'Minecraft server activity: {state}!',
-                'color': 0x0099ff,
-                'track_state': True
+                'pattern': r'Player (?P<event_type>connected|disconnected): (?P<player_name>\w+), xuid: (?P<xuid>\d+)',
+                'alert_type': 'player_activity',
+                'discord_title': '🎮 Minecraft Alert Monitor',
+                'discord_message': '**{player_name}** {event_type} the server',
+                'color': 0x0099ff
             },
-            # TODO: Add more alert types as needed
-            # {
-            #     'name': 'minecraft_server_down',
-            #     'service': 'minecraft',
-            #     'query': '{container_name="minecraft"} |= "Server stopped"',
-            #     'pattern': r'Server stopped',
-            #     'alert_type': 'server_down',
-            #     'discord_title': '🚨 Server Down!',
-            #     'discord_message': 'The Minecraft server has stopped!',
-            #     'color': 0xff0000
-            # },
-            # {
-            #     'name': 'copyparty_file_uploaded',
-            #     'service': 'copyparty',
-            #     'query': '{container_name="copyparty"} |= "file uploaded"',
-            #     'pattern': r'file uploaded: (?P<filename>\S+) by (?P<user>\S+)',
-            #     'alert_type': 'file_uploaded',
-            #     'discord_title': '📁 File Uploaded',
-            #     'discord_message': '**{filename}** uploaded by {user}',
-            #     'color': 0x0099ff
-            # }
+            # Copyparty user activity monitoring (with 1-hour cooldown)
+            {
+                'name': 'copyparty_user_activity',
+                'service': 'copyparty',
+                'query': '{container_name="copyparty"} |~ "GET.*@"',
+                'pattern': r'GET\s+([^\s]+)\s+@(?P<username>\w+)',
+                'alert_type': 'user_activity',
+                'discord_title': '👤 Copyparty Alert Monitor',
+                'discord_message': '**{username}** is using copyparty',
+                'color': 0x00ff99,
+                'track_state': True,
+                'cooldown_seconds': 3600  # Only alert if user hasn't been active for 1+ hours (3600 seconds)
+            }
         ]
     
     def load_state(self):
-        """Load the last check time and server states"""
+        """Load the last check time, server states, and user activity times"""
         try:
             if os.path.exists(self.state_file):
                 with open(self.state_file, 'r') as f:
@@ -98,18 +89,26 @@ class LogAlertMonitor:
                     # Load server states
                     self.server_states = data.get('server_states', {})
                     logger.info(f"Loaded server states: {self.server_states}")
+                    
+                    # Load user activity times
+                    user_activity_data = data.get('user_activity_times', {})
+                    self.user_activity_times = {k: datetime.fromisoformat(v) for k, v in user_activity_data.items()}
+                    if self.user_activity_times:
+                        logger.info(f"Loaded user activity times: {self.user_activity_times}")
         except Exception as e:
             logger.warning(f"Could not load state file: {e}")
             self.last_check_time = None
             self.server_states = {}
+            self.user_activity_times = {}
     
     def save_state(self):
-        """Save the last check time and server states"""
+        """Save the last check time, server states, and user activity times"""
         try:
             with open(self.state_file, 'w') as f:
                 json.dump({
                     'last_check_time': self.last_check_time.isoformat() if self.last_check_time else None,
-                    'server_states': self.server_states
+                    'server_states': self.server_states,
+                    'user_activity_times': {k: v.isoformat() for k, v in getattr(self, 'user_activity_times', {}).items()}
                 }, f)
         except Exception as e:
             logger.warning(f"Could not save state file: {e}")
@@ -174,44 +173,12 @@ class LogAlertMonitor:
                             'labels': result.get('stream', {})
                         })
             
+            if results:
+                logger.info(f"Loki query returned {len(results)} logs")
             return results
         except Exception as e:
             logger.error(f"Error querying Loki: {e}")
             return []
-    
-    def send_alert(self, config: Dict, matches: List[Dict]):
-        """Send alert to webhook"""
-        try:
-            for match in matches:
-                # Format the Discord message with extracted data
-                discord_message = config['discord_message'].format(**match)
-                
-                # Add XUID if available
-                if 'xuid' in match:
-                    discord_message += f"\n**XUID:** `{match['xuid']}`"
-                
-                payload = {
-                    "alerts": [{
-                        "status": "firing",
-                        "labels": {
-                            "service": config.get('service', 'unknown'),
-                            "alert_type": config['alert_type'],
-                            **match  # Include all extracted fields (player_name, xuid, etc.)
-                        },
-                        "annotations": {
-                            "discord_title": config['discord_title'],
-                            "discord_message": discord_message
-                        }
-                    }]
-                }
-                
-                response = requests.post(self.webhook_url, json=payload, timeout=10)
-                response.raise_for_status()
-                
-                logger.info(f"Sent alert: {config['name']} - {match.get('player_name', 'Unknown')}")
-                
-        except Exception as e:
-            logger.error(f"Error sending alert: {e}")
     
     def send_state_alert(self, config: Dict, current_state: str, previous_state: str):
         """Send alert for server state transition"""
@@ -308,6 +275,11 @@ class LogAlertMonitor:
         service = config['service']
         pattern = re.compile(config['pattern'])
         
+        # Check if this is a user activity alert with cooldown
+        if config.get('cooldown_seconds'):
+            self.process_user_activity_alert(config, logs)
+            return
+        
         # Determine current server state based on recent activity
         current_state = 'offline'  # Default to offline
         
@@ -332,6 +304,78 @@ class LogAlertMonitor:
         else:
             logger.debug(f"Server state unchanged for {service}: {current_state}")
     
+    def process_user_activity_alert(self, config: Dict, logs: List[Dict]):
+        """Process user activity alerts with cooldown"""
+        import re
+        from datetime import timedelta
+        
+        pattern = re.compile(config['pattern'])
+        cooldown_seconds = config.get('cooldown_seconds', 3600)  # Default to 3600 seconds (1 hour)
+        current_time = datetime.now()
+        
+        # Track user activity timestamps
+        if not hasattr(self, 'user_activity_times'):
+            self.user_activity_times = {}
+        
+        for log in logs:
+            match = pattern.search(log['message'])
+            if match:
+                username = match.group('username')
+                
+                # Check if we should alert for this user
+                last_activity = self.user_activity_times.get(username)
+                should_alert = False
+                
+                if last_activity is None:
+                    # First time seeing this user
+                    should_alert = True
+                    logger.info(f"First activity detected for user: {username}")
+                else:
+                    # Check if enough time has passed
+                    time_since_last = current_time - last_activity
+                    if time_since_last >= timedelta(seconds=cooldown_seconds):
+                        should_alert = True
+                        logger.info(f"User {username} active after {time_since_last}")
+                    else:
+                        logger.debug(f"User {username} active but within cooldown period")
+                
+                if should_alert:
+                    # Send alert for user activity
+                    self.send_user_activity_alert(config, username)
+                
+                # Update last activity time
+                self.user_activity_times[username] = current_time
+    
+    def send_user_activity_alert(self, config: Dict, username: str):
+        """Send alert for user activity"""
+        try:
+            # Format the Discord message with username
+            discord_message = config['discord_message'].format(username=username)
+            
+            payload = {
+                "alerts": [{
+                    "status": "firing",
+                    "labels": {
+                        "service": config['service'],
+                        "alert_type": config['alert_type'],
+                        "username": username
+                    },
+                    "annotations": {
+                        "discord_title": config['discord_title'],
+                        "discord_message": discord_message
+                    }
+                }]
+            }
+            
+            # Send to webhook service
+            response = requests.post(self.webhook_url, json=payload, timeout=10)
+            response.raise_for_status()
+            
+            logger.info(f"Sent user activity alert: {username} using {config['service']}")
+            
+        except Exception as e:
+            logger.error(f"Error sending user activity alert: {e}")
+    
     def process_regular_alert(self, config: Dict, logs: List[Dict]):
         """Process regular alerts (non-state-tracking)"""
         import re
@@ -348,18 +392,50 @@ class LogAlertMonitor:
         
         # Send alerts for new matches
         if matches:
-            self.send_alert(config, matches)
+            for match in matches:
+                # Format the Discord message with extracted data
+                # Convert event_type to past tense for better readability
+                if 'event_type' in match:
+                    event_type = match['event_type']
+                    if event_type == 'connected':
+                        match['event_type'] = 'joined'
+                    elif event_type == 'disconnected':
+                        match['event_type'] = 'left'
+                
+                discord_message = config['discord_message'].format(**match)
+                
+                payload = {
+                    "alerts": [{
+                        "status": "firing",
+                        "labels": {
+                            "service": config.get('service', 'unknown'),
+                            "alert_type": config['alert_type'],
+                            **match  # Include all extracted fields (player_name, xuid, etc.)
+                        },
+                        "annotations": {
+                            "discord_title": config['discord_title'],
+                            "discord_message": discord_message
+                        }
+                    }]
+                }
+                
+                # Send to webhook service
+                response = requests.post(self.webhook_url, json=payload, timeout=10)
+                response.raise_for_status()
+                
+                logger.info(f"Sent alert: {config['name']} - {match.get('player_name', 'Unknown')}")
     
     def run_check(self):
         """Run a single check cycle"""
         # Calculate time range for this check
         end_time = datetime.now()
         
-        # Use last check time if available, otherwise go back one interval
+        # Use last check time if available, otherwise go back a reasonable window
         if self.last_check_time:
             start_time = self.last_check_time
         else:
-            start_time = end_time - timedelta(seconds=self.check_interval)
+            # On first run, look back 5 minutes to catch any events that happened while down
+            start_time = end_time - timedelta(minutes=5)
         
         logger.info(f"Checking logs from {start_time} to {end_time}")
         

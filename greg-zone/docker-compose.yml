@@ -157,15 +157,16 @@ services:
     networks:
       - tailscale
 
-  minecraft-webhook:
-    build: ./minecraft/webhook
-    container_name: minecraft-webhook
-    hostname: greg-zone-minecraft-webhook
+  discord-webhook:
+    build: ./discord-webhook
+    container_name: discord-webhook
+    hostname: greg-zone-discord-webhook
     restart: unless-stopped
     ports:
       - "8083:8080"
     environment:
       - DISCORD_JORDANIA_WEBHOOK_URL=${DISCORD_JORDANIA_WEBHOOK_URL}
+      - DISCORD_COPYPARTY_WEBHOOK_URL=${DISCORD_COPYPARTY_WEBHOOK_URL}
     logging:
       options:
         max-size: "10m"
@@ -180,7 +181,7 @@ services:
     restart: unless-stopped
     environment:
       - LOKI_URL=http://loki:3100
-      - WEBHOOK_URL=http://minecraft-webhook:8080/webhook
+      - WEBHOOK_URL=http://discord-webhook:8080/webhook
       - CHECK_INTERVAL=5
     networks:
       - tailscale

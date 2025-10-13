@@ -210,9 +210,9 @@
             bottom: 0;
             width: 30px;
             cursor: pointer;
-            transition: all 0.2s ease;
+            transition: all 0.1s ease;
             z-index: 10;
-            background: rgba(139, 92, 246, 0.15);
+            background: rgba(139, 92, 246, 0.05);
             display: none;
         }
         
@@ -452,11 +452,18 @@
         /* Container list dropdown */
         .container-list {
             margin-top: 10px;
+            margin-left: 50px;
+            margin-right: 50px;
             background: rgba(255, 255, 255, 0.9);
             border-radius: 10px;
             border: 2px solid rgba(139, 92, 246, 0.3);
             overflow: hidden;
             animation: slideDown 0.15s ease;
+        }
+        
+        /* Hide container list on minecraft view */
+        .system-stats-compact.view-minecraft .container-list {
+            display: none !important;
         }
         
         @keyframes slideDown {
