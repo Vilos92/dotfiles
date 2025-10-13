@@ -19,12 +19,18 @@ logger = logging.getLogger(__name__)
 DISCORD_WEBHOOKS = {
     'minecraft': os.getenv('DISCORD_JORDANIA_WEBHOOK_URL'),
     'copyparty': os.getenv('DISCORD_COPYPARTY_WEBHOOK_URL'),
-    'plex': os.getenv('DISCORD_PLEX_WEBHOOK_URL')
+    'plex': os.getenv('DISCORD_PLEX_WEBHOOK_URL'),
+    'nginx': os.getenv('DISCORD_NGINX_WEBHOOK_URL')
 }
 
 def send_discord_message(service, title, message, color=0x00ff00):
     """Send a formatted message to the appropriate Discord webhook"""
-    webhook_url = DISCORD_WEBHOOKS.get(service)
+    # Route nginx security alerts to nginx webhook
+    if service.startswith('nginx') or service == 'nginx':
+        webhook_url = DISCORD_WEBHOOKS.get('nginx')
+        logger.info(f"Routing nginx alert to nginx webhook: {service}")
+    else:
+        webhook_url = DISCORD_WEBHOOKS.get(service)
     
     if not webhook_url:
         logger.error(f"No Discord webhook URL configured for service: {service}")

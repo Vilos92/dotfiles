@@ -33,6 +33,11 @@ class LogAlertMonitor:
         # Server state tracking
         self.server_states = {}  # Track online/offline state for each service
         
+        # IP monitoring state
+        self.known_ips = {}  # Track known IPs and their last seen time
+        self.suspicious_ips = set()  # Track IPs that have triggered alerts
+        self.ip_alert_cooldown = {}  # Track cooldown periods for IP alerts
+        
         # Alert configurations - easily extensible for different services
         self.alert_configs = [
             # Minecraft server health monitoring (up/down)
@@ -60,18 +65,61 @@ class LogAlertMonitor:
                 'discord_message': '**{player_name}** {event_type} the server',
                 'color': 0x0099ff
             },
-            # Copyparty user activity monitoring (with 1-hour cooldown)
+            # Copyparty user activity monitoring (simplified)
             {
                 'name': 'copyparty_user_activity',
                 'service': 'copyparty',
                 'query': '{container_name="copyparty"} |~ "GET.*@"',
-                'pattern': r'GET\s+([^\s]+)\s+@(?P<username>\w+)',
+                'pattern': r'GET\s+[^\s]+\s+@(?P<username>\w+)',
                 'alert_type': 'user_activity',
-                'discord_title': '👤 Copyparty Alert Monitor',
-                'discord_message': '**{username}** is using copyparty',
+                'discord_title': '',
+                'discord_message': '👤 **{username}** is using copyparty',
                 'color': 0x00ff99,
                 'track_state': True,
                 'cooldown_seconds': 3600  # Only alert if user hasn't been active for 1+ hours (3600 seconds)
+            },
+            # Nginx Cloudflare - New IP detection
+            {
+                'name': 'nginx_cloudflare_new_ip',
+                'service': 'nginx-cloudflared',
+                'query': '{container_name="nginx-cloudflared"} |~ "GET|POST|PUT|DELETE"',
+                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" cf_ip="(?P<cf_connecting_ip>[^"]*)" cf_country="(?P<cf_country>[^"]*)" cf_ray="(?P<cf_ray>[^"]*)"',
+                'alert_type': 'new_ip_access',
+                'discord_title': '',
+                'discord_message': '🌍 **New IP Access via Cloudflare**\n\n**📍 Location:** {cf_country}\n**🔗 IP Address:** `{cf_connecting_ip}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**☁️ Cloudflare Ray ID:** `{cf_ray}`\n**🌐 Protocol:** {protocol}',
+                'color': 0xff9900,
+                'track_state': True,
+                'cooldown_seconds': 3600,  # 1 hour cooldown for same IP
+                'ip_field': 'cf_connecting_ip'
+            },
+            # Nginx Tailscale - New IP detection
+            {
+                'name': 'nginx_tailscale_new_ip',
+                'service': 'nginx-tailscale',
+                'query': '{container_name="nginx-tailscale"} |~ "GET|POST|PUT|DELETE"',
+                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"',
+                'alert_type': 'new_ip_access',
+                'discord_title': '',
+                'discord_message': '🔒 **New IP Access via Tailscale**\n\n**🔗 IP Address:** `{remote_addr}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**🌐 Protocol:** {protocol}',
+                'color': 0x0099ff,
+                'track_state': True,
+                'cooldown_seconds': 3600,  # 1 hour cooldown for same IP
+                'ip_field': 'remote_addr'
+            },
+            # Suspicious activity detection (multiple failed requests)
+            {
+                'name': 'nginx_suspicious_activity',
+                'service': 'nginx-suspicious',
+                'query': '{container_name=~"nginx-.*"} |~ "4[0-9][0-9]|5[0-9][0-9]"',
+                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"',
+                'alert_type': 'suspicious_activity',
+                'discord_title': '',
+                'discord_message': '⚠️ **Suspicious Activity Detected**\n\n**🚨 IP Address:** `{remote_addr}`\n**🕐 Time:** {time_local}\n**🌐 Source:** {container_name}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Failed Request:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status} ❌\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**🌐 Protocol:** {protocol}\n\n**⚠️ Multiple failed requests detected from this IP!**',
+                'color': 0xff0000,
+                'track_state': False,
+                'cooldown_seconds': 1800,  # 30 minutes cooldown
+                'ip_field': 'remote_addr',
+                'threshold': 5  # Alert if 5+ failed requests in time window
             }
         ]
     
@@ -95,11 +143,22 @@ class LogAlertMonitor:
                     self.user_activity_times = {k: datetime.fromisoformat(v) for k, v in user_activity_data.items()}
                     if self.user_activity_times:
                         logger.info(f"Loaded user activity times: {self.user_activity_times}")
+                    
+                    # Load IP tracking data
+                    self.known_ips = data.get('known_ips', {})
+                    self.suspicious_ips = set(data.get('suspicious_ips', []))
+                    ip_cooldown_data = data.get('ip_alert_cooldown', {})
+                    self.ip_alert_cooldown = {k: datetime.fromisoformat(v) for k, v in ip_cooldown_data.items()}
+                    if self.known_ips:
+                        logger.info(f"Loaded {len(self.known_ips)} known IPs")
         except Exception as e:
             logger.warning(f"Could not load state file: {e}")
             self.last_check_time = None
             self.server_states = {}
             self.user_activity_times = {}
+            self.known_ips = {}
+            self.suspicious_ips = set()
+            self.ip_alert_cooldown = {}
     
     def save_state(self):
         """Save the last check time, server states, and user activity times"""
@@ -108,7 +167,10 @@ class LogAlertMonitor:
                 json.dump({
                     'last_check_time': self.last_check_time.isoformat() if self.last_check_time else None,
                     'server_states': self.server_states,
-                    'user_activity_times': {k: v.isoformat() for k, v in getattr(self, 'user_activity_times', {}).items()}
+                    'user_activity_times': {k: v.isoformat() for k, v in getattr(self, 'user_activity_times', {}).items()},
+                    'known_ips': self.known_ips,
+                    'suspicious_ips': list(self.suspicious_ips),
+                    'ip_alert_cooldown': {k: v.isoformat() for k, v in self.ip_alert_cooldown.items()}
                 }, f)
         except Exception as e:
             logger.warning(f"Could not save state file: {e}")
@@ -261,8 +323,15 @@ class LogAlertMonitor:
         if not logs:
             return
         
-        # Handle state-tracking alerts differently
-        if config.get('track_state', False):
+        # Handle different types of alerts
+        if config.get('check_type') == 'health_check':
+            # Already handled above
+            pass
+        elif config.get('alert_type') == 'new_ip_access':
+            self.process_ip_access_alert(config, logs)
+        elif config.get('alert_type') == 'suspicious_activity':
+            self.process_suspicious_activity_alert(config, logs)
+        elif config.get('track_state', False):
             self.process_state_tracking_alert(config, logs)
         else:
             # Handle regular alerts (like file uploads, etc.)
@@ -375,6 +444,170 @@ class LogAlertMonitor:
             
         except Exception as e:
             logger.error(f"Error sending user activity alert: {e}")
+    
+    def process_ip_access_alert(self, config: Dict, logs: List[Dict]):
+        """Process IP access alerts to detect new IPs"""
+        import re
+        from datetime import timedelta
+        
+        pattern = re.compile(config['pattern'])
+        ip_field = config.get('ip_field', 'remote_addr')
+        cooldown_seconds = config.get('cooldown_seconds', 3600)
+        current_time = datetime.now()
+        
+        for log in logs:
+            match = pattern.search(log['message'])
+            if match:
+                match_data = match.groupdict()
+                ip_address = match_data.get(ip_field)
+                
+                if not ip_address or ip_address == '-':
+                    continue
+                
+                # Check if this is a new IP or if cooldown has expired
+                should_alert = False
+                ip_key = f"{config['service']}:{ip_address}"
+                
+                if ip_key not in self.known_ips:
+                    # First time seeing this IP
+                    should_alert = True
+                    logger.info(f"New IP detected: {ip_address} accessing {config['service']}")
+                else:
+                    # Check if enough time has passed since last alert
+                    last_seen = self.known_ips[ip_key]
+                    time_since_last = current_time - last_seen
+                    if time_since_last >= timedelta(seconds=cooldown_seconds):
+                        should_alert = True
+                        logger.info(f"IP {ip_address} accessing {config['service']} after {time_since_last}")
+                    else:
+                        logger.debug(f"IP {ip_address} accessing {config['service']} but within cooldown period")
+                
+                if should_alert:
+                    # Send alert for new IP access
+                    self.send_ip_access_alert(config, match_data)
+                
+                # Update last seen time
+                self.known_ips[ip_key] = current_time
+    
+    def process_suspicious_activity_alert(self, config: Dict, logs: List[Dict]):
+        """Process suspicious activity alerts (multiple failed requests)"""
+        import re
+        from collections import defaultdict
+        
+        pattern = re.compile(config['pattern'])
+        ip_field = config.get('ip_field', 'remote_addr')
+        threshold = config.get('threshold', 5)
+        cooldown_seconds = config.get('cooldown_seconds', 1800)
+        current_time = datetime.now()
+        
+        # Count failed requests by IP and store the last failed request details
+        ip_failed_requests = defaultdict(int)
+        ip_last_failed_request = {}
+        
+        for log in logs:
+            match = pattern.search(log['message'])
+            if match:
+                match_data = match.groupdict()
+                ip_address = match_data.get(ip_field)
+                status = match_data.get('status', '200')
+                
+                if not ip_address or ip_address == '-' or not status.startswith(('4', '5')):
+                    continue
+                
+                # Extract container name from log labels
+                container_name = log.get('labels', {}).get('container_name', 'nginx-unknown')
+                match_data['container_name'] = container_name
+                
+                ip_failed_requests[ip_address] += 1
+                ip_last_failed_request[ip_address] = match_data
+        
+        # Check for IPs exceeding threshold
+        for ip_address, count in ip_failed_requests.items():
+            if count >= threshold:
+                ip_key = f"{config['service']}:{ip_address}"
+                
+                # Check cooldown
+                should_alert = True
+                if ip_key in self.ip_alert_cooldown:
+                    time_since_last = current_time - self.ip_alert_cooldown[ip_key]
+                    if time_since_last < timedelta(seconds=cooldown_seconds):
+                        should_alert = False
+                
+                if should_alert:
+                    logger.warning(f"Suspicious activity detected: {ip_address} made {count} failed requests")
+                    self.send_suspicious_activity_alert(config, ip_address, count, ip_last_failed_request[ip_address])
+                    self.ip_alert_cooldown[ip_key] = current_time
+    
+    def send_ip_access_alert(self, config: Dict, match_data: Dict):
+        """Send alert for new IP access"""
+        try:
+            # Format the Discord message with extracted data
+            discord_message = config['discord_message'].format(**match_data)
+            
+            payload = {
+                "alerts": [{
+                    "status": "firing",
+                    "labels": {
+                        "service": config['service'],
+                        "alert_type": config['alert_type'],
+                        **match_data
+                    },
+                    "annotations": {
+                        "discord_title": config['discord_title'],
+                        "discord_message": discord_message
+                    }
+                }]
+            }
+            
+            response = requests.post(self.webhook_url, json=payload, timeout=10)
+            response.raise_for_status()
+            
+            logger.info(f"Sent IP access alert: {config['service']} - {match_data.get('remote_addr', 'Unknown')}")
+            
+        except Exception as e:
+            logger.error(f"Error sending IP access alert: {e}")
+    
+    def send_suspicious_activity_alert(self, config: Dict, ip_address: str, count: int, last_request_data: Dict):
+        """Send alert for suspicious activity"""
+        try:
+            # Use the detailed message template from config with actual log data
+            discord_message = config['discord_message'].format(
+                remote_addr=ip_address,
+                time_local=last_request_data.get('time_local', 'Recent'),
+                remote_user=last_request_data.get('remote_user', '-'),
+                container_name=last_request_data.get('container_name', 'nginx-unknown'),
+                method=last_request_data.get('method', 'Multiple'),
+                request_uri=last_request_data.get('request_uri', 'Various paths'),
+                status=last_request_data.get('status', '4xx/5xx'),
+                body_bytes_sent=last_request_data.get('body_bytes_sent', '0'),
+                http_referer=last_request_data.get('http_referer', '-'),
+                http_user_agent=last_request_data.get('http_user_agent', 'Unknown'),
+                protocol=last_request_data.get('protocol', 'HTTP/1.1')
+            )
+            
+            payload = {
+                "alerts": [{
+                    "status": "firing",
+                    "labels": {
+                        "service": config['service'],
+                        "alert_type": config['alert_type'],
+                        "ip_address": ip_address,
+                        "failed_requests": str(count)
+                    },
+                    "annotations": {
+                        "discord_title": config['discord_title'],
+                        "discord_message": discord_message
+                    }
+                }]
+            }
+            
+            response = requests.post(self.webhook_url, json=payload, timeout=10)
+            response.raise_for_status()
+            
+            logger.info(f"Sent suspicious activity alert: {ip_address} - {count} failed requests")
+            
+        except Exception as e:
+            logger.error(f"Error sending suspicious activity alert: {e}")
     
     def process_regular_alert(self, config: Dict, logs: List[Dict]):
         """Process regular alerts (non-state-tracking)"""
