@@ -54,7 +54,7 @@ class LogAlertMonitor:
                 'name': 'minecraft_player_activity',
                 'service': 'minecraft',
                 'query': '{container_name="minecraft"} |~ "Player (connected|disconnected):"',
-                'pattern': r'Player (?P<event_type>connected|disconnected): (?P<player_name>\w+), xuid: (?P<xuid>\d+)',
+                'pattern': r'Player (?P<event_type>connected|disconnected): (?P<player_name>[^,]+), xuid: (?P<xuid>\d+)',
                 'alert_type': 'player_activity',
                 'discord_title': '🎮 Minecraft Alert Monitor',
                 'discord_message': '**{player_name}** {event_type} the server',
