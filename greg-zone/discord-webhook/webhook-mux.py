@@ -20,7 +20,8 @@ DISCORD_WEBHOOKS = {
     'minecraft': os.getenv('DISCORD_JORDANIA_WEBHOOK_URL'),
     'copyparty': os.getenv('DISCORD_COPYPARTY_WEBHOOK_URL'),
     'plex': os.getenv('DISCORD_PLEX_WEBHOOK_URL'),
-    'nginx': os.getenv('DISCORD_NGINX_WEBHOOK_URL')
+    'nginx': os.getenv('DISCORD_NGINX_WEBHOOK_URL'),
+    'infra': os.getenv('DISCORD_INFRA_WEBHOOK_URL')
 }
 
 def send_discord_message(service, title, message, color=0x00ff00):
@@ -59,6 +60,73 @@ def send_discord_message(service, title, message, color=0x00ff00):
     except Exception as e:
         logger.error(f"Failed to send Discord message to {service}: {e}")
         return False
+
+@app.route('/webhook/container-health', methods=['POST'])
+def container_health_webhook():
+    """Handle container health alerts from Prometheus/Alertmanager"""
+    try:
+        data = request.get_json()
+        logger.info(f"Received container health webhook: {json.dumps(data, indent=2)}")
+        
+        # Extract alert information from Alertmanager format
+        alerts = data.get('alerts', [])
+        
+        for alert in alerts:
+            labels = alert.get('labels', {})
+            annotations = alert.get('annotations', {})
+            status = alert.get('status', 'unknown')
+            
+            # Debug: log the full alert structure
+            logger.info(f"Alert labels: {labels}")
+            logger.info(f"Alert annotations: {annotations}")
+            
+            # Extract information
+            alertname = labels.get('alertname', 'Unknown Alert')
+            container_name = labels.get('container_name') or labels.get('name') or 'Unknown Container'
+            image = labels.get('image', 'Unknown Image')
+            severity = labels.get('severity', 'unknown')
+            
+            # Check if this is a resolved alert
+            is_resolved = status == 'resolved'
+            
+            # Create title and description based on status
+            if is_resolved:
+                title = f"✅ {alertname.replace('_', ' ').replace('ContainerDown', 'Container Down').title()} - Resolved"
+                summary = f"Container {container_name} is back up"
+                description = f"Container {container_name} has recovered and is running normally."
+                color = 0x00ff00  # Green for resolved
+            else:
+                title = f"🚨 {alertname.replace('_', ' ').replace('ContainerDown', 'Container Down').title()}"
+                summary = annotations.get('summary', alertname)
+                description = annotations.get('description', 'No description available')
+                # Set color based on severity
+                if severity == 'critical':
+                    color = 0xff0000  # Red
+                elif severity == 'warning':
+                    color = 0xffaa00  # Orange
+                else:
+                    color = 0x00ff00  # Green
+            
+            # Create detailed message
+            message = f"**📦 Container:** `{container_name}`\n"
+            if image != 'Unknown Image':
+                message += f"**🏷️ Image:** `{image}`\n"
+            message += f"**🔍 Summary:** {summary}\n"
+            message += f"**📝 Description:** {description}\n"
+            
+            
+            # Send to infrastructure webhook for container health alerts
+            success = send_discord_message('infra', title, message, color)
+            if success:
+                logger.info(f"Sent container health alert: {alertname} for {container_name}")
+            else:
+                logger.error(f"Failed to send container health alert: {alertname}")
+        
+        return jsonify({"status": "success"}), 200
+        
+    except Exception as e:
+        logger.error(f"Error processing container health webhook: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/webhook', methods=['POST'])
 def webhook():

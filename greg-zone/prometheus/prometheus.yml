@@ -3,8 +3,13 @@ global:
   evaluation_interval: 15s
 
 rule_files:
-  # - "first_rules.yml"
-  # - "second_rules.yml"
+  - "container_alerts.yml"
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets:
+          - alertmanager:9093
 
 scrape_configs:
   # Prometheus itself
@@ -37,15 +42,19 @@ scrape_configs:
     scrape_interval: 5s
     metrics_path: /metrics
 
-  # Docker services health checks (optional - for service-specific metrics)
-  - job_name: 'docker-services'
+  # Note: Removed docker-services health checks as these services don't expose /health endpoints
+
+  # Alertmanager monitoring
+  - job_name: 'alertmanager'
     static_configs:
-      - targets: 
-          - 'copyparty:3923'
-          - 'freshrss:80'
-          - 'kiwix:8080'
-          - 'transmission:9091'
-    metrics_path: /health
+      - targets: ['alertmanager:9093']
+    scrape_interval: 30s
+
+  # Grafana monitoring
+  - job_name: 'grafana'
+    static_configs:
+      - targets: ['grafana:3000']
+    metrics_path: /metrics
     scrape_interval: 30s
 
   # Minecraft server monitoring via mc-monitor

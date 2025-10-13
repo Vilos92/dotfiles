@@ -153,6 +153,7 @@ services:
       - '--web.console.templates=/etc/prometheus/consoles'
       - '--storage.tsdb.retention.time=200h'
       - '--web.enable-lifecycle'
+      - '--web.enable-admin-api'
     logging:
       options:
         max-size: "10m"
@@ -160,6 +161,27 @@ services:
     networks:
       - infrastructure
       - tailscale
+
+  alertmanager:
+    image: prom/alertmanager:latest
+    container_name: alertmanager
+    hostname: greg-zone-alertmanager
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+    volumes:
+      - ./alertmanager:/etc/alertmanager:ro
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/alertmanager.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.external-url=http://localhost:9093'
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+    networks:
+      - infrastructure
 
   discord-webhook:
     build: ./discord-webhook
@@ -173,6 +195,7 @@ services:
       - DISCORD_COPYPARTY_WEBHOOK_URL=${DISCORD_COPYPARTY_WEBHOOK_URL}
       - DISCORD_PLEX_WEBHOOK_URL=${DISCORD_PLEX_WEBHOOK_URL}
       - DISCORD_NGINX_WEBHOOK_URL=${DISCORD_NGINX_WEBHOOK_URL}
+      - DISCORD_INFRA_WEBHOOK_URL=${DISCORD_INFRA_WEBHOOK_URL}
     logging:
       options:
         max-size: "10m"
@@ -442,6 +465,8 @@ volumes:
   tailscale-state:
     driver: local
   prometheus-data:
+    driver: local
+  alertmanager-data:
     driver: local
   grafana-data:
     driver: local
