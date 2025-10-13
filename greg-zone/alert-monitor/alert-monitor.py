@@ -103,7 +103,7 @@ class LogAlertMonitor:
                 'discord_message': '🔒 **New IP Access via Tailscale**\n\n**🔗 IP Address:** `{remote_addr}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**🌐 Protocol:** {protocol}',
                 'color': 0x0099ff,
                 'track_state': True,
-                'cooldown_seconds': 3600,  # 1 hour cooldown for same IP
+                'cooldown_seconds': 86400,  # 24 hour cooldown for same IP
                 'ip_field': 'remote_addr'
             },
             # Suspicious activity detection (multiple failed requests)
