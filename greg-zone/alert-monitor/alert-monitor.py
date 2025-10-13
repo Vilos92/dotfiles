@@ -120,6 +120,48 @@ class LogAlertMonitor:
                 'cooldown_seconds': 1800,  # 30 minutes cooldown
                 'ip_field': 'remote_addr',
                 'threshold': 5  # Alert if 5+ failed requests in time window
+            },
+            # Copyparty public health monitoring
+            {
+                'name': 'copyparty_public_health',
+                'service': 'infra',
+                'check_type': 'url_health_check',
+                'urls': ['https://copyparty.greglinscheid.com'],
+                'alert_type': 'service_health_change',
+                'discord_title': '📁 Copyparty Alert',
+                'discord_message': 'Copyparty is now {state}!\n\n🌐 **URL:** https://copyparty.greglinscheid.com',
+                'color_online': 0x00ff00,
+                'color_offline': 0xff0000,
+                'track_state': True,
+                'state_key': 'copyparty_public'  # Unique state tracking key
+            },
+            # FreshRSS public health monitoring
+            {
+                'name': 'freshrss_public_health',
+                'service': 'infra',
+                'check_type': 'url_health_check',
+                'urls': ['https://freshrss.greglinscheid.com'],
+                'alert_type': 'service_health_change',
+                'discord_title': '📰 FreshRSS Alert',
+                'discord_message': 'FreshRSS is now {state}!\n\n🌐 **URL:** https://freshrss.greglinscheid.com',
+                'color_online': 0x00ff00,
+                'color_offline': 0xff0000,
+                'track_state': True,
+                'state_key': 'freshrss_public'  # Unique state tracking key
+            },
+            # Kiwix public health monitoring
+            {
+                'name': 'kiwix_public_health',
+                'service': 'infra',
+                'check_type': 'url_health_check',
+                'urls': ['https://kiwix.greglinscheid.com'],
+                'alert_type': 'service_health_change',
+                'discord_title': '📚 Kiwix Alert',
+                'discord_message': 'Kiwix is now {state}!\n\n🌐 **URL:** https://kiwix.greglinscheid.com',
+                'color_online': 0x00ff00,
+                'color_offline': 0xff0000,
+                'track_state': True,
+                'state_key': 'kiwix_public'  # Unique state tracking key
             }
         ]
     
@@ -148,7 +190,7 @@ class LogAlertMonitor:
                     self.known_ips = data.get('known_ips', {})
                     self.suspicious_ips = set(data.get('suspicious_ips', []))
                     ip_cooldown_data = data.get('ip_alert_cooldown', {})
-                    self.ip_alert_cooldown = {k: datetime.fromisoformat(v) for k, v in ip_cooldown_data.items()}
+                    self.ip_alert_cooldown = {k: datetime.fromisoformat(v) for k, v in ip_cooldown_data.items() if v}
                     if self.known_ips:
                         logger.info(f"Loaded {len(self.known_ips)} known IPs")
         except Exception as e:
@@ -170,7 +212,7 @@ class LogAlertMonitor:
                     'user_activity_times': {k: v.isoformat() for k, v in getattr(self, 'user_activity_times', {}).items()},
                     'known_ips': self.known_ips,
                     'suspicious_ips': list(self.suspicious_ips),
-                    'ip_alert_cooldown': {k: v.isoformat() for k, v in self.ip_alert_cooldown.items()}
+                    'ip_alert_cooldown': {k: v.isoformat() for k, v in self.ip_alert_cooldown.items() if v}
                 }, f)
         except Exception as e:
             logger.warning(f"Could not save state file: {e}")
@@ -207,6 +249,19 @@ class LogAlertMonitor:
                 
         except Exception as e:
             logger.debug(f"Health check failed for {host}:{port}: {e}")
+            return False
+    
+    def check_url_health(self, url: str, timeout: int = 10) -> bool:
+        """Check if a URL is responding with a healthy status code"""
+        try:
+            response = requests.head(url, timeout=timeout, allow_redirects=True)
+            # Consider 2xx and 3xx status codes as healthy
+            # 401 (auth required) is also healthy for services that require authentication
+            is_healthy = 200 <= response.status_code < 400 or response.status_code == 401
+            logger.debug(f"URL health check for {url}: {response.status_code} -> {'healthy' if is_healthy else 'unhealthy'}")
+            return is_healthy
+        except Exception as e:
+            logger.debug(f"URL health check failed for {url}: {e}")
             return False
     
     def query_loki(self, query: str, start_time: datetime, end_time: datetime) -> List[Dict]:
@@ -308,6 +363,39 @@ class LogAlertMonitor:
         else:
             logger.info(f"Server health unchanged for {service}: {current_state}")
     
+    def process_url_health_check_alert(self, config: Dict):
+        """Process URL health check alerts"""
+        service = config['service']
+        urls = config['urls']
+        state_key = config.get('state_key', service)  # Use unique state key if provided
+        
+        logger.info(f"Running URL health check for {service} with {len(urls)} URLs")
+        
+        # Check each URL and determine overall service state
+        all_healthy = True
+        for url in urls:
+            is_healthy = self.check_url_health(url)
+            if not is_healthy:
+                all_healthy = False
+                logger.warning(f"URL health check failed for {url}")
+        
+        current_state = 'online' if all_healthy else 'offline'
+        logger.info(f"URL health check result for {service}: {current_state} (all healthy: {all_healthy})")
+        
+        # Check if state has changed using the unique state key
+        previous_state = self.server_states.get(state_key, 'offline')
+        
+        if current_state != previous_state:
+            logger.info(f"Service health changed for {state_key}: {previous_state} -> {current_state}")
+            
+            # Send alert for state transition
+            self.send_state_alert(config, current_state, previous_state)
+            
+            # Update state using the unique state key
+            self.server_states[state_key] = current_state
+        else:
+            logger.info(f"Service health unchanged for {state_key}: {current_state}")
+    
     def process_alert_config(self, config: Dict, start_time: datetime, end_time: datetime):
         """Process a single alert configuration"""
         import re
@@ -315,6 +403,9 @@ class LogAlertMonitor:
         # Handle health checks differently
         if config.get('check_type') == 'health_check':
             self.process_health_check_alert(config)
+            return
+        elif config.get('check_type') == 'url_health_check':
+            self.process_url_health_check_alert(config)
             return
         
         # Query Loki for matching logs
