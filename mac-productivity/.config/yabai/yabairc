@@ -48,21 +48,3 @@ yabai -m config normal_window_border_color 0xff333333
 
 # By default, all applications will NOT be tiled by yabai.
 yabai -m rule --add app=".*" manage=off
-
-# --- APPS TO BE TILED ---
-# Add rules for specific applications to be managed (tiled) by yabai.
-
-# Terminals
-yabai -m rule --add app="^Alacritty$" manage=on
-
-# Browsers
-yabai -m rule --add app="^Zen$" manage=on
-yabai -m rule --add app="^Arc$" manage=on
-
-# Editors & IDEs
-yabai -m rule --add app="^Cursor$" manage=on
-# VS Code's app name is typically just 'Code'.
-yabai -m rule --add app="^Code$" manage=on
-
-# Productivity
-yabai -m rule --add app="^Notion$" manage=on

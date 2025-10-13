@@ -105,4 +105,4 @@ alt + ctrl - g : yabai -m space --toggle gap
 #--------------------------------------------------
 
 # Restart yabai and skhd services
-cmd + alt - r : yabai --restart-service && skhd --restart-service
+alt + ctrl - r : yabai --restart-service && skhd --restart-service
