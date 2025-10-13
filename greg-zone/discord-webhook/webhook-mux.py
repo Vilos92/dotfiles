@@ -18,7 +18,8 @@ logger = logging.getLogger(__name__)
 # Discord webhook URLs from environment
 DISCORD_WEBHOOKS = {
     'minecraft': os.getenv('DISCORD_JORDANIA_WEBHOOK_URL'),
-    'copyparty': os.getenv('DISCORD_COPYPARTY_WEBHOOK_URL')
+    'copyparty': os.getenv('DISCORD_COPYPARTY_WEBHOOK_URL'),
+    'plex': os.getenv('DISCORD_PLEX_WEBHOOK_URL')
 }
 
 def send_discord_message(service, title, message, color=0x00ff00):
@@ -128,13 +129,186 @@ def webhook():
     
     return jsonify({"status": "success", "message": "No alerts to process"})
 
+def parse_plex_metadata(metadata):
+    """Parse Plex metadata and return formatted information"""
+    if not metadata:
+        return "Unknown Media", "Unknown"
+    
+    media_type = metadata.get('type', 'unknown')
+    title = metadata.get('title', 'Unknown Title')
+    
+    # Handle different media types
+    if media_type == 'movie':
+        year = metadata.get('year', '')
+        return f"🎬 {title}" + (f" ({year})" if year else ""), "Movie"
+    elif media_type == 'episode':
+        show_title = metadata.get('grandparentTitle', 'Unknown Show')
+        season = metadata.get('parentIndex', '')
+        episode = metadata.get('index', '')
+        return f"📺 {show_title} - S{season:02d}E{episode:02d}: {title}", "TV Show"
+    elif media_type == 'track':
+        artist = metadata.get('grandparentTitle', 'Unknown Artist')
+        album = metadata.get('parentTitle', 'Unknown Album')
+        return f"🎵 {artist} - {album} - {title}", "Music"
+    elif media_type == 'artist':
+        return f"🎤 {title}", "Artist"
+    elif media_type == 'album':
+        artist = metadata.get('grandparentTitle', 'Unknown Artist')
+        return f"💿 {artist} - {title}", "Album"
+    else:
+        return f"📄 {title}", media_type.title()
+
+def get_plex_event_info(event_type):
+    """Get event information and color for Plex events"""
+    event_info = {
+        'media.play': {'emoji': '▶️', 'action': 'Started playing', 'color': 0x00ff00},
+        'media.pause': {'emoji': '⏸️', 'action': 'Paused', 'color': 0xffaa00},
+        'media.resume': {'emoji': '▶️', 'action': 'Resumed playing', 'color': 0x00ff00},
+        'media.stop': {'emoji': '⏹️', 'action': 'Stopped playing', 'color': 0xff0000},
+        'media.scrobble': {'emoji': '✅', 'action': 'Finished watching', 'color': 0x00ff88},
+        'media.rate': {'emoji': '⭐', 'action': 'Rated', 'color': 0xffdd00},
+        'library.new': {'emoji': '🆕', 'action': 'New content added', 'color': 0x0099ff},
+        'library.on.deck': {'emoji': '📋', 'action': 'Added to On Deck', 'color': 0x0099ff},
+        'playback.started': {'emoji': '👥', 'action': 'Shared user started playback', 'color': 0x00ff99},
+        'device.new': {'emoji': '📱', 'action': 'New device connected', 'color': 0x99ccff},
+        'admin.database.backup': {'emoji': '💾', 'action': 'Database backup completed', 'color': 0x00ff00},
+        'admin.database.corrupted': {'emoji': '⚠️', 'action': 'Database corruption detected', 'color': 0xff0000}
+    }
+    return event_info.get(event_type, {'emoji': '📡', 'action': 'Plex Event', 'color': 0x666666})
+
+@app.route('/plex-webhook', methods=['POST'])
+def plex_webhook():
+    """Handle incoming webhook from Plex Media Server"""
+    try:
+        # Debug logging
+        logger.info(f"Content-Type: {request.content_type}")
+        logger.info(f"Form data: {dict(request.form)}")
+        logger.info(f"Raw data: {request.get_data()}")
+        
+        # Plex sends data as multipart/form-data with JSON in 'payload' parameter
+        if 'multipart/form-data' in request.content_type or 'application/x-www-form-urlencoded' in request.content_type:
+            payload_data = request.form.get('payload')
+            if payload_data:
+                data = json.loads(payload_data)
+            else:
+                logger.error("No payload parameter in form data")
+                return jsonify({"status": "error", "message": "No payload parameter"}), 400
+        else:
+            # Fallback to direct JSON (for testing)
+            data = request.get_json()
+        
+        logger.info(f"Received Plex webhook: {json.dumps(data, indent=2)}")
+        
+        if not data:
+            logger.error("No data received in Plex webhook")
+            return jsonify({"status": "error", "message": "No data received"}), 400
+        
+        # Extract event information
+        event_type = data.get('event', 'unknown')
+        account = data.get('Account', {})
+        server = data.get('Server', {})
+        player = data.get('Player', {})
+        metadata = data.get('Metadata', {})
+        
+        # Get event details
+        event_info = get_plex_event_info(event_type)
+        
+        # Parse metadata
+        media_title, media_type = parse_plex_metadata(metadata)
+        
+        # Build Discord message
+        username = account.get('title', 'Unknown User')
+        server_name = server.get('title', 'Unknown Server')
+        player_name = player.get('title', 'Unknown Player')
+        is_local = player.get('local', False)
+        
+        # Create embed
+        embed = {
+            "title": f"{event_info['emoji']} {event_info['action']}",
+            "description": f"**{media_title}**",
+            "color": event_info['color'],
+            "timestamp": datetime.utcnow().isoformat(),
+            "fields": [
+                {
+                    "name": "👤 User",
+                    "value": username,
+                    "inline": True
+                },
+                {
+                    "name": "🖥️ Server",
+                    "value": server_name,
+                    "inline": True
+                },
+                {
+                    "name": "📱 Player",
+                    "value": f"{player_name} {'(Local)' if is_local else '(Remote)'}",
+                    "inline": True
+                },
+                {
+                    "name": "📂 Type",
+                    "value": media_type,
+                    "inline": True
+                },
+                {
+                    "name": "🎯 Event",
+                    "value": event_type,
+                    "inline": True
+                }
+            ],
+            "footer": {
+                "text": "Plex Media Server"
+            }
+        }
+        
+        # Add thumbnail if available (for media events)
+        if metadata.get('thumb') and event_type in ['media.play', 'media.rate', 'library.new', 'library.on.deck', 'playback.started']:
+            # Plex thumbnails are relative URLs, need to construct full URL
+            server_url = f"http://{server.get('uuid', 'localhost')}"
+            thumb_url = f"{server_url}{metadata.get('thumb')}"
+            embed["thumbnail"] = {"url": thumb_url}
+        
+        # Add additional fields for specific events
+        if event_type == 'media.rate':
+            rating = metadata.get('rating', 'Unknown')
+            embed["fields"].append({
+                "name": "⭐ Rating",
+                "value": f"{rating}/10",
+                "inline": True
+            })
+        
+        if event_type == 'library.new':
+            library_section = metadata.get('librarySectionType', 'Unknown')
+            embed["fields"].append({
+                "name": "📚 Library Section",
+                "value": library_section.title(),
+                "inline": True
+            })
+        
+        payload = {
+            "embeds": [embed]
+        }
+        
+        # Send to Discord
+        success = send_discord_message('plex', f"{event_info['emoji']} Plex Event", 
+                                     f"{event_info['action']}: {media_title}", event_info['color'])
+        
+        if success:
+            return jsonify({"status": "success", "message": "Plex webhook processed"})
+        else:
+            return jsonify({"status": "error", "message": "Failed to send Discord message"}), 500
+            
+    except Exception as e:
+        logger.error(f"Error processing Plex webhook: {e}")
+        return jsonify({"status": "error", "message": str(e)}), 500
+
 @app.route('/health', methods=['GET'])
 def health():
     """Health check endpoint"""
     return jsonify({
         "status": "healthy", 
         "service": "webhook-mux",
-        "configured_services": list(DISCORD_WEBHOOKS.keys())
+        "configured_services": list(DISCORD_WEBHOOKS.keys()),
+        "endpoints": ["/webhook", "/plex-webhook", "/health"]
     })
 
 if __name__ == '__main__':
