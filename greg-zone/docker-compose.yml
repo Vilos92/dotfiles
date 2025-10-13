@@ -175,7 +175,7 @@ services:
       - tailscale
 
   alert-monitor:
-    build: ./log-alerts
+    build: ./alert-monitor
     container_name: alert-monitor
     hostname: greg-zone-alert-monitor
     restart: unless-stopped
@@ -294,9 +294,7 @@ services:
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
     logging:
-      options:
-        max-size: "10m"
-        max-file: "3"
+      driver: "none"
     networks:
       - tailscale
 
