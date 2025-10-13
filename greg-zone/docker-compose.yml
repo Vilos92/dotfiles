@@ -182,7 +182,7 @@ services:
     environment:
       - LOKI_URL=http://loki:3100
       - WEBHOOK_URL=http://discord-webhook:8080/webhook
-      - CHECK_INTERVAL=5
+      - CHECK_INTERVAL=30
     networks:
       - tailscale
     volumes:
@@ -293,8 +293,6 @@ services:
       - ./loki/loki.yml:/etc/loki/local-config.yaml:ro
       - loki-data:/loki
     command: -config.file=/etc/loki/local-config.yaml
-    logging:
-      driver: "none"
     networks:
       - tailscale
 

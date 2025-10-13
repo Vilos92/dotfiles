@@ -47,14 +47,8 @@ limits_config:
   max_streams_matchers_per_query: 1000
   max_concurrent_tail_requests: 10
   max_queriers_per_tenant: 0
+  retention_period: 168h  # 7 days retention
 
-# Compactor with 7-day retention
-compactor:
-  working_directory: /loki
-  compaction_interval: 10m
-  retention_enabled: true
-  retention_delete_delay: 2h
-  retention_delete_worker_count: 150
 
 analytics:
   reporting_enabled: false

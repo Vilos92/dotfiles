@@ -23,7 +23,7 @@ class LogAlertMonitor:
     def __init__(self):
         self.loki_url = os.getenv('LOKI_URL', 'http://loki:3100')
         self.webhook_url = os.getenv('WEBHOOK_URL', 'http://discord-webhook:8080/webhook')
-        self.check_interval = int(os.getenv('CHECK_INTERVAL', '5'))  # seconds
+        self.check_interval = int(os.getenv('CHECK_INTERVAL', '30'))  # seconds
         self.state_file = '/tmp/alert_monitor_state.json'
         self.last_check_time = None
         
