@@ -83,10 +83,10 @@ class LogAlertMonitor:
                 'name': 'nginx_cloudflare_new_ip',
                 'service': 'nginx-cloudflared',
                 'query': '{container_name="nginx-cloudflared"} |~ "GET|POST|PUT|DELETE"',
-                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" cf_ip="(?P<cf_connecting_ip>[^"]*)" cf_country="(?P<cf_country>[^"]*)" cf_ray="(?P<cf_ray>[^"]*)"',
+                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" host="(?P<host>[^"]*)" cf_ip="(?P<cf_connecting_ip>[^"]*)" cf_country="(?P<cf_country>[^"]*)" cf_ray="(?P<cf_ray>[^"]*)"',
                 'alert_type': 'new_ip_access',
                 'discord_title': '',
-                'discord_message': '🌍 **New IP Access via Cloudflare**\n\n**📍 Location:** {cf_country}\n**🔗 IP Address:** `{cf_connecting_ip}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**☁️ Cloudflare Ray ID:** `{cf_ray}`\n**🌐 Protocol:** {protocol}',
+                'discord_message': '🌍 **New IP Access via Cloudflare**\n\n**📍 Service:** {service_name}\n**📍 Location:** {cf_country}\n**🔗 IP Address:** `{cf_connecting_ip}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**☁️ Cloudflare Ray ID:** `{cf_ray}`\n**🌐 Protocol:** {protocol}',
                 'color': 0xff9900,
                 'track_state': True,
                 'cooldown_seconds': 3600,  # 1 hour cooldown for same IP
@@ -97,10 +97,10 @@ class LogAlertMonitor:
                 'name': 'nginx_tailscale_new_ip',
                 'service': 'nginx-tailscale',
                 'query': '{container_name="nginx-tailscale"} |~ "GET|POST|PUT|DELETE"',
-                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"',
+                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" host="(?P<host>[^"]*)"',
                 'alert_type': 'new_ip_access',
                 'discord_title': '',
-                'discord_message': '🔒 **New IP Access via Tailscale**\n\n**🔗 IP Address:** `{remote_addr}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**🌐 Protocol:** {protocol}',
+                'discord_message': '🔒 **New IP Access via Tailscale**\n\n**📍 Service:** {service_name}\n**🔗 IP Address:** `{remote_addr}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**🌐 Protocol:** {protocol}',
                 'color': 0x0099ff,
                 'track_state': True,
                 'cooldown_seconds': 86400,  # 24 hour cooldown for same IP
@@ -632,6 +632,11 @@ class LogAlertMonitor:
     def send_ip_access_alert(self, config: Dict, match_data: Dict):
         """Send alert for new IP access"""
         try:
+            # Determine service name from host header
+            host = match_data.get('host', '')
+            service_name = self.get_service_name_from_host(host)
+            match_data['service_name'] = service_name
+            
             # Format the Discord message with extracted data
             discord_message = config['discord_message'].format(**match_data)
             
@@ -653,10 +658,32 @@ class LogAlertMonitor:
             response = requests.post(self.webhook_url, json=payload, timeout=10)
             response.raise_for_status()
             
-            logger.info(f"Sent IP access alert: {config['service']} - {match_data.get('remote_addr', 'Unknown')}")
+            logger.info(f"Sent IP access alert: {config['service']} - {match_data.get('remote_addr', 'Unknown')} - {service_name}")
             
         except Exception as e:
             logger.error(f"Error sending IP access alert: {e}")
+    
+    def get_service_name_from_host(self, host: str) -> str:
+        """Determine service name from host header"""
+        if not host:
+            return "Unknown Service"
+        
+        # Map hostnames to service names
+        host_mapping = {
+            'copyparty.greglinscheid.com': '📁 Copyparty',
+            'freshrss.greglinscheid.com': '📰 FreshRSS', 
+            'kiwix.greglinscheid.com': '📚 Kiwix',
+            'greg-zone': '🏠 Greg Zone (Tailscale)',
+            'greg-zone:9001': '📁 Copyparty (Tailscale)',
+            'greg-zone:9002': '📰 FreshRSS (Tailscale)',
+            'greg-zone:9003': '📚 Kiwix (Tailscale)',
+            'greg-zone:9004': '📥 Transmission (Tailscale)',
+            'greg-zone:9005': '📊 Prometheus (Tailscale)',
+            'greg-zone:9006': '📈 Grafana (Tailscale)',
+            'greg-zone:9007': '📊 cAdvisor (Tailscale)'
+        }
+        
+        return host_mapping.get(host, f"🌐 {host}")
     
     def send_suspicious_activity_alert(self, config: Dict, ip_address: str, count: int, last_request_data: Dict):
         """Send alert for suspicious activity"""
