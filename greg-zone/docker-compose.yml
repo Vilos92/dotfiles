@@ -59,8 +59,8 @@ services:
       - freshrss
       - kiwix
     networks:
-      - infrastructure
-      - cloudflare
+      cloudflare:
+        ipv4_address: 172.19.0.10
 
   copyparty:
     image: copyparty/dj:latest
@@ -448,6 +448,9 @@ services:
 networks:
   cloudflare:
     driver: bridge
+    ipam:
+      config:
+        - subnet: 172.19.0.0/24
   tailscale:
     driver: bridge
   playit:
