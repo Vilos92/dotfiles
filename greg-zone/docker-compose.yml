@@ -52,6 +52,7 @@ services:
       - "9847:80"
     volumes:
       - "./nginx/nginx-cloudflare.conf:/etc/nginx/nginx.conf:ro"
+      - "./nginx/cloudflare-ips.conf:/etc/nginx/cloudflare-ips.conf:ro"
       - "./nginx/auth:/etc/nginx/auth:ro"
     restart: unless-stopped
     depends_on:
