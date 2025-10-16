@@ -16,6 +16,7 @@ COPY shared/ ./shared/
 
 # Copy application code (changes most frequently)
 COPY services/services_alert_monitor.py .
+COPY redis_utils.py .
 
 # Create non-root user (cached layer)
 RUN adduser -D -s /bin/sh alertmonitor

@@ -1,7 +1,6 @@
-"""Base alert monitor class with common functionality."""
+"""Base alert monitor class with Redis persistence."""
 
 import os
-import json
 import requests
 import time
 import base64
@@ -9,148 +8,209 @@ from datetime import datetime, timedelta
 from typing import Dict, List, Any
 import logging
 from cryptography.fernet import Fernet
+from redis_utils import AlertMonitorRedis
 
 
 logger = logging.getLogger(__name__)
 
 
 class BaseAlertMonitor:
-    """Base class for all alert monitors with common functionality."""
+    """Base class for all alert monitors with Redis persistence."""
 
     def __init__(
         self,
         alert_configs: List[Dict[str, Any]],
-        state_file: str = "/tmp/alert_monitor_state.json",
+        monitor_type: str,
     ):
-        """Initialize the base alert monitor.
+        """Initialize the base alert monitor with Redis.
 
         Args:
             alert_configs: List of alert configurations for this monitor
-            state_file: Path to state file for persistence
+            monitor_type: Type of monitor ('services', 'infrastructure', 'minecraft')
         """
         self.loki_url = os.getenv("LOKI_URL", "http://loki:3100")
         self.webhook_url = os.getenv(
             "WEBHOOK_URL", "http://discord-webhook:8080/webhook"
         )
         self.check_interval = int(os.getenv("CHECK_INTERVAL", "30"))  # seconds
-        self.state_file = state_file
-        self.last_check_time = None
+        self.monitor_type = monitor_type
 
-        # Load previous state
+        # Initialize Redis client
+        self.redis_client = AlertMonitorRedis(monitor_type)
+
+        # Load previous state from Redis
         self.load_state()
-
-        # Server state tracking
-        self.server_states = {}  # Track online/offline state for each service
-
-        # IP monitoring state
-        self.known_ips = {}  # Track known IPs with timestamp and country: {ip: {"last_seen": datetime, "country": str}}
-        self.suspicious_ips = set()  # Track IPs that have triggered alerts
-        self.ip_alert_cooldown = {}  # Track cooldown periods for IP alerts
 
         # Alert configurations
         self.alert_configs = alert_configs
 
+        # Set alert monitor secret for health checks
+        self.alert_monitor_secret = os.getenv("ALERT_MONITOR_SECRET", "default-secret-change-me")
+
     def load_state(self):
-        """Load previous state from file."""
+        """Load previous state from Redis."""
         try:
-            if os.path.exists(self.state_file):
-                with open(self.state_file, "r") as f:
-                    state = json.load(f)
-                    self.last_check_time = datetime.fromisoformat(
-                        state.get("last_check_time", "1970-01-01T00:00:00")
-                    )
-                    self.server_states = state.get("server_states", {})
-                    # Convert known_ips back to proper structure
-                    known_ips_data = state.get("known_ips", {})
-                    self.known_ips = {}
-                    for ip_key, ip_data in known_ips_data.items():
-                        logger.debug(f"Loading IP {ip_key}: {type(ip_data)} = {ip_data}")
-                        if isinstance(ip_data, dict):
-                            # New format: {ip: {"last_seen": datetime, "country": str}}
-                            self.known_ips[ip_key] = {
-                                "last_seen": datetime.fromisoformat(ip_data["last_seen"]) if isinstance(ip_data["last_seen"], str) else ip_data["last_seen"],
-                                "country": ip_data.get("country", "Unknown")
-                            }
-                        else:
-                            # Legacy format: {ip: datetime} - convert to new format
-                            last_seen = datetime.fromisoformat(ip_data) if isinstance(ip_data, str) else ip_data
-                            self.known_ips[ip_key] = {
-                                "last_seen": last_seen,
-                                "country": "Unknown"
-                            }
-                    self.suspicious_ips = set(state.get("suspicious_ips", []))
-                    self.ip_alert_cooldown = {
-                        k: datetime.fromisoformat(v)
-                        for k, v in state.get("ip_alert_cooldown", {}).items()
-                    }
-                    # Load IP location cache if it exists (legacy support)
-                    if hasattr(self, 'ip_location_cache'):
-                        self.ip_location_cache = state.get("ip_location_cache", {})
-                    logger.info(f"Loaded state from {self.state_file}")
+            # Load last check time
+            self.last_check_time = self.redis_client.get_last_check_time()
+            if not self.last_check_time:
+                self.last_check_time = datetime(1970, 1, 1)
+                logger.info(f"No previous state found for {self.monitor_type} monitor")
+
+            # Server states will be loaded by individual monitors that need them
+
+            # Load IP data (unified structure)
+            all_ips = self.redis_client.get_all_ips()
+            self.known_ips = {}
+            self.suspicious_ips = set()
+            self.ip_alert_cooldown = {}
+
+            for ip_address, ip_data in all_ips.items():
+                # Convert back to legacy format for compatibility
+                self.known_ips[ip_address] = {
+                    "last_seen": ip_data["last_seen"],
+                    "country": ip_data["country"]
+                }
+                
+                if ip_data.get("is_suspicious", False):
+                    self.suspicious_ips.add(ip_address)
+                
+                # Convert cooldowns back to legacy format
+                if "cooldowns" in ip_data:
+                    for alert_type, cooldown_time in ip_data["cooldowns"].items():
+                        key = f"{ip_address}|{alert_type}"
+                        self.ip_alert_cooldown[key] = cooldown_time
+
+            # IP location cache removed - now using unified IP data structure
+
+            logger.info(f"Loaded state from Redis for {self.monitor_type} monitor")
+            logger.debug(f"Known IPs: {len(self.known_ips)}, Suspicious IPs: {len(self.suspicious_ips)}")
+
         except Exception as e:
-            logger.warning(f"Could not load state file: {e}")
-            self.last_check_time = None
+            logger.error(f"Error loading state from Redis: {e}")
+            # Initialize with defaults
+            self.last_check_time = datetime(1970, 1, 1)
+            self.known_ips = {}
+            self.suspicious_ips = set()
+            self.ip_alert_cooldown = {}
+            # IP location cache removed - now using unified IP data structure
 
     def save_state(self):
-        """Save current state to file."""
+        """Save current state to Redis."""
         try:
-            state = {
-                "last_check_time": self.last_check_time.isoformat()
-                if self.last_check_time
-                else None,
-                "server_states": self.server_states,
-                "known_ips": {
-                    k: {
-                        "last_seen": v["last_seen"].isoformat() if isinstance(v["last_seen"], datetime) else v["last_seen"],
-                        "country": v["country"]
-                    }
-                    for k, v in self.known_ips.items()
-                },
-                "suspicious_ips": list(self.suspicious_ips),
-                "ip_alert_cooldown": {
-                    k: v.isoformat() for k, v in self.ip_alert_cooldown.items()
-                },
-                "ip_location_cache": getattr(self, 'ip_location_cache', {}),
-            }
-            with open(self.state_file, "w") as f:
-                json.dump(state, f, indent=2)
+            # Save last check time
+            if self.last_check_time:
+                self.redis_client.set_last_check_time(self.last_check_time)
+
+
+
+            logger.debug(f"Saved state to Redis for {self.monitor_type} monitor")
+
         except Exception as e:
-            logger.warning(f"Could not save state file: {e}")
+            logger.error(f"Error saving state to Redis: {e}")
 
     def cleanup_old_ips(self, max_age_days: int = 30):
-        """Remove IPs that haven't been seen for more than max_age_days."""
-        logger.debug(f"Starting cleanup_old_ips with max_age_days={max_age_days}")
-        current_time = datetime.now()
-        cutoff_time = current_time - timedelta(days=max_age_days)
-        
-        ips_to_remove = []
-        for ip_key, ip_data in self.known_ips.items():
-            # Debug logging
-            logger.debug(f"Processing IP {ip_key}: {type(ip_data)} = {ip_data}")
-            if isinstance(ip_data, dict) and "last_seen" in ip_data:
+        """Clean up old IP data from Redis."""
+        try:
+            current_time = datetime.now()
+            cutoff_time = current_time - timedelta(days=max_age_days)
+            
+            all_ips = self.redis_client.get_all_ips()
+            cleaned_count = 0
+            
+            for ip_address, ip_data in all_ips.items():
                 if ip_data["last_seen"] < cutoff_time:
-                    ips_to_remove.append(ip_key)
-            else:
-                # Handle legacy format or malformed data
-                logger.warning(f"Skipping malformed IP data for {ip_key}: {ip_data}")
-        
-        for ip_key in ips_to_remove:
-            del self.known_ips[ip_key]
-        
-        if ips_to_remove:
-            logger.info(f"Cleaned up {len(ips_to_remove)} old IPs (older than {max_age_days} days)")
-        
-        # Also cleanup old cooldown entries
-        cooldown_to_remove = []
-        for ip_key, cooldown_time in self.ip_alert_cooldown.items():
-            if cooldown_time < cutoff_time:
-                cooldown_to_remove.append(ip_key)
-        
-        for ip_key in cooldown_to_remove:
-            del self.ip_alert_cooldown[ip_key]
-        
-        if cooldown_to_remove:
-            logger.info(f"Cleaned up {len(cooldown_to_remove)} old cooldown entries")
+                    # Remove old IP data
+                    key = self.redis_client._get_key("ips", ip_address)
+                    self.redis_client.redis_client.delete(key)
+                    cleaned_count += 1
+                    
+                    # Remove from local state
+                    if ip_address in self.known_ips:
+                        del self.known_ips[ip_address]
+                    if ip_address in self.suspicious_ips:
+                        self.suspicious_ips.remove(ip_address)
+                    
+                    # Remove cooldowns
+                    keys_to_remove = [k for k in self.ip_alert_cooldown.keys() if k.startswith(f"{ip_address}|")]
+                    for key in keys_to_remove:
+                        del self.ip_alert_cooldown[key]
+
+            if cleaned_count > 0:
+                logger.info(f"Cleaned up {cleaned_count} old IP records from Redis")
+                
+        except Exception as e:
+            logger.error(f"Error cleaning up old IPs: {e}")
+
+    # get_ip_location method removed - now handled by individual alert monitors
+    # using the unified IP data structure in Redis
+
+    def validate_health_check_token(self, token: str) -> bool:
+        """Validate a health check token."""
+        try:
+            if not hasattr(self, 'alert_monitor_secret'):
+                logger.error("alert_monitor_secret not set for this monitor")
+                return False
+
+            # Decode the token
+            decoded_token = base64.urlsafe_b64decode(token.encode())
+            
+            # Create decryption key from secret
+            secret = self.alert_monitor_secret
+            key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32, b"0"))
+            f = Fernet(key)
+            
+            # Decrypt the token
+            decrypted_timestamp = f.decrypt(decoded_token)
+            timestamp = int(decrypted_timestamp.decode())
+            
+            # Check if token is recent (within 5 minutes)
+            current_time = int(time.time())
+            if current_time - timestamp > 300:  # 5 minutes
+                logger.warning("Health check token is too old")
+                return False
+                
+            return True
+            
+        except Exception as e:
+            logger.warning(f"Health check token validation failed: {e}")
+            return False
+
+    def generate_health_check_token(self) -> str:
+        """Generate a secure health check token with encrypted timestamp."""
+        try:
+            if not hasattr(self, 'alert_monitor_secret'):
+                logger.error("alert_monitor_secret not set for this monitor")
+                return "fallback-token"
+
+            # Create a timestamp
+            timestamp = int(time.time())
+
+            # Get secret from environment
+            secret = self.alert_monitor_secret
+
+            # Create encryption key from secret (pad to 32 bytes)
+            key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32, b"0"))
+            f = Fernet(key)
+
+            # Encrypt the timestamp
+            encrypted_timestamp = f.encrypt(str(timestamp).encode())
+            return base64.urlsafe_b64encode(encrypted_timestamp).decode()
+        except Exception as e:
+            logger.warning(f"Failed to generate health check token: {e}")
+            return "fallback-token"
+
+    def check_server_health(self, host: str, port: int) -> bool:
+        """Check if a server is healthy by attempting a TCP connection."""
+        try:
+            import socket
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.settimeout(5)
+            result = sock.connect_ex((host, port))
+            sock.close()
+            return result == 0
+        except Exception as e:
+            logger.debug(f"Health check failed for {host}:{port}: {e}")
+            return False
 
     def query_loki(self, query: str) -> List[Dict]:
         """Query Loki for logs."""
@@ -195,89 +255,16 @@ class BaseAlertMonitor:
             logger.error(f"Error querying Loki: {e}")
             return []
 
-    def send_webhook(self, payload: Dict) -> None:
+    def send_webhook(self, payload: Dict[str, Any]):
         """Send webhook notification."""
         try:
             response = requests.post(self.webhook_url, json=payload, timeout=10)
-            response.raise_for_status()
-            logger.info("Webhook sent successfully")
+            if response.status_code == 200:
+                logger.info("Webhook sent successfully")
+            else:
+                logger.warning(f"Webhook failed with status {response.status_code}")
         except Exception as e:
             logger.error(f"Error sending webhook: {e}")
-
-    def check_server_health(self, host: str, port: int) -> bool:
-        """Check if a server is responding on the given port."""
-        try:
-            import socket
-
-            # Use TCP connection for standard health checks
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            result = sock.connect_ex((host, port))
-            sock.close()
-            return result == 0
-        except Exception as e:
-            logger.error(f"Error checking server health for {host}:{port}: {e}")
-            return False
-
-    def validate_health_check_token(self, received_token: str) -> bool:
-        """Validate a health check token by decrypting and checking timestamp."""
-        if not hasattr(self, 'alert_monitor_secret') or not self.alert_monitor_secret:
-            raise AttributeError("alert_monitor_secret must be set in the subclass to use health check token validation")
-        
-        try:
-            # Create encryption key from secret (pad to 32 bytes)
-            key = base64.urlsafe_b64encode(self.alert_monitor_secret.encode()[:32].ljust(32, b"0"))
-            f = Fernet(key)
-
-            # Decode and decrypt the token
-            encrypted_data = base64.urlsafe_b64decode(received_token.encode())
-            decrypted_timestamp = int(f.decrypt(encrypted_data).decode())
-
-            # Check if timestamp is within our window (30 seconds)
-            current_time = int(time.time())
-            time_diff = abs(current_time - decrypted_timestamp)
-
-            if time_diff <= 30:
-                logger.debug(
-                    f"Valid health check token: timestamp {decrypted_timestamp}, diff {time_diff}s"
-                )
-                return True
-            else:
-                logger.warning(
-                    f"Health check token timestamp too old: {time_diff}s ago (token: {decrypted_timestamp}, current: {current_time})"
-                )
-                return False
-
-        except base64.binascii.Error as e:
-            logger.warning(f"Health check token invalid base64 encoding: {e}")
-            return False
-        except Exception as e:
-            logger.warning(
-                f"Health check token decryption failed - possible attack or corrupted token: {e}"
-            )
-            return False
-
-    def generate_health_check_token(self) -> str:
-        """Generate a health check token with current timestamp."""
-        if not hasattr(self, 'alert_monitor_secret') or not self.alert_monitor_secret:
-            raise AttributeError("alert_monitor_secret must be set in the subclass to use health check token generation")
-        
-        try:
-            # Create encryption key from secret (pad to 32 bytes)
-            key = base64.urlsafe_b64encode(self.alert_monitor_secret.encode()[:32].ljust(32, b"0"))
-            f = Fernet(key)
-
-            # Encrypt current timestamp
-            current_timestamp = str(int(time.time()))
-            encrypted_data = f.encrypt(current_timestamp.encode())
-            
-            # Encode as base64 for URL safety
-            token = base64.urlsafe_b64encode(encrypted_data).decode()
-            return token
-
-        except Exception as e:
-            logger.error(f"Failed to generate health check token: {e}")
-            raise
 
     def run(self):
         """Main monitoring loop - to be implemented by subclasses."""

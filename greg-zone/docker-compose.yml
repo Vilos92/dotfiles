@@ -200,6 +200,31 @@ services:
     networks:
       - infrastructure
 
+  # Redis database for alert monitor state
+  infra-redis:
+    image: redis:8-alpine
+    container_name: infra-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: redis-server --requirepass "${INFRA_REDIS_PASSWORD}" --appendonly yes
+    volumes:
+      - redis-data:/data
+    networks:
+      - infrastructure
+
+  infra-redis-commander:
+    image: rediscommander/redis-commander:latest
+    container_name: infra-redis-commander
+    environment:
+      - REDIS_HOSTS=local:infra-redis:6379:0:${INFRA_REDIS_PASSWORD}
+    ports:
+      - "127.0.0.1:8084:8081"
+    networks:
+      - infrastructure
+    depends_on:
+      - infra-redis
+    restart: unless-stopped
 
   # Services alert monitor (nginx, copyparty, freshrss, kiwix)
   services-alert-monitor:
@@ -214,10 +239,11 @@ services:
       - CHECK_INTERVAL=30
       - ALERT_MONITOR_SECRET=${ALERT_MONITOR_SECRET}
       - IP_API_ACCESS_KEY=${IP_API_ACCESS_KEY}
+      - INFRA_REDIS_PASSWORD=${INFRA_REDIS_PASSWORD}
     networks:
       - infrastructure
-    volumes:
-      - services-alert-monitor-state:/tmp
+    depends_on:
+      - infra-redis
     logging:
       options:
         max-size: "10m"
@@ -235,10 +261,11 @@ services:
       - WEBHOOK_URL=http://discord-webhook:8080/webhook
       - CHECK_INTERVAL=30
       - ALERT_MONITOR_SECRET=${ALERT_MONITOR_SECRET}
+      - INFRA_REDIS_PASSWORD=${INFRA_REDIS_PASSWORD}
     networks:
       - infrastructure
-    volumes:
-      - infrastructure-alert-monitor-state:/tmp
+    depends_on:
+      - infra-redis
     logging:
       options:
         max-size: "10m"
@@ -255,11 +282,12 @@ services:
       - LOKI_URL=http://loki:3100
       - WEBHOOK_URL=http://discord-webhook:8080/webhook
       - CHECK_INTERVAL=30
+      - INFRA_REDIS_PASSWORD=${INFRA_REDIS_PASSWORD}
     networks:
       - infrastructure
       - playit
-    volumes:
-      - minecraft-alert-monitor-state:/tmp
+    depends_on:
+      - infra-redis
     logging:
       options:
         max-size: "10m"
@@ -509,11 +537,7 @@ volumes:
     driver: local
   loki-data:
     driver: local
-  services-alert-monitor-state:
-    driver: local
-  infrastructure-alert-monitor-state:
-    driver: local
-  minecraft-alert-monitor-state:
+  redis-data:
     driver: local
   copyparty-hists:
     driver: local

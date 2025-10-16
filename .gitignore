@@ -9,3 +9,6 @@ docker/copyparty/copyparty.conf
 
 # nginx auth files
 docker/nginx/auth/.htpasswd
+
+# Python
+__pycache__/

@@ -1,18 +1,15 @@
 #!/usr/bin/env python3
 """
-Infrastructure Alert Monitor
+Infrastructure Alert Monitor with Redis persistence
 Monitors the monitoring infrastructure: loki, prometheus, grafana, alertmanager, etc.
 Handles infrastructure service health monitoring.
 """
 
 import time
-import os
-import base64
 import requests
 from datetime import datetime
 from typing import Dict, Any
 import logging
-from cryptography.fernet import Fernet
 
 from shared.base_alert_monitor import BaseAlertMonitor
 
@@ -24,12 +21,12 @@ logger = logging.getLogger(__name__)
 
 
 class InfrastructureAlertMonitor(BaseAlertMonitor):
-    """Alert monitor for infrastructure services: loki, prometheus, grafana, etc."""
+    """Alert monitor for infrastructure services with Redis persistence."""
 
     def __init__(self):
-        """Initialize the infrastructure alert monitor with infrastructure-specific configurations."""
+        """Initialize the infrastructure alert monitor with Redis."""
         alert_configs = [
-            # Public service health monitoring (moved from original)
+            # Public service health monitoring
             {
                 "name": "copyparty_public_health",
                 "service": "infra",
@@ -60,44 +57,12 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
                 "track_state": True,
                 "state_key": "freshrss_public",
             },
-            {
-                "name": "kiwix_public_health",
-                "service": "infra",
-                "check_type": "url_health_check",
-                "urls": ["https://kiwix.greglinscheid.com"],
-                "alert_type": "service_health_change",
-                "discord_title": "📚 Kiwix Service Up",
-                "discord_message": "Kiwix is now {state}!\n\n🌐 **URL:** https://kiwix.greglinscheid.com",
-                "discord_title_offline": "📚 Kiwix Service Down",
-                "discord_message_offline": "Kiwix is now offline.\n\n🌐 **URL:** https://kiwix.greglinscheid.com\n\n📝 **Description:** Kiwix offline content server has stopped responding",
-                "color_online": 0x00FF00,
-                "color_offline": 0xFF0000,
-                "track_state": True,
-                "state_key": "kiwix_public",
-            },
         ]
 
-        super().__init__(alert_configs, "/tmp/infrastructure_alert_monitor_state.json")
-
-    def generate_health_check_token(self) -> str:
-        """Generate a secure health check token with encrypted timestamp."""
-        try:
-            # Create a timestamp
-            timestamp = int(time.time())
-
-            # Get secret from environment
-            secret = os.getenv("ALERT_MONITOR_SECRET", "default-secret-change-me")
-
-            # Create encryption key from secret (pad to 32 bytes)
-            key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32, b"0"))
-            f = Fernet(key)
-
-            # Encrypt the timestamp
-            encrypted_timestamp = f.encrypt(str(timestamp).encode())
-            return base64.urlsafe_b64encode(encrypted_timestamp).decode()
-        except Exception as e:
-            logger.warning(f"Failed to generate health check token: {e}")
-            return "fallback-token"
+        super().__init__(alert_configs, "infrastructure")
+        
+        # Initialize server states for infrastructure monitoring
+        self.server_states = self.redis_client.get_server_states()
 
     def check_url_health(self, url: str, timeout: int = 10) -> bool:
         """Check if a URL is responding with a healthy status code."""
@@ -111,9 +76,6 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
                 url, timeout=timeout, allow_redirects=True, headers=headers
             )
 
-            # For Kiwix, treat 401 (Unauthorized) as healthy since it requires authentication
-            if "kiwix.greglinscheid.com" in url and response.status_code == 401:
-                return True
 
             return response.status_code < 400
         except Exception as e:
@@ -122,7 +84,7 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
 
     def run(self):
         """Main monitoring loop for infrastructure services."""
-        logger.info("Starting Infrastructure Alert Monitor")
+        logger.info("Starting Infrastructure Alert Monitor with Redis persistence")
 
         while True:
             try:
@@ -222,6 +184,20 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
 
         except Exception as e:
             logger.error(f"Error sending infrastructure service health alert: {e}")
+
+    def save_state(self):
+        """Save infrastructure monitor state to Redis."""
+        try:
+            # Call parent save_state first
+            super().save_state()
+            
+            # Save server states
+            self.redis_client.set_server_states(self.server_states)
+            
+            logger.debug(f"Infrastructure state saved: {len(self.server_states)} server states")
+            
+        except Exception as e:
+            logger.error(f"Error saving infrastructure state: {e}")
 
 
 if __name__ == "__main__":

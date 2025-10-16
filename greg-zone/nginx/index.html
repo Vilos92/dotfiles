@@ -414,6 +414,12 @@
             border-top: 1px solid rgba(139, 92, 246, 0.2);
         }
         
+        .stats-footer-links {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+        
         .grafana-link {
             color: #8b5cf6;
             text-decoration: none;
@@ -807,9 +813,14 @@
                         <span class="container-list-title">🐳 Containers</span>
                         <span class="container-list-count" id="container-list-count">0</span>
                     </div>
-                    <a href="//greg-zone:9006/d/gregzone-containers/gregzone-container-metrics?orgId=1&from=now-1h&to=now&timezone=browser&var-container=$__all" class="container-metrics-link" target="_blank">
-                        📊 Detailed Metrics
-                    </a>
+                    <div class="stats-footer-links">
+                        <a href="//greg-zone:9006/d/gregzone-containers/gregzone-container-metrics?orgId=1&from=now-1h&to=now&timezone=browser&var-container=$__all" class="container-metrics-link" target="_blank">
+                            📊 Detailed Metrics
+                        </a>
+                        <a href="//greg-zone:8084" class="container-metrics-link" target="_blank">
+                            🗄️ Redis Insight
+                        </a>
+                    </div>
                 </div>
                 <div class="container-items" id="container-items">
                     <div class="container-item-loading">Loading containers...</div>

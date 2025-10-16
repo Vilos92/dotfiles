@@ -15,6 +15,7 @@ from collections import defaultdict
 import logging
 
 from shared.base_alert_monitor import BaseAlertMonitor
+from redis_utils import AlertMonitorRedis
 from shared.utils import format_nginx_timestamp
 
 # Configure logging
@@ -88,10 +89,10 @@ class ServicesAlertMonitor(BaseAlertMonitor):
             },
         ]
 
-        super().__init__(alert_configs, "/tmp/services_alert_monitor_state.json")
+        super().__init__(alert_configs, "services")
         
-        # Initialize IP location cache
-        self.ip_location_cache = {}
+        # Initialize Redis client for IP location cache
+        self.redis_client = AlertMonitorRedis("services")
         
         # Set alert monitor secret for health check token validation
         self.alert_monitor_secret = os.getenv("ALERT_MONITOR_SECRET", "default-secret-change-me")
@@ -216,40 +217,9 @@ class ServicesAlertMonitor(BaseAlertMonitor):
 
     def process_url_health_check(self, config: Dict[str, Any]):
         """Process URL health checks for services."""
-        urls = config.get("urls", [])
-        if not urls:
-            return
-
-        # Check all URLs
-        all_healthy = True
-        for url in urls:
-            if not self.check_url_health(url):
-                all_healthy = False
-                break
-
-        # Determine current state
-        current_state = "online" if all_healthy else "offline"
-        state_key = config.get("state_key", config["name"])
-
-        # Check if state changed
-        if state_key in self.server_states:
-            previous_state = self.server_states[state_key]
-            if previous_state == current_state:
-                logger.info(
-                    f"Service health unchanged for {state_key}: {current_state}"
-                )
-                return
-
-        # State changed - send alert
-        logger.info(
-            f"Service health changed for {state_key}: {previous_state} -> {current_state}"
-        )
-
-        # Send alert
-        self.send_service_health_alert(config, current_state)
-
-        # Update state
-        self.server_states[state_key] = current_state
+        # Services monitor doesn't handle health checks - that's handled by infrastructure monitor
+        # This method is not used by services monitor
+        pass
 
     def process_suspicious_activity_alert(
         self, config: Dict[str, Any], logs: List[Dict]
@@ -350,7 +320,9 @@ class ServicesAlertMonitor(BaseAlertMonitor):
 
                 # Check if this is a new IP
                 ip_key = f"{config['service']}:{ip_address}"
-                if ip_key not in self.known_ips:
+                existing_ip_data = self.redis_client.get_ip_data(ip_key)
+                
+                if not existing_ip_data:
                     # New IP - check cooldown
                     should_alert = True
                     if ip_key in self.ip_alert_cooldown:
@@ -367,10 +339,8 @@ class ServicesAlertMonitor(BaseAlertMonitor):
 
                 # Update last seen time and get country
                 country = self.get_ip_location(ip_address)
-                self.known_ips[ip_key] = {
-                    "last_seen": current_time,
-                    "country": country
-                }
+                # Store in Redis with proper service prefix
+                self.redis_client.update_ip(ip_key, current_time, country)
 
     def process_user_activity_alert(self, config: Dict[str, Any], logs: List[Dict]):
         """Process user activity alerts."""
@@ -402,38 +372,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                     self.send_user_activity_alert(config, match_data)
                     self.ip_alert_cooldown[user_key] = current_time
 
-    def send_service_health_alert(self, config: Dict[str, Any], state: str):
-        """Send service health change alert."""
-        try:
-            color = config.get(f"color_{state}", config.get("color", 0x00FF00))
-
-            payload = {
-                "alerts": [
-                    {
-                        "status": "firing",
-                        "labels": {
-                            "service": config["service"],
-                            "alert_type": config["alert_type"],
-                            "state": state,
-                        },
-                        "annotations": {
-                            "discord_title": config["discord_title"],
-                            "discord_message": config["discord_message"].format(
-                                state=state
-                            ),
-                        },
-                    }
-                ],
-                "color": color,
-            }
-
-            self.send_webhook(payload)
-            logger.info(
-                f"Sent state alert: {config.get('state_key', config['name'])} {state}"
-            )
-
-        except Exception as e:
-            logger.error(f"Error sending service health alert: {e}")
+    # send_service_health_alert method removed - services monitor doesn't handle health checks
 
     def send_suspicious_activity_alert(
         self,
@@ -599,16 +538,11 @@ class ServicesAlertMonitor(BaseAlertMonitor):
             logger.error(f"Error sending user activity alert: {e}")
 
     def get_ip_location(self, ip_address: str) -> str:
-        """Get location information for an IP address using ipapi.com with caching."""
-        # Check cache first
-        if ip_address in self.ip_location_cache:
-            return self.ip_location_cache[ip_address]
-        
+        """Get location information for an IP address using ipapi.com."""
         # Get API key from environment
         api_key = os.getenv("IP_API_ACCESS_KEY")
         if not api_key:
             logger.warning("IP_API_ACCESS_KEY not set, skipping geolocation lookup")
-            self.ip_location_cache[ip_address] = "Unknown"
             return "Unknown"
         
         try:
@@ -626,13 +560,11 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                 if "error" in data:
                     error_info = data.get("error", {})
                     logger.warning(f"Geolocation API error for {ip_address}: {error_info}")
-                    self.ip_location_cache[ip_address] = "Unknown"
                     return "Unknown"
                 
                 # Extract country name from response
                 country_name = data.get("country_name")
                 if country_name:
-                    self.ip_location_cache[ip_address] = country_name
                     return country_name
                 else:
                     logger.warning(f"No country name in response for {ip_address}")
@@ -642,8 +574,6 @@ class ServicesAlertMonitor(BaseAlertMonitor):
         except Exception as e:
             logger.warning(f"Geolocation lookup failed for {ip_address}: {e}")
         
-        # Cache the "Unknown" result to avoid repeated failed lookups
-        self.ip_location_cache[ip_address] = "Unknown"
         return "Unknown"
 
     def get_service_name_from_host(self, host: str) -> str:

@@ -178,9 +178,9 @@ def webhook():
                     discord_message = base_message
                     color = 0x00FF00 if current_state == "online" else 0xFF0000
                 elif alert_type == "player_activity":
-                    # Player activity alerts - add XUID and use event-based colors
-                    discord_message = f"{base_message}\n**XUID:** `{xuid}`"
-                    color = 0x00FF00 if event_type == "joined" else 0xFF6B6B
+                    # Player activity alerts - use event-based colors (XUID already in message)
+                    discord_message = base_message
+                    color = 0x0099FF if event_type == "joined" else 0xFFAA00
                 else:
                     # Default for other minecraft alert types
                     discord_message = base_message
