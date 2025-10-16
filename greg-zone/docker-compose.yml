@@ -203,10 +203,34 @@ services:
     networks:
       - infrastructure
 
-  alert-monitor:
-    build: ./alert-monitor
-    container_name: alert-monitor
-    hostname: greg-zone-alert-monitor
+  # Services alert monitor (nginx, copyparty, freshrss, kiwix)
+  services-alert-monitor:
+    build:
+      context: ./alert-monitors
+      dockerfile: services/Dockerfile
+    container_name: services-alert-monitor
+    hostname: greg-zone-services-alert-monitor
+    restart: unless-stopped
+    environment:
+      - LOKI_URL=http://loki:3100
+      - WEBHOOK_URL=http://discord-webhook:8080/webhook
+      - CHECK_INTERVAL=30
+    networks:
+      - infrastructure
+    volumes:
+      - services-alert-monitor-state:/tmp
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Infrastructure alert monitor (loki, prometheus, grafana, etc.)
+  infrastructure-alert-monitor:
+    build:
+      context: ./alert-monitors
+      dockerfile: infrastructure/Dockerfile
+    container_name: infrastructure-alert-monitor
+    hostname: greg-zone-infrastructure-alert-monitor
     restart: unless-stopped
     environment:
       - LOKI_URL=http://loki:3100
@@ -216,7 +240,29 @@ services:
     networks:
       - infrastructure
     volumes:
-      - alert-monitor-state:/tmp
+      - infrastructure-alert-monitor-state:/tmp
+    logging:
+      options:
+        max-size: "10m"
+        max-file: "3"
+
+  # Minecraft alert monitor (minecraft server)
+  minecraft-alert-monitor:
+    build:
+      context: ./alert-monitors
+      dockerfile: minecraft/Dockerfile
+    container_name: minecraft-alert-monitor
+    hostname: greg-zone-minecraft-alert-monitor
+    restart: unless-stopped
+    environment:
+      - LOKI_URL=http://loki:3100
+      - WEBHOOK_URL=http://discord-webhook:8080/webhook
+      - CHECK_INTERVAL=30
+    networks:
+      - infrastructure
+      - playit
+    volumes:
+      - minecraft-alert-monitor-state:/tmp
     logging:
       options:
         max-size: "10m"
@@ -476,7 +522,11 @@ volumes:
     driver: local
   loki-data:
     driver: local
-  alert-monitor-state:
+  services-alert-monitor-state:
+    driver: local
+  infrastructure-alert-monitor-state:
+    driver: local
+  minecraft-alert-monitor-state:
     driver: local
   copyparty-hists:
     driver: local
