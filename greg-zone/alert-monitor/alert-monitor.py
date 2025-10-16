@@ -11,9 +11,12 @@ import time
 import socket
 import requests
 import subprocess
+import base64
+import binascii
 from datetime import datetime, timedelta
 from typing import Dict, List
 import logging
+from cryptography.fernet import Fernet
 
 def format_nginx_timestamp(time_str: str) -> str:
     """Convert nginx timestamp to clean UTC format"""
@@ -25,6 +28,58 @@ def format_nginx_timestamp(time_str: str) -> str:
     except ValueError:
         # Fallback to original if parsing fails
         return time_str
+
+def generate_health_check_token() -> str:
+    """Generate a secure health check token with encrypted timestamp"""
+    try:
+        # Create a timestamp
+        timestamp = int(time.time())
+        
+        # Get secret from environment
+        secret = os.getenv('ALERT_MONITOR_SECRET', 'default-secret-change-me')
+        
+        # Create encryption key from secret (pad to 32 bytes)
+        key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32, b'0'))
+        f = Fernet(key)
+        
+        # Encrypt the timestamp
+        encrypted_timestamp = f.encrypt(str(timestamp).encode())
+        return base64.urlsafe_b64encode(encrypted_timestamp).decode()
+    except Exception as e:
+        logger.warning(f"Failed to generate health check token: {e}")
+        return "fallback-token"
+
+def validate_health_check_token(received_token: str) -> bool:
+    """Validate a health check token by decrypting and checking timestamp"""
+    try:
+        # Get secret from environment
+        secret = os.getenv('ALERT_MONITOR_SECRET', 'default-secret-change-me')
+        
+        # Create encryption key from secret (pad to 32 bytes)
+        key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32, b'0'))
+        f = Fernet(key)
+        
+        # Decode and decrypt the token
+        encrypted_data = base64.urlsafe_b64decode(received_token.encode())
+        decrypted_timestamp = int(f.decrypt(encrypted_data).decode())
+        
+        # Check if timestamp is within our window (30 seconds)
+        current_time = int(time.time())
+        time_diff = abs(current_time - decrypted_timestamp)
+        
+        if time_diff <= 30:
+            logger.debug(f"Valid health check token: timestamp {decrypted_timestamp}, diff {time_diff}s")
+            return True
+        else:
+            logger.warning(f"Health check token timestamp too old: {time_diff}s ago (token: {decrypted_timestamp}, current: {current_time})")
+            return False
+            
+    except base64.binascii.Error as e:
+        logger.warning(f"Health check token invalid base64 encoding: {e}")
+        return False
+    except Exception as e:
+        logger.warning(f"Health check token decryption failed - possible attack or corrupted token: {e}")
+        return False
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -122,10 +177,10 @@ class LogAlertMonitor:
                 'name': 'nginx_suspicious_activity',
                 'service': 'nginx-suspicious',
                 'query': '{container_name=~"nginx-.*"} |~ "4[0-9][0-9]|5[0-9][0-9]"',
-                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"',
+                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" host="[^"]*" cf_ip="[^"]*" cf_country="[^"]*" cf_ray="[^"]*" real_ip="[^"]*" forwarded_for="[^"]*" health_check="(?P<health_check>[^"]*)"',
                 'alert_type': 'suspicious_activity',
                 'discord_title': '',
-                'discord_message': '⚠️ **Suspicious Activity Detected**\n\n**🚨 IP Address:** `{remote_addr}`\n**🕐 Time:** {formatted_time}\n**🌐 Source:** {container_name}\n\n**🎯 Failed Request:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status} ❌\n• **Size:** {body_bytes_sent} bytes\n• **Protocol:** {protocol}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🔗 Referrer:** {http_referer}\n\n**⚠️ Multiple failed requests detected from this IP!**',
+                'discord_message': '⚠️ **Suspicious Activity Detected**\n\n**🚨 IP Address:** `{remote_addr}`\n**🕐 Time:** {formatted_time}\n**🌐 Source:** {container_name}\n\n**🎯 Failed Request:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status} ❌\n• **Size:** {body_bytes_sent} bytes\n• **Protocol:** {protocol}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🔗 Referrer:** {http_referer}\n\n**🔐 Health Check Status:** {health_check_status}\n\n**⚠️ Multiple failed requests detected from this IP!**',
                 'color': 0xff0000,
                 'track_state': False,
                 'cooldown_seconds': 1800,  # 30 minutes cooldown
@@ -265,7 +320,15 @@ class LogAlertMonitor:
     def check_url_health(self, url: str, timeout: int = 10) -> bool:
         """Check if a URL is responding with a healthy status code"""
         try:
-            response = requests.head(url, timeout=timeout, allow_redirects=True)
+            # Generate secure health check token
+            health_token = generate_health_check_token()
+            
+            # Add custom header with secure token
+            headers = {
+                'X-Health-Check': f'alert-monitor-{health_token}',
+                'User-Agent': 'alert-monitor-health-check/1.0'
+            }
+            response = requests.head(url, timeout=timeout, allow_redirects=True, headers=headers)
             # Consider 2xx and 3xx status codes as healthy
             # 401 (auth required) is also healthy for services that require authentication
             is_healthy = 200 <= response.status_code < 400 or response.status_code == 401
@@ -629,6 +692,21 @@ class LogAlertMonitor:
                 if not ip_address or ip_address == '-' or not status.startswith(('4', '5')):
                     continue
                 
+                # Skip legitimate health check requests
+                if self.is_legitimate_health_check_request(log['message'], match_data):
+                    logger.debug(f"Skipping legitimate health check request from {ip_address}")
+                    continue
+                
+                # Log malicious requests with bad health check headers
+                health_check_value = match_data.get('health_check', '-')
+                if health_check_value and health_check_value != '-':
+                    if health_check_value.startswith('alert-monitor-'):
+                        logger.warning(f"🚨 MALICIOUS REQUEST with fake health check token from {ip_address}: {health_check_value[:30]}...")
+                    else:
+                        logger.warning(f"🚨 MALICIOUS REQUEST with unexpected health check format from {ip_address}: {health_check_value[:30]}...")
+                else:
+                    logger.info(f"🚨 MALICIOUS REQUEST with no health check header from {ip_address}")
+                
                 # Extract container name from log labels
                 container_name = log.get('labels', {}).get('container_name', 'nginx-unknown')
                 match_data['container_name'] = container_name
@@ -701,6 +779,45 @@ class LogAlertMonitor:
         except Exception as e:
             logger.error(f"Error sending IP access alert: {e}")
     
+    def is_legitimate_health_check_request(self, log_message: str, parsed_data: Dict = None) -> bool:
+        """Check if a log entry represents a legitimate health check request"""
+        # If we have parsed data, use the health_check field directly
+        if parsed_data and 'health_check' in parsed_data:
+            health_check_value = parsed_data['health_check']
+            if health_check_value and health_check_value != '-':
+                # Extract token from health_check field (format: "alert-monitor-<token>")
+                if health_check_value.startswith('alert-monitor-'):
+                    token = health_check_value[14:]  # Remove "alert-monitor-" prefix
+                    is_valid = validate_health_check_token(token)
+                    if is_valid:
+                        logger.debug("Legitimate health check request validated successfully")
+                    else:
+                        logger.warning("Health check request with invalid token - possible attack attempt")
+                    return is_valid
+                else:
+                    logger.warning(f"Health check header found but unexpected format: {health_check_value}")
+                    return False
+            return False
+        
+        # Fallback to old method for backward compatibility
+        if 'X-Health-Check: alert-monitor-' in log_message:
+            # Extract the token from the log message
+            import re
+            match = re.search(r'X-Health-Check: alert-monitor-([A-Za-z0-9+/=]+)', log_message)
+            if match:
+                token = match.group(1)
+                # Validate the token
+                is_valid = validate_health_check_token(token)
+                if is_valid:
+                    logger.debug("Legitimate health check request validated successfully")
+                else:
+                    logger.warning("Health check request with invalid token - possible attack attempt")
+                return is_valid
+            else:
+                logger.warning("Health check header found but token extraction failed - malformed request")
+                return False
+        return False
+    
     def get_service_name_from_host(self, host: str) -> str:
         """Determine service name from host header"""
         if not host:
@@ -723,9 +840,32 @@ class LogAlertMonitor:
         
         return host_mapping.get(host, f"🌐 {host}")
     
+    def analyze_health_check_status(self, health_check_value: str) -> str:
+        """Analyze health check header value and return descriptive status"""
+        if not health_check_value or health_check_value == '-':
+            return "❌ **No health check header** - Regular malicious request"
+        
+        if health_check_value.startswith('alert-monitor-'):
+            token = health_check_value[14:]  # Remove "alert-monitor-" prefix
+            try:
+                # Try to validate the token
+                is_valid = validate_health_check_token(token)
+                if is_valid:
+                    return "✅ **Valid health check token** - Legitimate request (should be filtered)"
+                else:
+                    return f"🚨 **INVALID health check token** - Possible attack attempt with fake token: `{token[:20]}...`"
+            except Exception as e:
+                return f"🚨 **MALFORMED health check token** - Attack attempt with corrupted token: `{token[:20]}...`"
+        else:
+            return f"🚨 **UNEXPECTED health check format** - Possible attack attempt: `{health_check_value[:30]}...`"
+    
     def send_suspicious_activity_alert(self, config: Dict, ip_address: str, count: int, last_request_data: Dict):
         """Send alert for suspicious activity"""
         try:
+            # Analyze health check status
+            health_check_value = last_request_data.get('health_check', '-')
+            health_check_status = self.analyze_health_check_status(health_check_value)
+            
             # Use the detailed message template from config with actual log data
             discord_message = config['discord_message'].format(
                 remote_addr=ip_address,
@@ -738,7 +878,8 @@ class LogAlertMonitor:
                 body_bytes_sent=last_request_data.get('body_bytes_sent', '0'),
                 http_referer=last_request_data.get('http_referer', '-'),
                 http_user_agent=last_request_data.get('http_user_agent', 'Unknown'),
-                protocol=last_request_data.get('protocol', 'HTTP/1.1')
+                protocol=last_request_data.get('protocol', 'HTTP/1.1'),
+                health_check_status=health_check_status
             )
             
             payload = {

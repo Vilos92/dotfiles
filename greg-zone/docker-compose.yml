@@ -212,6 +212,7 @@ services:
       - LOKI_URL=http://loki:3100
       - WEBHOOK_URL=http://discord-webhook:8080/webhook
       - CHECK_INTERVAL=30
+      - ALERT_MONITOR_SECRET=${ALERT_MONITOR_SECRET}
     networks:
       - infrastructure
     volumes:
