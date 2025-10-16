@@ -82,6 +82,11 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 - `freshrss-docker.sh` - RSS reader 
 - `kiwix-docker.sh` - Offline Wikipedia/content server
 
+**Code Quality:**
+- `ruff.sh` - Python linting and formatting with ruff
+- `stylua.sh` - Lua code formatting with stylua
+- `shellcheck.sh` - Shell script linting with shellcheck
+
 ## Docker Services
 
 ### Service Overview
@@ -122,6 +127,11 @@ All services include:
 - `ffmpeg` - video/audio processing
 - `yt-dlp` - video downloading
 - `shellcheck` - shell script linting
+
+### Code Quality Tools
+- `ruff` - Python linting and formatting
+- `stylua` - Lua code formatting
+- `shellcheck` - Shell script linting
 
 ## Development Workflow
 
