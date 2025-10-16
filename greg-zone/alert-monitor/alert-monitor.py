@@ -15,6 +15,17 @@ from datetime import datetime, timedelta
 from typing import Dict, List
 import logging
 
+def format_nginx_timestamp(time_str: str) -> str:
+    """Convert nginx timestamp to clean UTC format"""
+    try:
+        # Parse nginx format: 16/Oct/2025:00:00:44 +0000
+        dt = datetime.strptime(time_str, '%d/%b/%Y:%H:%M:%S %z')
+        # Format as clean UTC: 2025-10-16 00:00:44 UTC
+        return dt.strftime('%Y-%m-%d %H:%M:%S UTC')
+    except ValueError:
+        # Fallback to original if parsing fails
+        return time_str
+
 # Configure logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
@@ -78,19 +89,19 @@ class LogAlertMonitor:
                 'track_state': True,
                 'cooldown_seconds': 3600  # Only alert if user hasn't been active for 1+ hours (3600 seconds)
             },
-            # Nginx Cloudflare - New IP detection
+            # Nginx Cloudflare - New IP detection (handles both CF and non-CF traffic)
             {
                 'name': 'nginx_cloudflare_new_ip',
                 'service': 'nginx-cloudflared',
                 'query': '{container_name="nginx-cloudflared"} |~ "GET|POST|PUT|DELETE"',
-                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" host="(?P<host>[^"]*)" cf_ip="(?P<cf_connecting_ip>[^"]*)" cf_country="(?P<cf_country>[^"]*)" cf_ray="(?P<cf_ray>[^"]*)"',
+                'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" host="(?P<host>[^"]*)" cf_ip="(?P<cf_connecting_ip>[^"]*)" cf_country="(?P<cf_country>[^"]*)" cf_ray="(?P<cf_ray>[^"]*)" real_ip="(?P<real_ip>[^"]*)" forwarded_for="(?P<forwarded_for>[^"]*)"',
                 'alert_type': 'new_ip_access',
                 'discord_title': '',
-                'discord_message': '🌍 **New IP Access via Cloudflare**\n\n**📍 Service:** {service_name}\n**📍 Location:** {cf_country}\n**🔗 IP Address:** `{cf_connecting_ip}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**☁️ Cloudflare Ray ID:** `{cf_ray}`\n**🌐 Protocol:** {protocol}',
+                'discord_message': '🌍 **New IP Access**\n\n**📍 Service:** {service_name}\n**🔗 IP Address:** `{client_ip}`\n**📍 Location:** {location}\n**🕐 Time:** {formatted_time}\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n• **Protocol:** {protocol}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🔗 Referrer:** {http_referer}\n**☁️ Cloudflare Ray ID:** {cf_ray}',
                 'color': 0xff9900,
                 'track_state': True,
                 'cooldown_seconds': 3600,  # 1 hour cooldown for same IP
-                'ip_field': 'cf_connecting_ip'
+                'ip_field': 'client_ip'
             },
             # Nginx Tailscale - New IP detection
             {
@@ -100,7 +111,7 @@ class LogAlertMonitor:
                 'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" host="(?P<host>[^"]*)"',
                 'alert_type': 'new_ip_access',
                 'discord_title': '',
-                'discord_message': '🔒 **New IP Access via Tailscale**\n\n**📍 Service:** {service_name}\n**🔗 IP Address:** `{remote_addr}`\n**🕐 Time:** {time_local}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**🌐 Protocol:** {protocol}',
+                'discord_message': '🔒 **New IP Access via Tailscale**\n\n**📍 Service:** {service_name}\n**🔗 IP Address:** `{remote_addr}`\n**🕐 Time:** {formatted_time}\n\n**🎯 Request Details:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status}\n• **Size:** {body_bytes_sent} bytes\n• **Protocol:** {protocol}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🔗 Referrer:** {http_referer}',
                 'color': 0x0099ff,
                 'track_state': True,
                 'cooldown_seconds': 86400,  # 24 hour cooldown for same IP
@@ -114,7 +125,7 @@ class LogAlertMonitor:
                 'pattern': r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)"',
                 'alert_type': 'suspicious_activity',
                 'discord_title': '',
-                'discord_message': '⚠️ **Suspicious Activity Detected**\n\n**🚨 IP Address:** `{remote_addr}`\n**🕐 Time:** {time_local}\n**🌐 Source:** {container_name}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🎯 Failed Request:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status} ❌\n• **Size:** {body_bytes_sent} bytes\n\n**🔗 Referrer:** {http_referer}\n**🌐 Protocol:** {protocol}\n\n**⚠️ Multiple failed requests detected from this IP!**',
+                'discord_message': '⚠️ **Suspicious Activity Detected**\n\n**🚨 IP Address:** `{remote_addr}`\n**🕐 Time:** {formatted_time}\n**🌐 Source:** {container_name}\n\n**🎯 Failed Request:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status} ❌\n• **Size:** {body_bytes_sent} bytes\n• **Protocol:** {protocol}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🔗 Referrer:** {http_referer}\n\n**⚠️ Multiple failed requests detected from this IP!**',
                 'color': 0xff0000,
                 'track_state': False,
                 'cooldown_seconds': 1800,  # 30 minutes cooldown
@@ -550,7 +561,20 @@ class LogAlertMonitor:
             match = pattern.search(log['message'])
             if match:
                 match_data = match.groupdict()
-                ip_address = match_data.get(ip_field)
+                
+                # Handle client_ip field - use CF IP if available, otherwise use forwarded_for
+                if ip_field == 'client_ip':
+                    cf_ip = match_data.get('cf_connecting_ip', '')
+                    forwarded_for = match_data.get('forwarded_for', '')
+                    
+                    if cf_ip and cf_ip != '':
+                        ip_address = cf_ip
+                    elif forwarded_for and forwarded_for != '' and forwarded_for != '-':
+                        ip_address = forwarded_for
+                    else:
+                        continue
+                else:
+                    ip_address = match_data.get(ip_field)
                 
                 if not ip_address or ip_address == '-':
                     continue
@@ -575,7 +599,7 @@ class LogAlertMonitor:
                 
                 if should_alert:
                     # Send alert for new IP access
-                    self.send_ip_access_alert(config, match_data)
+                    self.send_ip_access_alert(config, match_data, ip_address)
                 
                 # Update last seen time
                 self.known_ips[ip_key] = current_time
@@ -629,13 +653,27 @@ class LogAlertMonitor:
                     self.send_suspicious_activity_alert(config, ip_address, count, ip_last_failed_request[ip_address])
                     self.ip_alert_cooldown[ip_key] = current_time
     
-    def send_ip_access_alert(self, config: Dict, match_data: Dict):
+    def send_ip_access_alert(self, config: Dict, match_data: Dict, ip_address: str):
         """Send alert for new IP access"""
         try:
             # Determine service name from host header
             host = match_data.get('host', '')
             service_name = self.get_service_name_from_host(host)
             match_data['service_name'] = service_name
+            
+            # Handle location field - use CF country if available, otherwise show "Unknown"
+            cf_country = match_data.get('cf_country', '')
+            match_data['location'] = cf_country if cf_country and cf_country != '' else 'Unknown'
+            
+            # Handle CF ray field - show "N/A" if empty
+            cf_ray = match_data.get('cf_ray', '')
+            match_data['cf_ray'] = f'`{cf_ray}`' if cf_ray and cf_ray != '' else 'N/A'
+            
+            # Add client_ip to match_data for Discord message formatting
+            match_data['client_ip'] = ip_address
+            
+            # Format timestamp for better readability
+            match_data['formatted_time'] = format_nginx_timestamp(match_data.get('time_local', ''))
             
             # Format the Discord message with extracted data
             discord_message = config['discord_message'].format(**match_data)
@@ -691,7 +729,7 @@ class LogAlertMonitor:
             # Use the detailed message template from config with actual log data
             discord_message = config['discord_message'].format(
                 remote_addr=ip_address,
-                time_local=last_request_data.get('time_local', 'Recent'),
+                formatted_time=format_nginx_timestamp(last_request_data.get('time_local', 'Recent')),
                 remote_user=last_request_data.get('remote_user', '-'),
                 container_name=last_request_data.get('container_name', 'nginx-unknown'),
                 method=last_request_data.get('method', 'Multiple'),

@@ -60,6 +60,7 @@ services:
       - freshrss
       - kiwix
     networks:
+      infrastructure:
       cloudflare:
         ipv4_address: 172.19.0.10
 
