@@ -42,7 +42,6 @@ services:
       - nginx-cloudflared
     command: tunnel --no-autoupdate run --token ${COPYPARTY_CLOUDFLARED_TOKEN}
     networks:
-      - infrastructure
       - cloudflare
 
   nginx-cloudflared:
@@ -60,7 +59,6 @@ services:
       - freshrss
       - kiwix
     networks:
-      infrastructure:
       cloudflare:
         ipv4_address: 172.19.0.10
 
