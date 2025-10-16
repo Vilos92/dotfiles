@@ -1,7 +1,7 @@
-# AGENT.md Template for External Repositories
+# AGENTS.md Template for External Repositories
 
 > ⚠️ **TEMPLATE NOTICE**: This is a template file from Greg's dotfiles repository. When using this in another repository:
-> 1. Copy this file to `AGENT.md` in the target repository
+> 1. Copy this file to `AGENTS.md` in the target repository
 > 2. Remove this notice section
 > 3. Customize the project-specific sections below
 > 4. Keep the "Greg's System Context" section for access to his personal tooling
