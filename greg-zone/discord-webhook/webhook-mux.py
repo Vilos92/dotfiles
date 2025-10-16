@@ -137,6 +137,7 @@ def webhook():
         
         # Extract alert information
         alerts = data.get('alerts', [])
+        payload_color = data.get('color')  # Get color from payload if available
         
         for alert in alerts:
             labels = alert.get('labels', {})
@@ -188,6 +189,10 @@ def webhook():
                 # Default handling for unknown services
                 discord_message = base_message
                 color = 0x0099ff
+            
+            # Use color from payload if available (overrides the above logic)
+            if payload_color is not None:
+                color = payload_color
             
             # Send to appropriate Discord webhook
             success = send_discord_message(service, discord_title, discord_message, color)

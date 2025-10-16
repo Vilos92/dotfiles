@@ -140,11 +140,33 @@ class BaseAlertMonitor:
     def check_server_health(self, host: str, port: int) -> bool:
         """Check if a server is responding on the given port."""
         try:
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.settimeout(5)
-            result = sock.connect_ex((host, port))
-            sock.close()
-            return result == 0
+            # For Minecraft, use mc-monitor metrics endpoint
+            if host == 'minecraft':
+                try:
+                    import requests
+                    response = requests.get('http://mc-monitor:8080/metrics', timeout=5)
+                    if response.status_code == 200:
+                        # Check if minecraft_status_healthy metric exists and is 1
+                        metrics_text = response.text
+                        for line in metrics_text.split('\n'):
+                            if line.startswith('minecraft_status_healthy') and '1' in line:
+                                logger.debug(f"mc-monitor reports minecraft as healthy")
+                                return True
+                        logger.debug(f"mc-monitor reports minecraft as unhealthy")
+                        return False
+                    else:
+                        logger.debug(f"mc-monitor returned status {response.status_code}")
+                        return False
+                except Exception as e:
+                    logger.debug(f"Failed to check mc-monitor: {e}")
+                    return False
+            else:
+                # For other hosts, use TCP connection
+                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(5)
+                result = sock.connect_ex((host, port))
+                sock.close()
+                return result == 0
         except Exception as e:
             logger.error(f"Error checking server health for {host}:{port}: {e}")
             return False

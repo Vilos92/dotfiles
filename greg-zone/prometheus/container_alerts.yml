@@ -3,7 +3,7 @@ groups:
   rules:
   # Container is down/stopped (using docker-stats-exporter)
   - alert: ContainerDown
-    expr: absent(container_cpu_usage_percent{job="docker-stats",name="tailscale"}) or absent(container_cpu_usage_percent{job="docker-stats",name="nginx-tailscale"}) or absent(container_cpu_usage_percent{job="docker-stats",name="cloudflared"}) or absent(container_cpu_usage_percent{job="docker-stats",name="nginx-cloudflared"}) or absent(container_cpu_usage_percent{job="docker-stats",name="copyparty"}) or absent(container_cpu_usage_percent{job="docker-stats",name="kiwix"}) or absent(container_cpu_usage_percent{job="docker-stats",name="freshrss"}) or absent(container_cpu_usage_percent{job="docker-stats",name="transmission"}) or absent(container_cpu_usage_percent{job="docker-stats",name="prometheus"}) or absent(container_cpu_usage_percent{job="docker-stats",name="alertmanager"}) or absent(container_cpu_usage_percent{job="docker-stats",name="discord-webhook"}) or absent(container_cpu_usage_percent{job="docker-stats",name="alert-monitor"}) or absent(container_cpu_usage_percent{job="docker-stats",name="grafana"}) or absent(container_cpu_usage_percent{job="docker-stats",name="node-exporter"}) or absent(container_cpu_usage_percent{job="docker-stats",name="docker-stats-exporter"}) or absent(container_cpu_usage_percent{job="docker-stats",name="cadvisor"}) or absent(container_cpu_usage_percent{job="docker-stats",name="loki"}) or absent(container_cpu_usage_percent{job="docker-stats",name="promtail"}) or absent(container_cpu_usage_percent{job="docker-stats",name="minecraft"}) or absent(container_cpu_usage_percent{job="docker-stats",name="minecraft-backup"}) or absent(container_cpu_usage_percent{job="docker-stats",name="playit"}) or absent(container_cpu_usage_percent{job="docker-stats",name="mc-monitor"})
+    expr: absent(container_cpu_usage_percent{job="docker-stats",name="tailscale"}) or absent(container_cpu_usage_percent{job="docker-stats",name="nginx-tailscale"}) or absent(container_cpu_usage_percent{job="docker-stats",name="cloudflared"}) or absent(container_cpu_usage_percent{job="docker-stats",name="nginx-cloudflared"}) or absent(container_cpu_usage_percent{job="docker-stats",name="copyparty"}) or absent(container_cpu_usage_percent{job="docker-stats",name="kiwix"}) or absent(container_cpu_usage_percent{job="docker-stats",name="freshrss"}) or absent(container_cpu_usage_percent{job="docker-stats",name="transmission"}) or absent(container_cpu_usage_percent{job="docker-stats",name="prometheus"}) or absent(container_cpu_usage_percent{job="docker-stats",name="alertmanager"}) or absent(container_cpu_usage_percent{job="docker-stats",name="discord-webhook"}) or absent(container_cpu_usage_percent{job="docker-stats",name="services-alert-monitor"}) or absent(container_cpu_usage_percent{job="docker-stats",name="infrastructure-alert-monitor"}) or absent(container_cpu_usage_percent{job="docker-stats",name="minecraft-alert-monitor"}) or absent(container_cpu_usage_percent{job="docker-stats",name="grafana"}) or absent(container_cpu_usage_percent{job="docker-stats",name="node-exporter"}) or absent(container_cpu_usage_percent{job="docker-stats",name="docker-stats-exporter"}) or absent(container_cpu_usage_percent{job="docker-stats",name="cadvisor"}) or absent(container_cpu_usage_percent{job="docker-stats",name="loki"}) or absent(container_cpu_usage_percent{job="docker-stats",name="promtail"}) or absent(container_cpu_usage_percent{job="docker-stats",name="minecraft"}) or absent(container_cpu_usage_percent{job="docker-stats",name="minecraft-backup"}) or absent(container_cpu_usage_percent{job="docker-stats",name="playit"}) or absent(container_cpu_usage_percent{job="docker-stats",name="mc-monitor"})
     for: 30s
     labels:
       severity: critical
@@ -13,7 +13,7 @@ groups:
 
   # Container restarting frequently
   - alert: ContainerRestarting
-    expr: rate(container_start_time_seconds{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"}[5m]) > 0.1
+    expr: rate(container_start_time_seconds{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|services-alert-monitor|infrastructure-alert-monitor|minecraft-alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"}[5m]) > 0.1
     for: 2m
     labels:
       severity: warning
@@ -23,7 +23,7 @@ groups:
 
   # High memory usage
   - alert: ContainerHighMemoryUsage
-    expr: (container_memory_usage_bytes{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"} / container_memory_limit_bytes{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"}) > 0.9
+    expr: (container_memory_usage_bytes{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|services-alert-monitor|infrastructure-alert-monitor|minecraft-alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"} / container_memory_limit_bytes{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|services-alert-monitor|infrastructure-alert-monitor|minecraft-alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"}) > 0.9
     for: 5m
     labels:
       severity: warning
@@ -33,7 +33,7 @@ groups:
 
   # High CPU usage
   - alert: ContainerHighCPUUsage
-    expr: container_cpu_usage_percent{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"} > 80
+    expr: container_cpu_usage_percent{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|services-alert-monitor|infrastructure-alert-monitor|minecraft-alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"} > 80
     for: 5m
     labels:
       severity: warning
@@ -43,7 +43,7 @@ groups:
 
   # Disk space running low
   - alert: ContainerHighDiskUsage
-    expr: (container_fs_usage_bytes{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"} / container_fs_limit_bytes{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"}) > 0.9
+    expr: (container_fs_usage_bytes{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|services-alert-monitor|infrastructure-alert-monitor|minecraft-alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"} / container_fs_limit_bytes{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|services-alert-monitor|infrastructure-alert-monitor|minecraft-alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"}) > 0.9
     for: 5m
     labels:
       severity: warning
@@ -53,7 +53,7 @@ groups:
 
   # Container OOMKilled
   - alert: ContainerOOMKilled
-    expr: increase(container_oom_events_total{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"}[1h]) > 0
+    expr: increase(container_oom_events_total{job="docker-stats",name=~"tailscale|nginx-tailscale|cloudflared|nginx-cloudflared|copyparty|kiwix|freshrss|transmission|prometheus|alertmanager|discord-webhook|services-alert-monitor|infrastructure-alert-monitor|minecraft-alert-monitor|grafana|node-exporter|docker-stats-exporter|cadvisor|loki|promtail|minecraft|minecraft-backup|playit|mc-monitor"}[1h]) > 0
     for: 0s
     labels:
       severity: critical

@@ -34,10 +34,10 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
                 'check_type': 'url_health_check',
                 'urls': ['https://copyparty.greglinscheid.com'],
                 'alert_type': 'service_health_change',
-                'discord_title': '📁 Copyparty Alert',
+                'discord_title': '📁 Copyparty Service Up',
                 'discord_message': 'Copyparty is now {state}!\n\n🌐 **URL:** https://copyparty.greglinscheid.com',
                 'discord_title_offline': '📁 Copyparty Service Down',
-                'discord_message_offline': '📁 **Service:** Copyparty is now offline\n\n🌐 **URL:** https://copyparty.greglinscheid.com\n\n📝 **Description:** Copyparty file sharing service has stopped responding',
+                'discord_message_offline': 'Copyparty is now offline.\n\n🌐 **URL:** https://copyparty.greglinscheid.com\n\n📝 **Description:** Copyparty file sharing service has stopped responding',
                 'color_online': 0x00ff00,
                 'color_offline': 0xff0000,
                 'track_state': True,
@@ -49,10 +49,10 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
                 'check_type': 'url_health_check',
                 'urls': ['https://freshrss.greglinscheid.com'],
                 'alert_type': 'service_health_change',
-                'discord_title': '📰 FreshRSS Alert',
+                'discord_title': '📰 FreshRSS Service Up',
                 'discord_message': 'FreshRSS is now {state}!\n\n🌐 **URL:** https://freshrss.greglinscheid.com',
                 'discord_title_offline': '📰 FreshRSS Service Down',
-                'discord_message_offline': '📰 **Service:** FreshRSS is now offline\n\n🌐 **URL:** https://freshrss.greglinscheid.com\n\n📝 **Description:** FreshRSS feed reader service has stopped responding',
+                'discord_message_offline': 'FreshRSS is now offline.\n\n🌐 **URL:** https://freshrss.greglinscheid.com\n\n📝 **Description:** FreshRSS feed reader service has stopped responding',
                 'color_online': 0x00ff00,
                 'color_offline': 0xff0000,
                 'track_state': True,
@@ -64,10 +64,10 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
                 'check_type': 'url_health_check',
                 'urls': ['https://kiwix.greglinscheid.com'],
                 'alert_type': 'service_health_change',
-                'discord_title': '📚 Kiwix Alert',
+                'discord_title': '📚 Kiwix Service Up',
                 'discord_message': 'Kiwix is now {state}!\n\n🌐 **URL:** https://kiwix.greglinscheid.com',
                 'discord_title_offline': '📚 Kiwix Service Down',
-                'discord_message_offline': '📚 **Service:** Kiwix is now offline\n\n🌐 **URL:** https://kiwix.greglinscheid.com\n\n📝 **Description:** Kiwix offline content server has stopped responding',
+                'discord_message_offline': 'Kiwix is now offline.\n\n🌐 **URL:** https://kiwix.greglinscheid.com\n\n📝 **Description:** Kiwix offline content server has stopped responding',
                 'color_online': 0x00ff00,
                 'color_offline': 0xff0000,
                 'track_state': True,
@@ -106,6 +106,11 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
                 'User-Agent': 'alert-monitor-health-check/1.0'
             }
             response = requests.head(url, timeout=timeout, allow_redirects=True, headers=headers)
+            
+            # For Kiwix, treat 401 (Unauthorized) as healthy since it requires authentication
+            if 'kiwix.greglinscheid.com' in url and response.status_code == 401:
+                return True
+            
             return response.status_code < 400
         except Exception as e:
             logger.error(f"Error checking URL health for {url}: {e}")

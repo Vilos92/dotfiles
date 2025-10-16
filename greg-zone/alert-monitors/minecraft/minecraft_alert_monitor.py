@@ -24,7 +24,7 @@ class MinecraftAlertMonitor(BaseAlertMonitor):
     def __init__(self):
         """Initialize the minecraft alert monitor with minecraft-specific configurations."""
         alert_configs = [
-            # Minecraft server health monitoring (up/down)
+            # Minecraft server health monitoring (via mc-monitor metrics)
             {
                 'name': 'minecraft_server_health',
                 'service': 'minecraft',
@@ -107,6 +107,14 @@ class MinecraftAlertMonitor(BaseAlertMonitor):
         previous_state = self.server_states.get(state_key, 'unknown')
         if previous_state == current_state:
             logger.info(f"Server health unchanged for {state_key}: {current_state}")
+            return
+        
+        # Log and alert on initial state detection
+        if previous_state == 'unknown':
+            logger.info(f"🎮 Minecraft server initial check: {current_state}")
+            # Always send alert for initial state detection
+            self.send_server_health_alert(config, current_state)
+            self.server_states[state_key] = current_state
             return
         
         # State changed - send alert
