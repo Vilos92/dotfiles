@@ -41,11 +41,9 @@ else
     ruff check .
 fi
 
-# Format all Python files using fd (faster than find)
 echo "Formatting Python files..."
 fd -e py -x ruff format
 
-# Run final check to show any remaining issues
 echo "Final check for any remaining issues..."
 ruff check .
 
