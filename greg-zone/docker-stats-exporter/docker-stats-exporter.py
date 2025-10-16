@@ -4,10 +4,9 @@ Docker Stats Exporter for Prometheus
 Works with Docker Desktop on macOS by using Docker's built-in stats API
 """
 
-import json
 import time
 import docker
-from prometheus_client import start_http_server, Gauge, Counter
+from prometheus_client import start_http_server, Gauge
 import logging
 
 # Configure logging
@@ -166,16 +165,18 @@ def cleanup_old_metrics(current_containers):
             container_disk_read,
             container_disk_write,
         ]
-        
+
         for metric in all_metrics:
             # Get all current labels for this metric
             for sample in metric.collect()[0].samples:
-                if sample.name == metric._name and 'name' in sample.labels:
-                    container_name = sample.labels['name']
+                if sample.name == metric._name and "name" in sample.labels:
+                    container_name = sample.labels["name"]
                     if container_name not in current_containers:
                         # Remove the metric for this container
                         metric.remove(container_name)
-                        logger.info(f"Cleaned up metrics for removed container: {container_name}")
+                        logger.info(
+                            f"Cleaned up metrics for removed container: {container_name}"
+                        )
     except Exception as e:
         logger.error(f"Error cleaning up old metrics: {e}")
 
