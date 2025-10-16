@@ -8,12 +8,11 @@ Handles suspicious activity detection, user activity monitoring, and health chec
 import os
 import re
 import time
-import base64
+import requests
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
 from collections import defaultdict
 import logging
-from cryptography.fernet import Fernet
 
 from shared.base_alert_monitor import BaseAlertMonitor
 from shared.utils import format_nginx_timestamp
@@ -56,7 +55,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                 "color": 0xFF9900,
                 "track_state": True,
                 "cooldown_seconds": 3600,  # 1 hour cooldown for same IP
-                "ip_field": "client_ip",
+                "ip_field": "forwarded_for",
             },
             # Nginx Tailscale - New IP detection
             {
@@ -80,7 +79,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                 "pattern": r'^(?P<remote_addr>\S+) - (?P<remote_user>\S+) \[(?P<time_local>[^\]]+)\] "(?P<method>\S+) (?P<request_uri>\S+) (?P<protocol>\S+)" (?P<status>\d+) (?P<body_bytes_sent>\d+) "(?P<http_referer>[^"]*)" "(?P<http_user_agent>[^"]*)" host="[^"]*" cf_ip="[^"]*" cf_country="[^"]*" cf_ray="[^"]*" real_ip="[^"]*" forwarded_for="[^"]*" health_check="(?P<health_check>[^"]*)"',
                 "alert_type": "suspicious_activity",
                 "discord_title": "",
-                "discord_message": "⚠️ **Suspicious Activity Detected**\n\n**🚨 IP Address:** `{remote_addr}`\n**🕐 Time:** {formatted_time}\n**🌐 Source:** {container_name}\n\n**🎯 Failed Request:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status} ❌\n• **Size:** {body_bytes_sent} bytes\n• **Protocol:** {protocol}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🔗 Referrer:** {http_referer}\n\n**🔐 Health Check Status:** {health_check_status}\n\n**⚠️ Multiple failed requests detected from this IP!**",
+                "discord_message": "⚠️ **Suspicious Activity Detected**\n\n**🚨 IP Address:** `{remote_addr}`\n**🌍 Location:** {location}\n**🕐 Time:** {formatted_time}\n**🌐 Source:** {container_name}\n\n**🎯 Failed Request:**\n• **Method:** {method}\n• **Path:** `{request_uri}`\n• **Status:** {status} ❌\n• **Size:** {body_bytes_sent} bytes\n• **Protocol:** {protocol}\n\n**💻 Device Info:**\n```{http_user_agent}```\n\n**🔗 Referrer:** {http_referer}\n\n**🔐 Health Check Status:** {health_check_status}\n\n**⚠️ Multiple failed requests detected from this IP!**",
                 "color": 0xFF0000,
                 "track_state": False,
                 "cooldown_seconds": 1800,  # 30 minutes cooldown
@@ -90,44 +89,12 @@ class ServicesAlertMonitor(BaseAlertMonitor):
         ]
 
         super().__init__(alert_configs, "/tmp/services_alert_monitor_state.json")
-
-    def validate_health_check_token(self, received_token: str) -> bool:
-        """Validate a health check token by decrypting and checking timestamp."""
-        try:
-            # Get secret from environment
-            secret = os.getenv("ALERT_MONITOR_SECRET", "default-secret-change-me")
-
-            # Create encryption key from secret (pad to 32 bytes)
-            key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32, b"0"))
-            f = Fernet(key)
-
-            # Decode and decrypt the token
-            encrypted_data = base64.urlsafe_b64decode(received_token.encode())
-            decrypted_timestamp = int(f.decrypt(encrypted_data).decode())
-
-            # Check if timestamp is within our window (30 seconds)
-            current_time = int(time.time())
-            time_diff = abs(current_time - decrypted_timestamp)
-
-            if time_diff <= 30:
-                logger.debug(
-                    f"Valid health check token: timestamp {decrypted_timestamp}, diff {time_diff}s"
-                )
-                return True
-            else:
-                logger.warning(
-                    f"Health check token timestamp too old: {time_diff}s ago (token: {decrypted_timestamp}, current: {current_time})"
-                )
-                return False
-
-        except base64.binascii.Error as e:
-            logger.warning(f"Health check token invalid base64 encoding: {e}")
-            return False
-        except Exception as e:
-            logger.warning(
-                f"Health check token decryption failed - possible attack or corrupted token: {e}"
-            )
-            return False
+        
+        # Initialize IP location cache
+        self.ip_location_cache = {}
+        
+        # Set alert monitor secret for health check token validation
+        self.alert_monitor_secret = os.getenv("ALERT_MONITOR_SECRET", "default-secret-change-me")
 
     def is_legitimate_health_check_request(
         self, log_message: str, parsed_data: Dict = None
@@ -207,6 +174,9 @@ class ServicesAlertMonitor(BaseAlertMonitor):
     def run(self):
         """Main monitoring loop for services."""
         logger.info("Starting Services Alert Monitor")
+        
+        # Clean up old IPs on startup
+        self.cleanup_old_ips()
 
         while True:
             try:
@@ -395,8 +365,12 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                         self.send_ip_access_alert(config, match_data, ip_address)
                         self.ip_alert_cooldown[ip_key] = current_time
 
-                # Update last seen time
-                self.known_ips[ip_key] = current_time
+                # Update last seen time and get country
+                country = self.get_ip_location(ip_address)
+                self.known_ips[ip_key] = {
+                    "last_seen": current_time,
+                    "country": country
+                }
 
     def process_user_activity_alert(self, config: Dict[str, Any], logs: List[Dict]):
         """Process user activity alerts."""
@@ -470,6 +444,9 @@ class ServicesAlertMonitor(BaseAlertMonitor):
     ):
         """Send alert for suspicious activity."""
         try:
+            # Get IP location
+            location = self.get_ip_location(ip_address)
+            
             # Analyze health check status
             health_check_value = last_request_data.get("health_check", "-")
             health_check_status = self.analyze_health_check_status(health_check_value)
@@ -477,6 +454,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
             # Use the detailed message template from config with actual log data
             discord_message = config["discord_message"].format(
                 remote_addr=ip_address,
+                location=location,
                 formatted_time=format_nginx_timestamp(
                     last_request_data.get("time_local", "Recent")
                 ),
@@ -530,8 +508,13 @@ class ServicesAlertMonitor(BaseAlertMonitor):
 
             # Determine client IP and location
             if config["service"] == "nginx-cloudflared":
-                client_ip = match_data.get("cf_connecting_ip", ip_address)
-                location = match_data.get("cf_country", "Unknown")
+                client_ip = match_data.get("forwarded_for", ip_address)
+                cf_country = match_data.get("cf_country", "")
+                if cf_country and cf_country != "":
+                    location = cf_country
+                else:
+                    # Fallback to geolocation lookup when Cloudflare headers are not available
+                    location = self.get_ip_location(client_ip)
             else:
                 client_ip = ip_address
                 location = "Tailscale Network"
@@ -614,6 +597,54 @@ class ServicesAlertMonitor(BaseAlertMonitor):
 
         except Exception as e:
             logger.error(f"Error sending user activity alert: {e}")
+
+    def get_ip_location(self, ip_address: str) -> str:
+        """Get location information for an IP address using ipapi.com with caching."""
+        # Check cache first
+        if ip_address in self.ip_location_cache:
+            return self.ip_location_cache[ip_address]
+        
+        # Get API key from environment
+        api_key = os.getenv("IP_API_ACCESS_KEY")
+        if not api_key:
+            logger.warning("IP_API_ACCESS_KEY not set, skipping geolocation lookup")
+            self.ip_location_cache[ip_address] = "Unknown"
+            return "Unknown"
+        
+        try:
+            # Use ipapi.com for geolocation lookup
+            response = requests.get(
+                f"http://api.ipapi.com/api/{ip_address}",
+                params={"access_key": api_key},
+                timeout=5
+            )
+            
+            if response.status_code == 200:
+                data = response.json()
+                
+                # Check for API error responses (rate limiting, etc.)
+                if "error" in data:
+                    error_info = data.get("error", {})
+                    logger.warning(f"Geolocation API error for {ip_address}: {error_info}")
+                    self.ip_location_cache[ip_address] = "Unknown"
+                    return "Unknown"
+                
+                # Extract country name from response
+                country_name = data.get("country_name")
+                if country_name:
+                    self.ip_location_cache[ip_address] = country_name
+                    return country_name
+                else:
+                    logger.warning(f"No country name in response for {ip_address}")
+            else:
+                logger.warning(f"Geolocation API returned status {response.status_code} for {ip_address}")
+                
+        except Exception as e:
+            logger.warning(f"Geolocation lookup failed for {ip_address}: {e}")
+        
+        # Cache the "Unknown" result to avoid repeated failed lookups
+        self.ip_location_cache[ip_address] = "Unknown"
+        return "Unknown"
 
     def get_service_name_from_host(self, host: str) -> str:
         """Determine service name from host header."""

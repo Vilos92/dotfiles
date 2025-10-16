@@ -57,6 +57,37 @@ class MinecraftAlertMonitor(BaseAlertMonitor):
 
         super().__init__(alert_configs, "/tmp/minecraft_alert_monitor_state.json")
 
+    def check_server_health(self, host: str, port: int) -> bool:
+        """Override to use mc-monitor metrics endpoint for Minecraft health checks."""
+        if host == "minecraft":
+            try:
+                import requests
+
+                response = requests.get("http://mc-monitor:8080/metrics", timeout=5)
+                if response.status_code == 200:
+                    # Check if minecraft_status_healthy metric exists and is 1
+                    metrics_text = response.text
+                    for line in metrics_text.split("\n"):
+                        if (
+                            line.startswith("minecraft_status_healthy")
+                            and "1" in line
+                        ):
+                            logger.debug("mc-monitor reports minecraft as healthy")
+                            return True
+                    logger.debug("mc-monitor reports minecraft as unhealthy")
+                    return False
+                else:
+                    logger.debug(
+                        f"mc-monitor returned status {response.status_code}"
+                    )
+                    return False
+            except Exception as e:
+                logger.debug(f"Failed to check mc-monitor: {e}")
+                return False
+        else:
+            # Fall back to parent implementation for other hosts
+            return super().check_server_health(host, port)
+
     def run(self):
         """Main monitoring loop for Minecraft services."""
         logger.info("Starting Minecraft Alert Monitor")
