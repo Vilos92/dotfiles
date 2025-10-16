@@ -139,7 +139,6 @@ services:
   prometheus:
     image: prom/prometheus:latest
     container_name: prometheus
-    hostname: greg-zone-prometheus
     restart: unless-stopped
     ports:
       - "9090:9090"
@@ -165,7 +164,6 @@ services:
   alertmanager:
     image: prom/alertmanager:latest
     container_name: alertmanager
-    hostname: greg-zone-alertmanager
     restart: unless-stopped
     ports:
       - "9093:9093"
@@ -186,7 +184,6 @@ services:
   discord-webhook:
     build: ./discord-webhook
     container_name: discord-webhook
-    hostname: greg-zone-discord-webhook
     restart: unless-stopped
     ports:
       - "8083:8080"
@@ -203,13 +200,13 @@ services:
     networks:
       - infrastructure
 
+
   # Services alert monitor (nginx, copyparty, freshrss, kiwix)
   services-alert-monitor:
     build:
       context: ./alert-monitors
       dockerfile: services/Dockerfile
     container_name: services-alert-monitor
-    hostname: greg-zone-services-alert-monitor
     restart: unless-stopped
     environment:
       - LOKI_URL=http://loki:3100
@@ -232,7 +229,6 @@ services:
       context: ./alert-monitors
       dockerfile: infrastructure/Dockerfile
     container_name: infrastructure-alert-monitor
-    hostname: greg-zone-infrastructure-alert-monitor
     restart: unless-stopped
     environment:
       - LOKI_URL=http://loki:3100
@@ -254,7 +250,6 @@ services:
       context: ./alert-monitors
       dockerfile: minecraft/Dockerfile
     container_name: minecraft-alert-monitor
-    hostname: greg-zone-minecraft-alert-monitor
     restart: unless-stopped
     environment:
       - LOKI_URL=http://loki:3100
@@ -273,7 +268,6 @@ services:
   grafana:
     image: grafana/grafana:latest
     container_name: grafana
-    hostname: greg-zone-grafana
     restart: unless-stopped
     ports:
       - "3000:3000"
@@ -295,7 +289,6 @@ services:
   node-exporter:
     image: prom/node-exporter:latest
     container_name: node-exporter
-    hostname: greg-zone-node-exporter
     restart: unless-stopped
     ports:
       - "9100:9100"
@@ -318,7 +311,6 @@ services:
   docker-stats-exporter:
     build: ./docker-stats-exporter
     container_name: docker-stats-exporter
-    hostname: greg-zone-docker-stats
     restart: unless-stopped
     ports:
       - "8081:8081"
@@ -334,7 +326,6 @@ services:
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:latest
     container_name: cadvisor
-    hostname: greg-zone-cadvisor
     restart: unless-stopped
     ports:
       - "8080:8080"
@@ -365,7 +356,6 @@ services:
   loki:
     image: grafana/loki:latest
     container_name: loki
-    hostname: greg-zone-loki
     restart: unless-stopped
     ports:
       - "3100:3100"
@@ -379,7 +369,6 @@ services:
   promtail:
     image: grafana/promtail:latest
     container_name: promtail
-    hostname: greg-zone-promtail
     restart: unless-stopped
     volumes:
       - ./promtail/promtail.yml:/etc/promtail/config.yml:ro
@@ -401,7 +390,6 @@ services:
     image: itzg/minecraft-bedrock-server:latest
     platform: linux/amd64
     container_name: minecraft
-    hostname: greg-zone-minecraft
     restart: unless-stopped
     environment:
       - EULA=TRUE
@@ -433,7 +421,6 @@ services:
   minecraft-backup:
     image: kaiede/minecraft-bedrock-backup
     container_name: minecraft-backup
-    hostname: greg-zone-minecraft-backup
     restart: unless-stopped
     environment:
       - TZ=America/Los_Angeles
@@ -454,7 +441,6 @@ services:
   playit:
     image: ghcr.io/playit-cloud/playit-agent:0.16
     container_name: playit
-    hostname: greg-zone-playit
     restart: unless-stopped
     depends_on:
       - minecraft
@@ -475,7 +461,6 @@ services:
   mc-monitor:
     image: itzg/mc-monitor:latest
     container_name: mc-monitor
-    hostname: greg-zone-mc-monitor
     restart: unless-stopped
     ports:
       - "8082:8080"
