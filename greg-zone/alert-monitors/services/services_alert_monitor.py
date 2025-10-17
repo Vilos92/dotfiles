@@ -109,11 +109,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                 if health_check_value.startswith("alert-monitor-"):
                     token = health_check_value[14:]  # Remove "alert-monitor-" prefix
                     is_valid = self.validate_health_check_token(token)
-                    if is_valid:
-                        logger.debug(
-                            "Legitimate health check request validated successfully"
-                        )
-                    else:
+                    if not is_valid:
                         logger.warning(
                             "Health check request with invalid token - possible attack attempt"
                         )
@@ -137,11 +133,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                 token = match.group(1)
                 # Validate the token
                 is_valid = self.validate_health_check_token(token)
-                if is_valid:
-                    logger.debug(
-                        "Legitimate health check request validated successfully"
-                    )
-                else:
+                if not is_valid:
                     logger.warning(
                         "Health check request with invalid token - possible attack attempt"
                     )
@@ -251,9 +243,6 @@ class ServicesAlertMonitor(BaseAlertMonitor):
 
                 # Skip legitimate health check requests
                 if self.is_legitimate_health_check_request(log["message"], match_data):
-                    logger.debug(
-                        f"Skipping legitimate health check request from {ip_address}"
-                    )
                     continue
 
                 # Log malicious requests with bad health check headers

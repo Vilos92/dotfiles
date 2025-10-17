@@ -83,7 +83,6 @@ class BaseAlertMonitor:
             # IP location cache removed - now using unified IP data structure
 
             logger.info(f"Loaded state from Redis for {self.monitor_type} monitor")
-            logger.debug(f"Known IPs: {len(self.known_ips)}, Suspicious IPs: {len(self.suspicious_ips)}")
 
         except Exception as e:
             logger.error(f"Error loading state from Redis: {e}")
@@ -103,7 +102,6 @@ class BaseAlertMonitor:
 
 
 
-            logger.debug(f"Saved state to Redis for {self.monitor_type} monitor")
 
         except Exception as e:
             logger.error(f"Error saving state to Redis: {e}")
@@ -209,7 +207,6 @@ class BaseAlertMonitor:
             sock.close()
             return result == 0
         except Exception as e:
-            logger.debug(f"Health check failed for {host}:{port}: {e}")
             return False
 
     def query_loki(self, query: str) -> List[Dict]:

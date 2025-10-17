@@ -15,7 +15,7 @@ from shared.base_alert_monitor import BaseAlertMonitor
 
 # Configure logging
 logging.basicConfig(
-    level=logging.DEBUG, format="%(asctime)s - %(levelname)s - %(message)s"
+    level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
 )
 logger = logging.getLogger(__name__)
 
@@ -75,17 +75,11 @@ class MinecraftAlertMonitor(BaseAlertMonitor):
                             line.startswith("minecraft_status_healthy")
                             and "1" in line
                         ):
-                            logger.debug("mc-monitor reports minecraft as healthy")
                             return True
-                    logger.debug("mc-monitor reports minecraft as unhealthy")
                     return False
                 else:
-                    logger.debug(
-                        f"mc-monitor returned status {response.status_code}"
-                    )
                     return False
             except Exception as e:
-                logger.debug(f"Failed to check mc-monitor: {e}")
                 return False
         else:
             # Fall back to parent implementation for other hosts
@@ -304,7 +298,6 @@ class MinecraftAlertMonitor(BaseAlertMonitor):
             # Save server states
             self.redis_client.set_server_states(self.server_states)
             
-            logger.debug(f"Minecraft state saved: {len(self.server_states)} server states")
             
         except Exception as e:
             logger.error(f"Error saving Minecraft state: {e}")
@@ -332,7 +325,6 @@ class MinecraftAlertMonitor(BaseAlertMonitor):
             # Store in Redis
             self.redis_client.set_player_mapping(player_key, player_data)
             
-            logger.debug(f"Stored player mapping: XUID {xuid} -> {username} (last online: {timestamp.isoformat()})")
             
         except Exception as e:
             logger.error(f"Error storing player mapping for XUID {xuid}: {e}")

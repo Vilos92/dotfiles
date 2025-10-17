@@ -194,7 +194,6 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
             # Save server states
             self.redis_client.set_server_states(self.server_states)
             
-            logger.debug(f"Infrastructure state saved: {len(self.server_states)} server states")
             
         except Exception as e:
             logger.error(f"Error saving infrastructure state: {e}")

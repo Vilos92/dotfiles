@@ -32,7 +32,6 @@ class AlertMonitorRedis:
             decode_responses=True
         )
         
-        # Test connection
         try:
             self.redis_client.ping()
             logger.info(f"Connected to Redis for {monitor_type} monitor")
