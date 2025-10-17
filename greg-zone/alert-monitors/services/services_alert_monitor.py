@@ -326,8 +326,17 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                         self.send_ip_access_alert(config, match_data, ip_address)
                         self.ip_alert_cooldown[ip_key] = current_time
 
-                # Update last seen time and get country
-                country = self.get_ip_location(ip_address)
+                # Update last seen time and get country (skip geolocation for Tailscale)
+                if config['service'] == 'nginx-tailscale':
+                    # Skip geolocation for Tailscale IPs (private network)
+                    country = "Tailscale"
+                else:
+                    # Use cached country if available and not a placeholder, otherwise lookup
+                    cached_country = existing_ip_data.get('country') if existing_ip_data else None
+                    if cached_country and cached_country not in ['Unknown', None, '']:
+                        country = cached_country
+                    else:
+                        country = self.get_ip_location(ip_address)
                 # Store in Redis with proper service prefix
                 self.redis_client.update_ip(ip_key, current_time, country)
 
@@ -527,7 +536,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
             logger.error(f"Error sending user activity alert: {e}")
 
     def get_ip_location(self, ip_address: str) -> str:
-        """Get location information for an IP address using ipapi.com."""
+        """Get location information for an IP address using theipapi.com."""
         # Get API key from environment
         api_key = os.getenv("IP_API_ACCESS_KEY")
         if not api_key:
@@ -535,10 +544,10 @@ class ServicesAlertMonitor(BaseAlertMonitor):
             return "Unknown"
         
         try:
-            # Use ipapi.com for geolocation lookup
+            # Use theipapi.com for geolocation lookup
             response = requests.get(
-                f"http://api.ipapi.com/api/{ip_address}",
-                params={"access_key": api_key},
+                f"https://api.theipapi.com/v1/ip/{ip_address}",
+                params={"api_key": api_key},
                 timeout=5
             )
             
@@ -546,13 +555,15 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                 data = response.json()
                 
                 # Check for API error responses (rate limiting, etc.)
-                if "error" in data:
-                    error_info = data.get("error", {})
-                    logger.warning(f"Geolocation API error for {ip_address}: {error_info}")
+                if data.get("status") != "OK":
+                    logger.warning(f"Geolocation API error for {ip_address}: {data}")
                     return "Unknown"
                 
                 # Extract country name from response
-                country_name = data.get("country_name")
+                # New API format: body.location.country (full name) or body.location.country_code (2-letter code)
+                body = data.get("body", {})
+                location = body.get("location", {})
+                country_name = location.get("country")
                 if country_name:
                     return country_name
                 else:
