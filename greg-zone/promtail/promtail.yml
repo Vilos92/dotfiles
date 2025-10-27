@@ -52,7 +52,7 @@ scrape_configs:
           container_name:
       # Minecraft-specific parsing for minecraft container - only player events
       - match:
-          selector: '{container_name="minecraft"} |= "Player connected:" |= "Player disconnected:"'
+          selector: '{container_name="minecraft"} |~ "Player (connected|disconnected):"'
           stages:
             - regex:
                 expression: '\[(?P<timestamp>\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}:\d{3} \w+)\] (?P<message>.*)'

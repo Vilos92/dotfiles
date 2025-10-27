@@ -285,7 +285,7 @@ class Tools(object):
                 return True
             else:
                 return default
-        except AttributeError as e:
+        except AttributeError:
             sys.exit(f'ERROR: Alfred Environment "{var}" Variable not found!')
 
     @staticmethod

@@ -58,6 +58,7 @@ start_services() {
     echo -e "   • FreshRSS:      http://greg-zone:9002"
     echo -e "   • Kiwix:         http://greg-zone:9003"
     echo -e "   • Transmission:  http://greg-zone:9004"
+    echo -e "   • Redis Insight: http://greg-zone:8084"
     echo
     echo -e "${PURPLE}🌍 Public Access:${NC}"
     echo -e "   • copyparty:     https://copyparty.greglinscheid.com"
@@ -153,6 +154,7 @@ show_access_info() {
     echo -e "   • Transmission:  http://greg-zone:9004 (Torrent client)"
     echo -e "   • Prometheus:    http://greg-zone:9005 (Metrics collection)"
     echo -e "   • cAdvisor:      http://greg-zone:9007 (Container metrics)"
+    echo -e "   • Redis Insight: http://greg-zone:8084 (Redis data browser)"
     echo
     echo -e "${PURPLE}🌍 Public Access (via Cloudflare):${NC}"
     echo -e "   • copyparty:     https://copyparty.greglinscheid.com (File sharing)"

@@ -82,6 +82,11 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 - `freshrss-docker.sh` - RSS reader 
 - `kiwix-docker.sh` - Offline Wikipedia/content server
 
+**Code Quality:**
+- `ruff.sh` - Python linting and formatting with ruff
+- `stylua.sh` - Lua code formatting with stylua
+- `shellcheck.sh` - Shell script linting with shellcheck
+
 ## Docker Services
 
 ### Service Overview
@@ -123,6 +128,11 @@ All services include:
 - `yt-dlp` - video downloading
 - `shellcheck` - shell script linting
 
+### Code Quality Tools
+- `ruff` - Python linting and formatting
+- `stylua` - Lua code formatting
+- `shellcheck` - Shell script linting
+
 ## Development Workflow
 
 ### Approach
@@ -155,14 +165,14 @@ Most configurations (nvim, tmux, zsh, git) work across all devices.
 - Cloudflare tunnel for public copyparty access
 
 ### Self-Maintenance
-This AGENT.md should be kept up-to-date as the environment evolves. Feel free to update this file when:
+This AGENTS.md should be kept up-to-date as the environment evolves. Feel free to update this file when:
 - New tools or aliases are added
 - Workflow preferences change  
 - New services or configurations are introduced
 - Dependencies change
 - Binary commands are added or modified
 
-**Important:** When updating this file, also update `AGENT_TEMPLATE.md` to keep the "Greg's System Context" section in sync with any universally useful tools, aliases, or practices that would be valuable in other repositories.
+**Important:** When updating this file, also update `AGENTS_TEMPLATE.md` to keep the "Greg's System Context" section in sync with any universally useful tools, aliases, or practices that would be valuable in other repositories.
 
 ### Testing Expectations  
 - Test all changes locally before committing (dogfooding approach)
