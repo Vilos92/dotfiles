@@ -1,14 +1,8 @@
 # alacritty theme set by alacritty-theme
 alacritty/.config/alacritty/theme.toml
 
-# copyparty configuration
-docker/copyparty/copyparty.conf
-
 # environment variables
 .env
-
-# nginx auth files
-docker/nginx/auth/.htpasswd
 
 # Python
 __pycache__/
