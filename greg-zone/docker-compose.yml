@@ -75,7 +75,6 @@ services:
       - "./copyparty/copyparty-discord-hook.py:/app/copyparty-discord-hook.py:ro"
       - "copyparty-hists:/cfg/hists"
       - "/Volumes/T7:/Volumes/T7"
-      - "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault"
       - "/Volumes/Wokyis M.2 SSD - Storage:/Volumes/Wokyis M.2 SSD - Storage"
     restart: unless-stopped
     command: ["--rproxy", "-1", "-c", "/app/copyparty.conf", "--xau", "f,t5,j,python3,/app/copyparty-discord-hook.py,--"]
@@ -106,8 +105,8 @@ services:
       - TZ=America/Los_Angeles
       - CRON_MIN=1,31
     volumes:
-      - "/Users/greg.linscheid/Desktop/Mac Vault/Greg News/freshrss-data:/var/www/FreshRSS/data"
-      - "/Users/greg.linscheid/Desktop/Mac Vault/Greg News/freshrss-extensions:/var/www/FreshRSS/extensions"
+      - "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/Greg News/freshrss-data:/var/www/FreshRSS/data"
+      - "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/Greg News/freshrss-extensions:/var/www/FreshRSS/extensions"
     restart: unless-stopped
     logging:
       options:
@@ -131,7 +130,7 @@ services:
       - USER=greg
       - PASS=${TRANSMISSION_PASSWORD}
     volumes:
-      - "/Users/greg.linscheid/Desktop/Mac Vault/transmission-config:/config"
+      - "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/transmission-config:/config"
       - "/Volumes/T7/Vaults/Local Vault/torrent:/downloads"
     restart: unless-stopped
     networks:
@@ -432,7 +431,7 @@ services:
     expose:
       - "2222"
     volumes:
-      - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania:/data"
+      - "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/Minecraft/Jordania:/data"
     stdin_open: true
     tty: true
     deploy:
@@ -454,8 +453,8 @@ services:
     environment:
       - TZ=America/Los_Angeles
     volumes:
-      - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania_backups:/data"
-      - "/Users/greg.linscheid/Desktop/Mac Vault/Minecraft/Jordania:/jordania"
+      - "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/Minecraft/Jordania_backups:/data"
+      - "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/Minecraft/Jordania:/jordania"
       - "./minecraft/backup/config.yml:/config/config.yml:ro"
     depends_on:
       - minecraft
