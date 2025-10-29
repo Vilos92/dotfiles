@@ -7,13 +7,15 @@
 # This script performs a ONE-WAY MIRROR backup.
 #
 # The T7 drive is the DESTINATION. It is intended to be an exact copy
-# of the source Mac Vault files.
+# of selected Wokyis Vault folders.
 #
 # Data flows FROM:
-#   - ~/Desktop/Mac Vault/
+#   - /Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/
+#   - /Volumes/Wokyis M.2 SSD - Storage/Vaults/Hobby Vault/
 #
 # Data flows TO:
-#   - /Volumes/T7/Vaults/Mac Vault/
+#   - /Volumes/T7/Vaults/GregZone Vault/
+#   - /Volumes/T7/Vaults/Hobby Vault/
 #
 # Because this script uses the --delete flag, any file that exists on the
 # T7 drive but NOT in the source Mac Vault will be PERMANENTLY DELETED from
@@ -43,26 +45,46 @@ if [ ! -d "/Volumes/T7" ]; then
     exit 1
 fi
 
-if [ ! -d "$HOME/Desktop/Mac Vault" ]; then
-    echo "❌ ERROR: Mac Vault not found at $HOME/Desktop/Mac Vault"
-    echo "   Please ensure your Mac Vault directory exists"
+if [ ! -d "/Volumes/Wokyis M.2 SSD - Storage" ]; then
+    echo "❌ ERROR: Wokyis drive not found at /Volumes/Wokyis M.2 SSD - Storage"
+    echo "   Please ensure your Wokyis drive is connected and mounted"
     exit 1
 fi
 
-echo "✅ Source Mac Vault found: $HOME/Desktop/Mac Vault"
+GZ_SOURCE_BASE="/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault"
+HB_SOURCE_BASE="/Volumes/Wokyis M.2 SSD - Storage/Vaults/Hobby Vault"
+
+if [ ! -d "$GZ_SOURCE_BASE" ]; then
+    echo "❌ ERROR: GregZone Vault not found at $GZ_SOURCE_BASE"
+    exit 1
+fi
+
+if [ ! -d "$HB_SOURCE_BASE" ]; then
+    echo "❌ ERROR: Hobby Vault not found at $HB_SOURCE_BASE"
+    exit 1
+fi
+
+echo "✅ Source GregZone Vault found: $GZ_SOURCE_BASE"
+echo "✅ Source Hobby Vault found: $HB_SOURCE_BASE"
 echo "✅ Target Samsung T7 drive found: /Volumes/T7"
 echo "===================================================="
 
 
-# --- Mac Vault Backup (Desktop -> T7) ---
-echo "▶️  Starting Mac Vault Backup"
-# --- Configuration ---
-MV_SOURCE_BASE="$HOME/Desktop/Mac Vault"
-MV_DEST_BASE="/Volumes/T7/Vaults/Mac Vault"
+# --- Ensure destination directories exist ---
+mkdir -p "/Volumes/T7/Vaults/GregZone Vault" "/Volumes/T7/Vaults/Hobby Vault"
 
-# --- Logic ---
-echo "🔄 Syncing: Entire Mac Vault"
-rsync $RSYNC_OPTS "$MV_SOURCE_BASE/" "$MV_DEST_BASE/"
+# --- GregZone Vault Backup (Wokyis -> T7) ---
+echo "▶️  Starting GregZone Vault backup"
+GZ_DEST_BASE="/Volumes/T7/Vaults/GregZone Vault"
+echo "🔄 Syncing: $GZ_SOURCE_BASE -> $GZ_DEST_BASE"
+rsync $RSYNC_OPTS "$GZ_SOURCE_BASE/" "$GZ_DEST_BASE/"
+echo "----------------------------------------------------"
+
+# --- Hobby Vault Backup (Wokyis -> T7) ---
+echo "▶️  Starting Hobby Vault backup"
+HB_DEST_BASE="/Volumes/T7/Vaults/Hobby Vault"
+echo "🔄 Syncing: $HB_SOURCE_BASE -> $HB_DEST_BASE"
+rsync $RSYNC_OPTS "$HB_SOURCE_BASE/" "$HB_DEST_BASE/"
 echo "----------------------------------------------------"
 
 echo "✅ All backup stages finished."

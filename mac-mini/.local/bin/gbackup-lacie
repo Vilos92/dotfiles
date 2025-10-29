@@ -12,7 +12,8 @@
 # Data flows FROM:
 #   - /Volumes/T7/Vaults/Local Vault/media/
 #   - /Volumes/T7/Vaults/Cloud Vault/
-#   - /Volumes/T7/Vaults/Mac Vault/
+#   - /Volumes/T7/Vaults/GregZone Vault/
+#   - /Volumes/T7/Vaults/Hobby Vault/
 #
 # Data flows TO:
 #   - /Volumes/Lacie/
@@ -109,15 +110,34 @@ done
 echo "----------------------------------------------------"
 
 
-# --- Stage 3: Mac Vault Backup (T7 -> LaCie Small) ---
-echo "▶️  Starting Stage 3: Mac Vault Backup"
+# --- Stage 3: GregZone Vault Backup (T7 -> LaCie Small) ---
+echo "▶️  Starting Stage 3: GregZone Vault Backup"
 # --- Configuration for Stage 3 ---
-MV_SOURCE_BASE="/Volumes/T7/Vaults/Mac Vault"
-MV_DEST_BASE="/Volumes/LaCie Small/Mac Vault"
+GZ_SOURCE_BASE="/Volumes/T7/Vaults/GregZone Vault"
+GZ_DEST_BASE="/Volumes/LaCie Small/GregZone Vault"
 
 # --- Logic for Stage 3 ---
-echo "🔄 Syncing: Entire Mac Vault"
-rsync $RSYNC_OPTS "$MV_SOURCE_BASE/" "$MV_DEST_BASE/"
+if [ -d "$GZ_SOURCE_BASE" ]; then
+  echo "🔄 Syncing: Entire GregZone Vault"
+  rsync $RSYNC_OPTS "$GZ_SOURCE_BASE/" "$GZ_DEST_BASE/"
+else
+  echo "⚠️  Skipping, not found: $GZ_SOURCE_BASE"
+fi
+echo "----------------------------------------------------"
+
+# --- Stage 4: Hobby Vault Backup (T7 -> LaCie Small) ---
+echo "▶️  Starting Stage 4: Hobby Vault Backup"
+# --- Configuration for Stage 4 ---
+HB_SOURCE_BASE="/Volumes/T7/Vaults/Hobby Vault"
+HB_DEST_BASE="/Volumes/LaCie Small/Hobby Vault"
+
+# --- Logic for Stage 4 ---
+if [ -d "$HB_SOURCE_BASE" ]; then
+  echo "🔄 Syncing: Entire Hobby Vault"
+  rsync $RSYNC_OPTS "$HB_SOURCE_BASE/" "$HB_DEST_BASE/"
+else
+  echo "⚠️  Skipping, not found: $HB_SOURCE_BASE"
+fi
 echo "----------------------------------------------------"
 
 echo "✅ All backup stages finished."
