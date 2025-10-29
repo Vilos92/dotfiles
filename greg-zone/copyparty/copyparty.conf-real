@@ -46,15 +46,20 @@
   accs:
     r: friend
 
-# Wokyis M.2 SSD Vault.
-# Only the admin can access this volume.
-[/Wokyis Vault]
-  /Volumes/Wokyis M.2 SSD - Storage/Vaults
+# Admin can access the GregZone Vault.
+[/GregZone Vault]
+  /Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault
   accs:
     r: greg
 
-# Friends can access llm models under Wokyis Vault.
-[/Wokyis Vault/llm models]
+# Admin can access the Hobby Vault.
+[/Hobby Vault]
+  /Volumes/Wokyis M.2 SSD - Storage/Vaults/Hobby Vault
+  accs:
+    r: greg
+
+# Friends can access llm models under Hobby Vault.
+[/Hobby Vault/llm models]
   /Volumes/Wokyis M.2 SSD - Storage/Vaults/Hobby Vault/llm_models
   accs:
     r: friend
