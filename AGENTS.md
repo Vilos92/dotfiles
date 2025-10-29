@@ -202,3 +202,22 @@ All commands in `~/.local/bin/` are available when stow is applied (see Binary C
 
 ### Docker Services
 Individual service management scripts are preferred over docker-compose for the granular control and error checking they provide.
+
+**Important: Rebuilding Images for Code Changes**
+When making changes to Python files or other source code that Docker services depend on:
+1. **Rebuild the image** to ensure changes are reflected: `docker-compose build <service>`
+2. **Stop the service**: `docker-compose down <service>`
+3. **Start the service again**: `docker-compose up -d <service>`
+
+**Critical Workflow:** Code changes → Build → Down → Up
+- **Code changes alone are NOT enough** - even restarting containers won't pick up new code
+- **You MUST rebuild the image** after code changes before restarting containers
+- This is especially critical for services in `greg-zone/` that build custom images from local Python files (e.g., alert monitors, webhook services)
+- Without rebuilding, containers will continue running the old code even after file changes and container restarts
+
+**Volume Mount Changes on macOS**
+When adding new external volume mounts to Docker containers on macOS:
+- **Use `docker-compose down <service> && docker-compose up -d <service>`** instead of just `restart`
+- **Restart alone may not properly mount new external volumes**
+- This is particularly important when adding new drives or changing volume paths in docker-compose.yml
+- Always verify volume mounts with `docker exec <container> ls -la <mount-path>` after changes
