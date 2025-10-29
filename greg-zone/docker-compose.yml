@@ -76,6 +76,7 @@ services:
       - "copyparty-hists:/cfg/hists"
       - "/Volumes/T7:/Volumes/T7"
       - "/Users/greg.linscheid/Desktop/Mac Vault:/Volumes/Mac Vault"
+      - "/Volumes/Wokyis M.2 SSD - Storage:/Volumes/Wokyis M.2 SSD - Storage"
     restart: unless-stopped
     command: ["--rproxy", "-1", "-c", "/app/copyparty.conf", "--xau", "f,t5,j,python3,/app/copyparty-discord-hook.py,--"]
     networks:
