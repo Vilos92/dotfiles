@@ -77,8 +77,15 @@ check_prerequisites() {
         exit 1
     fi
     
-    if [ ! -d "/Users/greg.linscheid/Desktop/Mac Vault" ]; then
-        print_error "/Users/greg.linscheid/Desktop/Mac Vault directory does not exist"
+    if [ ! -d "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault" ]; then
+        print_error "GregZone Vault not found at /Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault"
+        print_error "Please make sure your Wokyis M.2 SSD drive is mounted"
+        exit 1
+    fi
+    
+    if [ ! -d "/Volumes/Wokyis M.2 SSD - Storage/Vaults/Hobby Vault" ]; then
+        print_error "Hobby Vault not found at /Volumes/Wokyis M.2 SSD - Storage/Vaults/Hobby Vault"
+        print_error "Please make sure your Wokyis M.2 SSD drive is mounted"
         exit 1
     fi
     

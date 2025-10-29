@@ -11,7 +11,7 @@
 # =============================================================================
 
 DOTFILES_ROOT="/Users/greg.linscheid/greg_projects/dotfiles"
-LLM_MODELS="$HOME/Desktop/Mac Vault/llm_models"
+LLM_MODELS="/Volumes/Wokyis M.2 SSD - Storage/Vaults/Hobby Vault/llm_models"
 MODEL_NAME="Phi-3-mini-4k-instruct-q4.gguf"
 
 # =============================================================================

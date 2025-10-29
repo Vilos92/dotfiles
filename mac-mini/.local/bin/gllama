@@ -1,6 +1,6 @@
 #!/bin/sh
 
-LLM_MODELS="$HOME/Desktop/Mac Vault/llm_models"
+LLM_MODELS="/Volumes/Wokyis M.2 SSD - Storage/Vaults/Hobby Vault/llm_models"
 
 RUN_SERVER=false
 if [ "$1" = "--server" ]; then

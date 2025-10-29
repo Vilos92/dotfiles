@@ -18,10 +18,10 @@
 #   - /Volumes/T7/Vaults/Hobby Vault/
 #
 # Because this script uses the --delete flag, any file that exists on the
-# T7 drive but NOT in the source Mac Vault will be PERMANENTLY DELETED from
+# T7 drive but NOT in the source Wokyis Vaults will be PERMANENTLY DELETED from
 # the T7 drive during the sync.
 #
-# DO NOT STORE UNIQUE FILES IN THE T7 MAC VAULT DIRECTORY.
+# DO NOT STORE UNIQUE FILES IN THE T7 VAULTS DIRECTORY.
 #
 # ==============================================================================
 

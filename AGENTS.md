@@ -102,7 +102,9 @@ All services include:
 
 ### Service Dependencies
 - External drive: `/Volumes/T7/Vaults` (required for copyparty, kiwix) - T7 is now the main data hub
-- Mac Vault: `~/Desktop/Mac Vault` (required for copyparty, freshrss)
+- Wokyis M.2 SSD: `/Volumes/Wokyis M.2 SSD - Storage/Vaults` (required for copyparty, freshrss, transmission, minecraft)
+  - GregZone Vault: Contains freshrss, transmission, minecraft data
+  - Hobby Vault: Contains llm models and music production files
 - Environment variables: `COPYPARTY_CLOUDFLARED_TOKEN` (required for copyparty)
 
 ## CLI Tools Available
