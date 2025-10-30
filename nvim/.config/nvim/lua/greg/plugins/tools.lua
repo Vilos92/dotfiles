@@ -13,7 +13,4 @@ return {
 
   -- vim-fugitive for additional Git capabilities
   { "tpope/vim-fugitive" },
-
-  -- GitHub copilot
-  { "github/copilot.vim" },
 }
