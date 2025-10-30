@@ -159,8 +159,6 @@ def webhook():
             # Extract information
             service = labels.get("service", "unknown")
             alert_type = labels.get("alert_type", "unknown")
-            player_name = labels.get("player_name", "Unknown Player")
-            xuid = labels.get("xuid", "Unknown XUID")
             event_type = labels.get("event_type", "unknown")
             current_state = labels.get("current_state", "unknown")
             username = labels.get("username", "Unknown User")
@@ -402,8 +400,6 @@ def plex_webhook():
                     "inline": True,
                 }
             )
-
-        payload = {"embeds": [embed]}
 
         # Send to Discord
         success = send_discord_message(

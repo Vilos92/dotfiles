@@ -45,7 +45,7 @@ def parse_cpu_percent(cpu_str):
     """Parse CPU percentage string like '0.24%' to float"""
     try:
         return float(cpu_str.replace("%", ""))
-    except:
+    except Exception:
         return 0.0
 
 
@@ -61,7 +61,7 @@ def parse_memory(mem_str):
             return float(usage_part.replace("KiB", "")) * 1024
         else:
             return float(usage_part)
-    except:
+    except Exception:
         return 0.0
 
 

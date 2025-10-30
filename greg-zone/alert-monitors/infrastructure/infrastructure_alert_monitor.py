@@ -60,7 +60,7 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
         ]
 
         super().__init__(alert_configs, "infrastructure")
-        
+
         # Initialize server states for infrastructure monitoring
         self.server_states = self.redis_client.get_server_states()
 
@@ -75,7 +75,6 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
             response = requests.head(
                 url, timeout=timeout, allow_redirects=True, headers=headers
             )
-
 
             return response.status_code < 400
         except Exception as e:
@@ -190,11 +189,10 @@ class InfrastructureAlertMonitor(BaseAlertMonitor):
         try:
             # Call parent save_state first
             super().save_state()
-            
+
             # Save server states
             self.redis_client.set_server_states(self.server_states)
-            
-            
+
         except Exception as e:
             logger.error(f"Error saving infrastructure state: {e}")
 

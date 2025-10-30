@@ -76,7 +76,7 @@ class Workflows(object):
         try:
             with open(plist_path, "rb") as fp:
                 return load(fp)
-        except:
+        except Exception:
             raise ValueError
 
     def get_wf_directory(self):
@@ -238,7 +238,7 @@ class Workflows(object):
             val_list = self._flatten_dict(i)
             for s in val_list:
                 if (
-                    type(s) == str and
+                    isinstance(s, str) and
                     # search_term.lower() in s.lower()
                     re.search(r'\b' + search_term, s, re.IGNORECASE)
                 ):
@@ -268,7 +268,7 @@ class Workflows(object):
                 bool: True when valid item; False when invalid item
             """
             if (
-                type(el) == str and
+                isinstance(el, str) and
                 'alfred.workflow' not in el and
                 '/' not in el
             ):
@@ -278,7 +278,7 @@ class Workflows(object):
 
         ret_list = list()
         for t in iter(tdict.values()):
-            if type(t) == list and len(t) > 0:
+            if isinstance(t, list) and len(t) > 0:
                 for h in t:
                     ret_list += self._flatten_dict(h)
             else:

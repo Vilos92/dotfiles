@@ -748,11 +748,6 @@
                         <span class="dropdown-arrow">🔄</span>
                     </div>
                     <div class="stat-item">
-                        <span class="stat-icon">💾</span>
-                        <span class="stat-value" id="disk-usage">Loading...</span>
-                        <span class="stat-label">Disk</span>
-                    </div>
-                    <div class="stat-item">
                         <span class="stat-icon">🕐</span>
                         <span class="stat-value" id="last-updated">Never</span>
                         <span class="stat-label">Updated</span>
@@ -931,12 +926,6 @@
                     document.getElementById('container-count').textContent = '0';
                 }
                 
-                // Get disk usage
-                const diskResponse = await fetch(`${prometheusUrl}?query=(1%20-%20(node_filesystem_avail_bytes{mountpoint="/"}%20/%20node_filesystem_size_bytes{mountpoint="/"}))%20*%20100`);
-                const diskData = await diskResponse.json();
-                const diskUsage = diskData.data?.result?.[0]?.value?.[1] || '0';
-                document.getElementById('disk-usage').textContent = `${parseFloat(diskUsage).toFixed(1)}%`;
-                
                 // Update timestamp
                 document.getElementById('last-updated').textContent = new Date().toLocaleTimeString();
                 
@@ -946,7 +935,6 @@
                 document.getElementById('cpu-usage').textContent = 'Error';
                 document.getElementById('memory-usage').textContent = 'Error';
                 document.getElementById('container-count').textContent = 'Error';
-                document.getElementById('disk-usage').textContent = 'Error';
                 document.getElementById('last-updated').textContent = 'Error';
             }
         }

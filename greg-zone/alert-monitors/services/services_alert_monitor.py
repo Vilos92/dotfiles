@@ -90,12 +90,14 @@ class ServicesAlertMonitor(BaseAlertMonitor):
         ]
 
         super().__init__(alert_configs, "services")
-        
+
         # Initialize Redis client for IP location cache
         self.redis_client = AlertMonitorRedis("services")
-        
+
         # Set alert monitor secret for health check token validation
-        self.alert_monitor_secret = os.getenv("ALERT_MONITOR_SECRET", "default-secret-change-me")
+        self.alert_monitor_secret = os.getenv(
+            "ALERT_MONITOR_SECRET", "default-secret-change-me"
+        )
 
     def is_legitimate_health_check_request(
         self, log_message: str, parsed_data: Dict = None
@@ -167,7 +169,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
     def run(self):
         """Main monitoring loop for services."""
         logger.info("Starting Services Alert Monitor")
-        
+
         # Clean up old IPs on startup
         self.cleanup_old_ips()
 
@@ -310,7 +312,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                 # Check if this is a new IP
                 ip_key = f"{config['service']}:{ip_address}"
                 existing_ip_data = self.redis_client.get_ip_data(ip_key)
-                
+
                 if not existing_ip_data:
                     # New IP - check cooldown
                     should_alert = True
@@ -327,13 +329,15 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                         self.ip_alert_cooldown[ip_key] = current_time
 
                 # Update last seen time and get country (skip geolocation for Tailscale)
-                if config['service'] == 'nginx-tailscale':
+                if config["service"] == "nginx-tailscale":
                     # Skip geolocation for Tailscale IPs (private network)
                     country = "Tailscale"
                 else:
                     # Use cached country if available and not a placeholder, otherwise lookup
-                    cached_country = existing_ip_data.get('country') if existing_ip_data else None
-                    if cached_country and cached_country not in ['Unknown', None, '']:
+                    cached_country = (
+                        existing_ip_data.get("country") if existing_ip_data else None
+                    )
+                    if cached_country and cached_country not in ["Unknown", None, ""]:
                         country = cached_country
                     else:
                         country = self.get_ip_location(ip_address)
@@ -383,7 +387,7 @@ class ServicesAlertMonitor(BaseAlertMonitor):
         try:
             # Get IP location
             location = self.get_ip_location(ip_address)
-            
+
             # Analyze health check status
             health_check_value = last_request_data.get("health_check", "-")
             health_check_status = self.analyze_health_check_status(health_check_value)
@@ -542,23 +546,23 @@ class ServicesAlertMonitor(BaseAlertMonitor):
         if not api_key:
             logger.warning("IP_API_ACCESS_KEY not set, skipping geolocation lookup")
             return "Unknown"
-        
+
         try:
             # Use theipapi.com for geolocation lookup
             response = requests.get(
                 f"https://api.theipapi.com/v1/ip/{ip_address}",
                 params={"api_key": api_key},
-                timeout=5
+                timeout=5,
             )
-            
+
             if response.status_code == 200:
                 data = response.json()
-                
+
                 # Check for API error responses (rate limiting, etc.)
                 if data.get("status") != "OK":
                     logger.warning(f"Geolocation API error for {ip_address}: {data}")
                     return "Unknown"
-                
+
                 # Extract country name from response
                 # New API format: body.location.country (full name) or body.location.country_code (2-letter code)
                 body = data.get("body", {})
@@ -569,11 +573,13 @@ class ServicesAlertMonitor(BaseAlertMonitor):
                 else:
                     logger.warning(f"No country name in response for {ip_address}")
             else:
-                logger.warning(f"Geolocation API returned status {response.status_code} for {ip_address}")
-                
+                logger.warning(
+                    f"Geolocation API returned status {response.status_code} for {ip_address}"
+                )
+
         except Exception as e:
             logger.warning(f"Geolocation lookup failed for {ip_address}: {e}")
-        
+
         return "Unknown"
 
     def get_service_name_from_host(self, host: str) -> str:

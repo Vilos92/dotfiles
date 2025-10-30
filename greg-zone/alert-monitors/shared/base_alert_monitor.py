@@ -45,7 +45,9 @@ class BaseAlertMonitor:
         self.alert_configs = alert_configs
 
         # Set alert monitor secret for health checks
-        self.alert_monitor_secret = os.getenv("ALERT_MONITOR_SECRET", "default-secret-change-me")
+        self.alert_monitor_secret = os.getenv(
+            "ALERT_MONITOR_SECRET", "default-secret-change-me"
+        )
 
     def load_state(self):
         """Load previous state from Redis."""
@@ -68,12 +70,12 @@ class BaseAlertMonitor:
                 # Convert back to legacy format for compatibility
                 self.known_ips[ip_address] = {
                     "last_seen": ip_data["last_seen"],
-                    "country": ip_data["country"]
+                    "country": ip_data["country"],
                 }
-                
+
                 if ip_data.get("is_suspicious", False):
                     self.suspicious_ips.add(ip_address)
-                
+
                 # Convert cooldowns back to legacy format
                 if "cooldowns" in ip_data:
                     for alert_type, cooldown_time in ip_data["cooldowns"].items():
@@ -100,9 +102,6 @@ class BaseAlertMonitor:
             if self.last_check_time:
                 self.redis_client.set_last_check_time(self.last_check_time)
 
-
-
-
         except Exception as e:
             logger.error(f"Error saving state to Redis: {e}")
 
@@ -111,31 +110,35 @@ class BaseAlertMonitor:
         try:
             current_time = datetime.now()
             cutoff_time = current_time - timedelta(days=max_age_days)
-            
+
             all_ips = self.redis_client.get_all_ips()
             cleaned_count = 0
-            
+
             for ip_address, ip_data in all_ips.items():
                 if ip_data["last_seen"] < cutoff_time:
                     # Remove old IP data
                     key = self.redis_client._get_key("ips", ip_address)
                     self.redis_client.redis_client.delete(key)
                     cleaned_count += 1
-                    
+
                     # Remove from local state
                     if ip_address in self.known_ips:
                         del self.known_ips[ip_address]
                     if ip_address in self.suspicious_ips:
                         self.suspicious_ips.remove(ip_address)
-                    
+
                     # Remove cooldowns
-                    keys_to_remove = [k for k in self.ip_alert_cooldown.keys() if k.startswith(f"{ip_address}|")]
+                    keys_to_remove = [
+                        k
+                        for k in self.ip_alert_cooldown.keys()
+                        if k.startswith(f"{ip_address}|")
+                    ]
                     for key in keys_to_remove:
                         del self.ip_alert_cooldown[key]
 
             if cleaned_count > 0:
                 logger.info(f"Cleaned up {cleaned_count} old IP records from Redis")
-                
+
         except Exception as e:
             logger.error(f"Error cleaning up old IPs: {e}")
 
@@ -145,30 +148,30 @@ class BaseAlertMonitor:
     def validate_health_check_token(self, token: str) -> bool:
         """Validate a health check token."""
         try:
-            if not hasattr(self, 'alert_monitor_secret'):
+            if not hasattr(self, "alert_monitor_secret"):
                 logger.error("alert_monitor_secret not set for this monitor")
                 return False
 
             # Decode the token
             decoded_token = base64.urlsafe_b64decode(token.encode())
-            
+
             # Create decryption key from secret
             secret = self.alert_monitor_secret
             key = base64.urlsafe_b64encode(secret.encode()[:32].ljust(32, b"0"))
             f = Fernet(key)
-            
+
             # Decrypt the token
             decrypted_timestamp = f.decrypt(decoded_token)
             timestamp = int(decrypted_timestamp.decode())
-            
+
             # Check if token is recent (within 5 minutes)
             current_time = int(time.time())
             if current_time - timestamp > 300:  # 5 minutes
                 logger.warning("Health check token is too old")
                 return False
-                
+
             return True
-            
+
         except Exception as e:
             logger.warning(f"Health check token validation failed: {e}")
             return False
@@ -176,7 +179,7 @@ class BaseAlertMonitor:
     def generate_health_check_token(self) -> str:
         """Generate a secure health check token with encrypted timestamp."""
         try:
-            if not hasattr(self, 'alert_monitor_secret'):
+            if not hasattr(self, "alert_monitor_secret"):
                 logger.error("alert_monitor_secret not set for this monitor")
                 return "fallback-token"
 
@@ -201,12 +204,13 @@ class BaseAlertMonitor:
         """Check if a server is healthy by attempting a TCP connection."""
         try:
             import socket
+
             sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             sock.settimeout(5)
             result = sock.connect_ex((host, port))
             sock.close()
             return result == 0
-        except Exception as e:
+        except Exception:
             return False
 
     def query_loki(self, query: str) -> List[Dict]:
