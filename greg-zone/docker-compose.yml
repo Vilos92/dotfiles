@@ -131,7 +131,7 @@ services:
       - PASS=${TRANSMISSION_PASSWORD}
     volumes:
       - "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/transmission-config:/config"
-      - "/Volumes/T7/Vaults/Local Vault/torrent:/downloads"
+      - "/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/torrent:/downloads"
     restart: unless-stopped
     networks:
       - tailscale
