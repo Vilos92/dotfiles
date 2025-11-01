@@ -6,20 +6,8 @@ local lsp = require("lsp-zero")
 
 lsp.preset("recommended")
 
-lsp.setup_servers({
-  "ts_ls",
-  "rust_analyzer",
-})
-
-require("lspconfig").lua_ls.setup({
-  settings = {
-    Lua = {
-      diagnostics = {
-        globals = { "vim", "MiniStarter" },
-      },
-    },
-  },
-})
+-- NOTE: `ts_ls` and `rust_analyzer` are auto-configured by `lsp-zero` with `mason-lspconfig`.
+-- We only need to configure `lua_ls` with custom settings after `lsp.setup()`.
 
 local cmp = require("cmp")
 local cmp_select = { behavior = cmp.SelectBehavior.Select }
@@ -83,6 +71,17 @@ lsp.on_attach(function(client, bufnr)
 end)
 
 lsp.setup()
+
+vim.lsp.config("lua_ls", {
+  settings = {
+    Lua = {
+      diagnostics = {
+        globals = { "vim", "MiniStarter" },
+      },
+    },
+  },
+})
+vim.lsp.enable("lua_ls")
 
 vim.diagnostic.config({
   virtual_text = true,
