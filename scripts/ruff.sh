@@ -40,6 +40,11 @@ done
 
 echo "Running ruff on all Python files..."
 
+# Show which files will be checked
+echo "Python files to check:"
+fd -e py | sed 's/^/  /' || find . -name '*.py' | sed 's/^/  /'
+echo ""
+
 if [ "$FIX_MODE" = true ]; then
     echo "Auto-fixing linting issues..."
     ruff check --fix .
