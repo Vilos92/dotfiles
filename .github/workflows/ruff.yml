@@ -29,7 +29,10 @@ jobs:
           pip install ruff
           sudo apt-get update
           sudo apt-get install -y fd-find
+          sudo ln -s $(which fdfind) /usr/local/bin/fd
 
       - name: Run ruff checks
-        run: ./scripts/ruff.sh --check
+        run: |
+          chmod +x scripts/ruff.sh
+          ./scripts/ruff.sh --check
 
