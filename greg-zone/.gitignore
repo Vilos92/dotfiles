@@ -1,5 +1,0 @@
-# copyparty configuration
-copyparty/copyparty.conf
-
-# nginx auth files
-nginx/auth/.htpasswd
