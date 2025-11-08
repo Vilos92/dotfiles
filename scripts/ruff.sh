@@ -42,7 +42,14 @@ echo "Running ruff on all Python files..."
 
 # Show which files will be checked
 echo "Python files to check:"
-fd -e py | sed 's/^/  /' || find . -name '*.py' | sed 's/^/  /'
+file_count=$(fd -e py 2>/dev/null | wc -l | tr -d ' ') || file_count=$(find . -name '*.py' 2>/dev/null | wc -l | tr -d ' ')
+if [ "$file_count" -gt 0 ]; then
+    fd -e py 2>/dev/null | sed 's/^/  /' || find . -name '*.py' 2>/dev/null | sed 's/^/  /'
+    echo ""
+    echo "Found $file_count Python file(s) to check"
+else
+    echo "  (no Python files found)"
+fi
 echo ""
 
 if [ "$FIX_MODE" = true ]; then
