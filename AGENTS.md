@@ -20,7 +20,9 @@ This repository uses GNU Stow for dotfile management. Run `scripts/stow.sh` to i
 
 **Non-Stowable Directories:**
 - `scripts/` - Standalone executable scripts
-- `docker/` - Docker service configurations
+- `greg-zone/` - Docker infrastructure and services (separate repository, but this AGENTS.md is responsible for documenting it)
+- `arch/` - Arch Linux specific configurations (currently empty)
+- `mac-productivity/` - Mac productivity configurations (currently empty)
 
 ### Binary Commands
 Each stowable directory can include a `.local/bin/` directory that gets symlinked to `~/.local/bin/` via stow:
@@ -74,38 +76,80 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 
 ### Scripts (scripts/)
 **Setup & Installation:**
-- `brews.sh` - Install all homebrew packages and applications
+- `brews.sh` - Install all homebrew packages and applications (macOS)
+- `pacs.sh` - Install packages for Arch Linux systems
 - `stow.sh` - Interactively stow dotfile configurations
-
-**Docker Services:**
-- `copyparty-docker.sh` - File sharing server with Cloudflare tunnel
-- `freshrss-docker.sh` - RSS reader 
-- `kiwix-docker.sh` - Offline Wikipedia/content server
 
 **Code Quality:**
 - `ruff.sh` - Python linting and formatting with ruff
 - `stylua.sh` - Lua code formatting with stylua
 - `shellcheck.sh` - Shell script linting with shellcheck
 
-## Docker Services
+## Docker Services (greg-zone/)
+
+**Note:** The `greg-zone/` directory is a separate repository containing all Docker infrastructure and services. This AGENTS.md is responsible for documenting it as well.
+
+### Service Management
+All services are managed via `greg-zone/docker-services.sh`, which wraps docker-compose and provides:
+- Unified service management (up, down, restart, logs, etc.)
+- Prerequisite checking
+- Service status and access information
+- Comprehensive error handling
+
+See `greg-zone/README.md` and `./docker-services.sh help` for full command reference.
 
 ### Service Overview
-- **copyparty:** File sharing (port 3923/8080) - https://copyparty.greglinscheid.com
-- **freshrss:** RSS reader (port 49153) 
-- **kiwix:** Offline content server (port 8473)
 
-All services include:
-- Automatic container cleanup and restart
-- Volume dependency checking
-- Latest image pulling
-- Comprehensive error handling
+**Application Services:**
+- **copyparty:** File sharing (port 3923/8080) - https://copyparty.greglinscheid.com
+- **freshrss:** RSS reader (port 49153) - https://freshrss.greglinscheid.com
+- **kiwix:** Offline content server (port 8473) - https://kiwix.greglinscheid.com
+- **transmission:** Torrent client (port 9091)
+- **minecraft:** Minecraft Bedrock server (port 19132/udp)
+
+**Monitoring Stack:**
+- **prometheus:** Metrics collection (port 9090)
+- **grafana:** Dashboards and visualization (port 3000)
+- **loki:** Log aggregation (port 3100)
+- **promtail:** Log shipping
+- **alertmanager:** Alert routing (port 9093)
+- **node-exporter:** System metrics (port 9100)
+- **cadvisor:** Container metrics (port 8080)
+- **docker-stats-exporter:** Docker stats exporter (port 8081)
+- **mc-monitor:** Minecraft server metrics (port 8082)
+
+**Networking & Infrastructure:**
+- **tailscale:** VPN mesh network
+- **cloudflared:** Cloudflare tunnel for public access
+- **nginx-tailscale:** Reverse proxy for Tailscale network
+- **nginx-cloudflared:** Reverse proxy for Cloudflare tunnel
+
+**Alerting & Webhooks:**
+- **discord-webhook:** Discord webhook multiplexer (port 8083)
+- **services-alert-monitor:** Monitors nginx, copyparty, freshrss, kiwix
+- **infrastructure-alert-monitor:** Monitors loki, prometheus, grafana, etc.
+- **minecraft-alert-monitor:** Monitors minecraft server
+
+**Supporting Services:**
+- **infra-redis:** Redis database for alert monitor state (port 6379)
+- **infra-redis-commander:** Redis management UI (port 8084)
+- **playit:** Minecraft server tunneling
+- **minecraft-backup:** Automated Minecraft backups
 
 ### Service Dependencies
 - External drive: `/Volumes/T7/Vaults` (required for copyparty, kiwix) - T7 is now the main data hub
 - Wokyis M.2 SSD: `/Volumes/Wokyis M.2 SSD - Storage/Vaults` (required for copyparty, freshrss, transmission, minecraft)
   - GregZone Vault: Contains freshrss, transmission, minecraft data
   - Hobby Vault: Contains llm models and music production files
-- Environment variables: `COPYPARTY_CLOUDFLARED_TOKEN` (required for copyparty)
+- Environment variables (in `greg-zone/.env`):
+  - `COPYPARTY_CLOUDFLARED_TOKEN` (required for copyparty)
+  - `TAILSCALE_AUTH_KEY` (required for Tailscale)
+  - `TRANSMISSION_PASSWORD` (required for Transmission)
+  - `GRAFANA_PASSWORD` (required for Grafana)
+  - `DISCORD_*_WEBHOOK_URL` (various Discord webhooks)
+  - `ALERT_MONITOR_SECRET` (required for alert monitors)
+  - `INFRA_REDIS_PASSWORD` (required for Redis)
+  - `PLAYIT_SECRET_KEY` (required for Playit)
 
 ## CLI Tools Available
 
@@ -203,13 +247,13 @@ All scripts in `scripts/` directory are executable and well-documented with erro
 All commands in `~/.local/bin/` are available when stow is applied (see Binary Commands section above).
 
 ### Docker Services
-Individual service management scripts are preferred over docker-compose for the granular control and error checking they provide.
+All Docker services are managed via `greg-zone/docker-services.sh`, which provides a unified interface to docker-compose with additional error checking and convenience features.
 
 **Important: Rebuilding Images for Code Changes**
 When making changes to Python files or other source code that Docker services depend on:
-1. **Rebuild the image** to ensure changes are reflected: `docker-compose build <service>`
-2. **Stop the service**: `docker-compose down <service>`
-3. **Start the service again**: `docker-compose up -d <service>`
+1. **Rebuild the image** to ensure changes are reflected: `cd greg-zone && docker-compose build <service>`
+2. **Stop the service**: `cd greg-zone && docker-compose down <service>`
+3. **Start the service again**: `cd greg-zone && docker-compose up -d <service>`
 
 **Critical Workflow:** Code changes → Build → Down → Up
 - **Code changes alone are NOT enough** - even restarting containers won't pick up new code
@@ -219,7 +263,7 @@ When making changes to Python files or other source code that Docker services de
 
 **Volume Mount Changes on macOS**
 When adding new external volume mounts to Docker containers on macOS:
-- **Use `docker-compose down <service> && docker-compose up -d <service>`** instead of just `restart`
+- **Use `cd greg-zone && docker-compose down <service> && docker-compose up -d <service>`** instead of just `restart`
 - **Restart alone may not properly mount new external volumes**
-- This is particularly important when adding new drives or changing volume paths in docker-compose.yml
+- This is particularly important when adding new drives or changing volume paths in `greg-zone/docker-compose.yml`
 - Always verify volume mounts with `docker exec <container> ls -la <mount-path>` after changes
