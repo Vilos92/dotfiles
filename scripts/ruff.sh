@@ -5,10 +5,12 @@
 # Usage:
 #   ./scripts/ruff.sh        - Check and format (read-only)
 #   ./scripts/ruff.sh --fix  - Auto-fix issues and format
+#   ./scripts/ruff.sh --check - Check only (no formatting, for CI)
 
 set -e
 
 FIX_MODE=false
+CHECK_MODE=false
 
 # Parse command line arguments
 while [ $# -gt 0 ]; do
@@ -17,9 +19,14 @@ while [ $# -gt 0 ]; do
             FIX_MODE=true
             shift
             ;;
+        --check)
+            CHECK_MODE=true
+            shift
+            ;;
         -h|--help)
-            echo "Usage: $0 [--fix]"
+            echo "Usage: $0 [--fix|--check]"
             echo "  --fix    Auto-fix fixable linting issues"
+            echo "  --check  Check only (no formatting, for CI)"
             echo "  -h, --help    Show this help message"
             exit 0
             ;;
@@ -41,8 +48,13 @@ else
     ruff check .
 fi
 
-echo "Formatting Python files..."
-fd -e py -x ruff format
+if [ "$CHECK_MODE" = true ]; then
+    echo "Checking formatting (no changes)..."
+    fd -e py -x ruff format --check
+else
+    echo "Formatting Python files..."
+    fd -e py -x ruff format
+fi
 
 echo "Final check for any remaining issues..."
 ruff check .
