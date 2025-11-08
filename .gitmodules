@@ -1,3 +1,6 @@
 [submodule "front"]
 	path = front
 	url = git@github.com:Vilos92/dotfiles-front.git
+[submodule "greg-zone"]
+	path = greg-zone
+	url = git@github.com:Vilos92/greg-zone.git
