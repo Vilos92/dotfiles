@@ -43,7 +43,8 @@ echo "Running ruff on all Python files..."
 # Show which files will be checked
 echo "Python files to check:"
 # Use find as primary method (more reliable with submodules)
-py_files=$(find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' 2>/dev/null | sort)
+# Exclude Alfred workflow files and other non-repo files
+py_files=$(find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' -not -path './mac-productivity/*' 2>/dev/null | sort)
 file_count=$(echo "$py_files" | grep -c . || echo "0")
 if [ "$file_count" -gt 0 ] && [ "$file_count" != "0" ]; then
     echo "$py_files" | sed 's/^/  /'
@@ -64,10 +65,10 @@ fi
 
 if [ "$CHECK_MODE" = true ]; then
     echo "Checking formatting (no changes)..."
-    find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' -exec ruff format --check {} +
+    find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' -not -path './mac-productivity/*' -exec ruff format --check {} +
 else
     echo "Formatting Python files..."
-    find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' -exec ruff format {} +
+    find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' -not -path './mac-productivity/*' -exec ruff format {} +
 fi
 
 echo "Final check for any remaining issues..."

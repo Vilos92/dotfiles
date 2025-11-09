@@ -13,11 +13,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: false
-
-      - name: Checkout submodules (greg-zone only)
-        run: |
-          git submodule update --init greg-zone || true
+          submodules: recursive
+          # GITHUB_TOKEN is automatically provided by GitHub Actions - no setup needed
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install ShellCheck
         run: |
@@ -35,11 +33,9 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
         with:
-          submodules: false
-
-      - name: Checkout submodules (greg-zone only)
-        run: |
-          git submodule update --init greg-zone || true
+          submodules: recursive
+          # GITHUB_TOKEN is automatically provided by GitHub Actions - no setup needed
+          token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Install Python
         uses: actions/setup-python@v5

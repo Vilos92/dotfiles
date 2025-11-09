@@ -22,6 +22,7 @@ exclude = [
     "dist",
     "node_modules",
     "venv",
+    "mac-productivity",
 ]
 
 # Same as Black.
