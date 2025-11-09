@@ -42,9 +42,11 @@ echo "Running ruff on all Python files..."
 
 # Show which files will be checked
 echo "Python files to check:"
-file_count=$(fd -e py 2>/dev/null | wc -l | tr -d ' ') || file_count=$(find . -name '*.py' 2>/dev/null | wc -l | tr -d ' ')
-if [ "$file_count" -gt 0 ]; then
-    fd -e py 2>/dev/null | sed 's/^/  /' || find . -name '*.py' 2>/dev/null | sed 's/^/  /'
+# Use find as primary method (more reliable with submodules)
+py_files=$(find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' 2>/dev/null | sort)
+file_count=$(echo "$py_files" | grep -c . || echo "0")
+if [ "$file_count" -gt 0 ] && [ "$file_count" != "0" ]; then
+    echo "$py_files" | sed 's/^/  /'
     echo ""
     echo "Found $file_count Python file(s) to check"
 else
@@ -62,10 +64,10 @@ fi
 
 if [ "$CHECK_MODE" = true ]; then
     echo "Checking formatting (no changes)..."
-    fd -e py -x ruff format --check
+    find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' -exec ruff format --check {} +
 else
     echo "Formatting Python files..."
-    fd -e py -x ruff format
+    find . -name '*.py' -not -path './.git/*' -not -path '*/__pycache__/*' -exec ruff format {} +
 fi
 
 echo "Final check for any remaining issues..."
