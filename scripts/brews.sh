@@ -151,7 +151,6 @@ install_gleam() {
 install_browsers() {
   prompt_and_install "zen browser" 'brew install --cask zen'
   prompt_and_install "firefox" 'brew install --cask firefox'
-  prompt_and_install "browserosaurus" 'brew install --cask browserosaurus'
 }
 
 # Alfred.
