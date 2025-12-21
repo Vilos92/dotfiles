@@ -76,6 +76,12 @@ install_1password() {
   prompt_and_install "1password" 'brew install --cask 1password'
 }
 
+# VPN
+install_tailscale() {
+  prompt_and_install "tailscale" 'brew install tailscale'
+  prompt_and_install "tailscale-app" 'brew install --cask tailscale-app'
+}
+
 # Hosting.
 install_host_packages() {
   # install cloudflared to allow exposing the copyparty instance.
@@ -274,6 +280,9 @@ handle_arguments() {
     "1password" )
       install_1password
       ;;
+    "tailscale" )
+      install_tailscale
+      ;;
     "host" )
       install_host_packages
       ;;
@@ -405,6 +414,7 @@ install_everything() {
   install_mouse_packages
   install_terminal_packages
   install_1password
+  install_tailscale
   install_host_packages
   install_dev_packages
   install_gh
