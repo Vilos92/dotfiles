@@ -36,6 +36,12 @@ install_dotfile_packages() {
   prompt_and_install "stow" 'brew install stow'
 }
 
+# ForkLift file manager.
+install_forklift() {
+  prompt_and_install "forklift" 'brew install --cask forklift'
+}
+
+
 # Better Display for scalable displays.
 install_better_display() {
   prompt_and_install "better-display" 'brew install --cask betterdisplay'
@@ -265,6 +271,9 @@ handle_arguments() {
     "dotfile-pkgs" )
       install_dotfile_packages
       ;;
+    "forklift" )
+      install_forklift
+      ;;
     "better-display" )
       install_better_display
       ;;
@@ -409,6 +418,7 @@ handle_arguments() {
 
 install_everything() {
   install_dotfile_packages
+  install_forklift
   install_better_display
   install_window_management_packages
   install_mouse_packages
