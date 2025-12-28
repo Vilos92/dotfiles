@@ -249,6 +249,13 @@ All commands in `~/.local/bin/` are available when stow is applied (see Binary C
 ### Docker Services
 All Docker services are managed via `greg-zone/docker-services.sh`, which provides a unified interface to docker-compose with additional error checking and convenience features.
 
+**Minimal Impact Testing:**
+When making changes or testing services, **always target specific services** rather than affecting the entire infrastructure:
+- Use `docker-compose restart <service>` instead of `docker-compose restart` (all services)
+- Use `docker-compose stop <service>` instead of `docker-compose down` (all services)
+- Use `docker-compose up -d <service>` to start only specific services
+- Example: Testing Minecraft changes should only affect `minecraft`, `minecraft-backup`, `minecraft-alert-monitor`, `playit`, and `mc-monitor` - copyparty, freshrss, and monitoring should continue running
+
 **Important: Rebuilding Images for Code Changes**
 When making changes to Python files or other source code that Docker services depend on:
 1. **Rebuild the image** to ensure changes are reflected: `cd greg-zone && docker-compose build <service>`
