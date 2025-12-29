@@ -47,10 +47,8 @@ install_better_display() {
   prompt_and_install "better-display" 'brew install --cask betterdisplay'
 }
 
-# Window management packages (yabai, skhd, alt-tab).
+# Window management packages (alt-tab).
 install_window_management_packages() {
-  prompt_and_install "yabai" 'brew install koekeishiya/formulae/yabai'
-  prompt_and_install "skhd" 'brew install koekeishiya/formulae/skhd'
   prompt_and_install "alt-tab" 'brew install --cask alt-tab'
 }
 
@@ -387,7 +385,7 @@ handle_arguments() {
       echo "Available options:"
       echo "  dotfile-pkgs     - stow for dotfile management"
       echo "  better-display   - BetterDisplay for scalable displays"
-      echo "  window-mgmt-pkgs - Window management tools (yabai, skhd, alt-tab)"
+      echo "  window-mgmt-pkgs - Window management tools (alt-tab)"
       echo "  mouse-pkgs       - mouse management tools"
       echo "  terminal-pkgs    - terminal emulator and shell tools"
       echo "  1password       - 1Password password manager"
