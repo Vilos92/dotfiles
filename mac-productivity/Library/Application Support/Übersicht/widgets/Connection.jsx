@@ -25,7 +25,7 @@ const rowStyle = css`
   align-items: center;
   gap: 8px;
   width: 100%;
-  justify-content: space-between;
+  justify-content: flex-start;
 `
 
 const statusDot = (color) => css`
@@ -72,12 +72,12 @@ export const render = ({ output, error }) => {
     return (
       <div>
         <div className={rowStyle}>
-          <span>macOS Online</span>
           <div className={statusDot('#ff1744')} />
+          <span>macOS Online</span>
         </div>
         <div className={rowStyle} style={{ marginTop: '4px' }}>
-          <span>Tailscale</span>
           <div className={statusDot('#9e9e9e')} />
+          <span>Tailscale</span>
         </div>
       </div>
     )
@@ -127,31 +127,31 @@ export const render = ({ output, error }) => {
   return (
     <div>
       <div className={rowStyle}>
-        <span>macOS Online</span>
         <div className={statusDot(isOnline ? '#00e676' : '#ff1744')} />
+        <span>macOS Online</span>
       </div>
 
       <div className={rowStyle} style={{ marginTop: '4px' }}>
-        <span>Tailscale</span>
         {/* Yellow if running but macOS offline, Green if running and online, Gray if off */}
         <div className={statusDot(
           isTsRunning 
             ? (isOnline ? '#00e676' : '#ffea00') 
             : '#9e9e9e'
         )} />
+        <span>Tailscale</span>
       </div>
 
       {isTsRunning && (
         <div style={{ marginTop: '8px', borderTop: '1px solid rgba(255,255,255,0.2)', paddingTop: '4px', fontSize: '11px', opacity: 0.9 }}>
           {routingInfo ? (
             <div className={rowStyle}>
-              <span>→ <strong>{routingInfo}</strong></span>
               <div className={statusDot(isOnline ? '#00e676' : '#ffea00')} />
+              <span>→ <strong>{routingInfo}</strong></span>
             </div>
           ) : (
             <div className={rowStyle}>
-              <span>Exit Node</span>
               <div className={statusDot('#ff1744')} />
+              <span>Exit Node</span>
             </div>
           )}
         </div>
