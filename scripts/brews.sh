@@ -242,6 +242,11 @@ install_yt_dlp() {
   prompt_and_install "yt-dlp" 'brew install yt-dlp'
 }
 
+# Desktop widgets.
+install_desktop_widgets() {
+  prompt_and_install "ubersicht" 'brew install --cask ubersicht'
+}
+
 # Chat
 install_chats() {
   prompt_and_install "whatsapp" 'brew install --cask whatsapp'
@@ -358,6 +363,9 @@ handle_arguments() {
     "yt-dlp" )
       install_yt_dlp
       ;;
+    "desktop-widgets" )
+      install_desktop_widgets
+      ;;
     "chats" )
       install_chats
       ;;
@@ -446,6 +454,7 @@ install_everything() {
   install_there
   install_transmission
   install_yt_dlp
+  install_desktop_widgets
   install_chats
   install_ai_packages
 
