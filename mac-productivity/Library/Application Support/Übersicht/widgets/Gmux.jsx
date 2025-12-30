@@ -4,13 +4,14 @@ import {cardStyle, headerStyle} from './shared/Card.jsx';
 /*
  * Constants.
  */
+
 export const refreshFrequency = 2000;
 
 /*
  * Styles.
  */
 
-export const className = cardStyle({bottom: '20px', right: '20px', maxWidth: '300px'});
+export const className = cardStyle({bottom: '20px', right: '20px', maxWidth: '200px'});
 
 const sessionRowStyle = isClickable => css`
   display: flex;
@@ -76,7 +77,7 @@ export const command = `
   
   # Get all possible projects from ~/greg_projects (same logic as gmux)
   if [ -d "$HOME/greg_projects" ]; then
-    find "$HOME/greg_projects" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | xargs -n 1 basename | sed 's/\.nvim$/_nvim/' | while read -r project; do
+    /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" 2>/dev/null | xargs -n 1 basename | sed 's/\.nvim$/_nvim/' | while read -r project; do
       echo "PROJECT:$project"
     done
   fi

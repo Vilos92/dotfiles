@@ -5,6 +5,8 @@ import {cardStyle, headerStyle} from './shared/Card.jsx';
  * Constants.
  */
 
+export const refreshFrequency = 5000;
+
 /*
  * Styles.
  */
@@ -198,13 +200,12 @@ function checkIsTailscaleRunning(tsOutput) {
  */
 function extractRoutingInfo(tsOutput) {
   if (!tsOutput) return undefined;
-  
+
   // Skip the TAILSCALE_RUNNING line and EXIT_NODES_UNAVAILABLE if present
-  const lines = tsOutput.split('\n').filter(line => 
-    !line.includes('TAILSCALE_RUNNING') && 
-    !line.includes('EXIT_NODES_UNAVAILABLE')
-  );
-  
+  const lines = tsOutput
+    .split('\n')
+    .filter(line => !line.includes('TAILSCALE_RUNNING') && !line.includes('EXIT_NODES_UNAVAILABLE'));
+
   if (lines.length === 0) return undefined;
 
   // Find the line ending in "selected".
