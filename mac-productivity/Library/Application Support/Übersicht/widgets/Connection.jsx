@@ -53,8 +53,10 @@ export const command = `
     if echo "$STATUS_OUTPUT" | grep -q "Tailscale is stopped"; then
       echo "TAILSCALE_STOPPED"
     else
-      # Tailscale is running, get exit node list
-      "$TS_PATH" exit-node list 2>&1
+      # Tailscale is running, output status indicator
+      echo "TAILSCALE_RUNNING"
+      # Try to get exit node list (may not be available)
+      "$TS_PATH" exit-node list 2>&1 || echo "EXIT_NODES_UNAVAILABLE"
     fi
   else
     echo "BINARY_MISSING"
@@ -170,18 +172,18 @@ function checkIsTailscaleStopped(tsOutput) {
 /**
  * Check if Tailscale is running based on output format.
  * @param {string} tsOutput - The Tailscale command output
- * @returns {boolean} True if running (has valid exit node list), false otherwise
+ * @returns {boolean} True if running, false otherwise
  * @example
- * checkIsTailscaleRunning("HOSTNAME COUNTRY...") // => true
+ * checkIsTailscaleRunning("TAILSCALE_RUNNING\nHOSTNAME COUNTRY...") // => true
+ * checkIsTailscaleRunning("TAILSCALE_RUNNING\nEXIT_NODES_UNAVAILABLE") // => true
  * checkIsTailscaleRunning("Tailscale is stopped") // => false
  * checkIsTailscaleRunning("") // => false
  */
 function checkIsTailscaleRunning(tsOutput) {
   if (checkIsTailscaleStopped(tsOutput)) return false;
   if (tsOutput === '') return false;
-  // Only consider running if we have the table headers.
-  // This means Tailscale returned a valid exit node list.
-  return tsOutput.includes('HOSTNAME') && tsOutput.includes('COUNTRY');
+  // Consider running if we see the running indicator (exit nodes are optional)
+  return tsOutput.includes('TAILSCALE_RUNNING');
 }
 
 /**
@@ -189,15 +191,24 @@ function checkIsTailscaleRunning(tsOutput) {
  * @param {string} tsOutput - The Tailscale exit node list output
  * @returns {string|undefined} City name if available, hostname otherwise, or undefined if not found
  * @example
- * extractRoutingInfo("100.1.2.3  my-node  US  San Jose, CA  selected") // => "San Jose, CA"
- * extractRoutingInfo("100.1.2.3  my-node  US  Any  selected") // => "my-node"
+ * extractRoutingInfo("TAILSCALE_RUNNING\n100.1.2.3  my-node  US  San Jose, CA  selected") // => "San Jose, CA"
+ * extractRoutingInfo("TAILSCALE_RUNNING\n100.1.2.3  my-node  US  Any  selected") // => "my-node"
+ * extractRoutingInfo("TAILSCALE_RUNNING\nEXIT_NODES_UNAVAILABLE") // => undefined
  * extractRoutingInfo("no selected line") // => undefined
  */
 function extractRoutingInfo(tsOutput) {
   if (!tsOutput) return undefined;
+  
+  // Skip the TAILSCALE_RUNNING line and EXIT_NODES_UNAVAILABLE if present
+  const lines = tsOutput.split('\n').filter(line => 
+    !line.includes('TAILSCALE_RUNNING') && 
+    !line.includes('EXIT_NODES_UNAVAILABLE')
+  );
+  
+  if (lines.length === 0) return undefined;
 
   // Find the line ending in "selected".
-  const selectedLine = tsOutput.split('\n').find(line => line.trim().endsWith('selected'));
+  const selectedLine = lines.find(line => line.trim().endsWith('selected'));
   if (!selectedLine) return undefined;
 
   // Split by 2 or more spaces to handle columns cleanly.
