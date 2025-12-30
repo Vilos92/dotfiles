@@ -9,7 +9,7 @@ import {cardStyle, headerStyle} from './shared/Card.jsx';
  * Styles.
  */
 
-export const className = cardStyle({top: '20px', right: '20px', alignItems: 'flex-end'});
+export const className = cardStyle({bottom: '20px', left: '20px', alignItems: 'flex-end'});
 
 const rowStyle = css`
   display: flex;
