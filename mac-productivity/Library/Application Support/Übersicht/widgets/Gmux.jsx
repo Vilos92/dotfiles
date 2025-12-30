@@ -11,7 +11,7 @@ export const refreshFrequency = 2000;
  * Styles.
  */
 
-export const className = cardStyle({bottom: '20px', right: '20px', maxWidth: '200px'});
+export const className = cardStyle({bottom: '20px', right: '20px', maxWidth: '160px'});
 
 const sessionRowStyle = isClickable => css`
   display: flex;

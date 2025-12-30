@@ -34,7 +34,8 @@ const cardStyle = (position = {}) => css`
   ${position.maxWidth ? `max-width: ${position.maxWidth};` : ''}
 `;
 
-export const className = cardStyle({bottom: '20px', right: '240px', maxWidth: '400px'});
+// Position relative to Gmux: Gmux is at right: 20px with maxWidth: 160px, so Transmission goes to its left with a 24px gap
+export const className = cardStyle({bottom: '20px', right: 'calc(20px + 160px + 24px)', maxWidth: '500px'});
 
 const headerStyle = css`
   font-weight: 600;
@@ -79,6 +80,12 @@ const nameStyle = css`
 const metaStyle = css`
   opacity: 0.6;
   margin-left: 8px;
+  font-family: monospace;
+`;
+
+const metaStyleRight = css`
+  opacity: 0.6;
+  margin-left: auto;
   font-family: monospace;
 `;
 
@@ -179,9 +186,8 @@ export const render = ({output, error}) => {
                 {t.down && t.down !== '0.0' && t.down !== '0' && t.up && t.up !== '0.0' && t.up !== '0' ? ' ' : ''}
                 {t.up && t.up !== '0.0' && t.up !== '0' ? `↑ ${t.up} kB/s` : ''}
               </div>
-            ) : (
-              <div className={metaStyle}>{t.percent}%</div>
-            )}
+            ) : null}
+            <div className={isActive ? metaStyleRight : metaStyle}>{t.percent}%</div>
           </div>
         );
       })}
@@ -207,13 +213,21 @@ export const render = ({output, error}) => {
  */
 
 /**
- * Determine if a torrent is actively transferring data.
+ * Determine if a torrent is actively transferring data or in an active state.
  * @param {string} status - The text status from `transmission-remote`
- * @returns {boolean} True if torrent is actively uploading or downloading
+ * @returns {boolean} True if torrent is actively uploading, downloading, checking, verifying, or queued
  */
 function isTorrentActive(status) {
   const s = status.toLowerCase();
-  return s.includes('seeding') || s.includes('download') || s.includes('up & down');
+  return (
+    s.includes('seeding') ||
+    s.includes('download') ||
+    s.includes('up & down') ||
+    s.includes('check') ||
+    s.includes('verifying') ||
+    s.includes('meta') ||
+    s.includes('queued')
+  );
 }
 
 /**
@@ -223,11 +237,11 @@ function isTorrentActive(status) {
  */
 function getTorrentColor(status) {
   const s = status.toLowerCase();
-  if (s.includes('seeding')) return '#00e676'; // Green
+  if (s.includes('seeding') || s.includes('idle')) return '#00e676'; // Green (seeding or completed)
   if (s.includes('download')) return '#2196f3'; // Blue
   if (s.includes('stopped')) return '#9e9e9e'; // Gray
   if (s.includes('check') || s.includes('meta')) return '#ff9100'; // Orange
-  return '#ffea00'; // Yellow (Catch all)
+  return '#ffea00'; // Yellow (Catch all - includes Finished, Queued, etc.)
 }
 
 /**
@@ -288,24 +302,37 @@ function parseOutput(output) {
     })
     .filter(Boolean)
     .sort((a, b) => {
-      // Sort priority: Downloading > Seeding > Inactive
+      // Sort priority: Active (blue) > Idling/waiting (yellow) > Seeding (green) > Done (grey)
       const aStatus = (a.status || '').toLowerCase();
       const bStatus = (b.status || '').toLowerCase();
       
       const aIsDownloading = aStatus.includes('download');
       const bIsDownloading = bStatus.includes('download');
-      const aIsSeeding = aStatus.includes('seeding');
-      const bIsSeeding = bStatus.includes('seeding');
+      const aIsSeeding = aStatus.includes('seeding') || aStatus.includes('idle');
+      const bIsSeeding = bStatus.includes('seeding') || bStatus.includes('idle');
+      const aIsStopped = aStatus.includes('stopped');
+      const bIsStopped = bStatus.includes('stopped');
+      const aIsCheck = aStatus.includes('check') || aStatus.includes('meta');
+      const bIsCheck = bStatus.includes('check') || bStatus.includes('meta');
       
-      // Downloads first
+      // Yellow status = idling/waiting (not stopped, not idle/seeding, not check/meta, not downloading)
+      const aIsYellow = !aIsStopped && !aIsCheck && !aIsSeeding && !aIsDownloading;
+      const bIsYellow = !bIsStopped && !bIsCheck && !bIsSeeding && !bIsDownloading;
+      
+      // 1. Active (blue) - downloading first
       if (aIsDownloading && !bIsDownloading) return -1;
       if (!aIsDownloading && bIsDownloading) return 1;
       
-      // Then seeds
+      // 2. Idling/waiting (yellow) - queued, checking, etc.
+      if (aIsYellow && !bIsYellow) return -1;
+      if (!aIsYellow && bIsYellow) return 1;
+      
+      // 3. Seeding (green) - seeding and idle (100% completed)
       if (aIsSeeding && !bIsSeeding) return -1;
       if (!aIsSeeding && bIsSeeding) return 1;
       
-      // Inactive at bottom (maintain original order for same priority)
+      // 4. Done (grey) - stopped at bottom
+      // (maintain original order for same priority)
       return 0;
     });
 
