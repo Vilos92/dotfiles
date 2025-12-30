@@ -60,3 +60,20 @@ jobs:
           chmod +x scripts/ruff.sh
           ./scripts/ruff.sh --check
 
+  prettier:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          submodules: false
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v1
+        with:
+          bun-version: latest
+
+      - name: Run Prettier checks
+        run: |
+          chmod +x scripts/prettier.sh
+          ./scripts/prettier.sh --check

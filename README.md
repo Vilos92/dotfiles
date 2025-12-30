@@ -1,4 +1,4 @@
-# dotfiles 
+# dotfiles
 
 My personal dotfiles and other configurations.
 
@@ -14,7 +14,7 @@ sh scripts/brews.sh
 
 ## Stow
 
-To create symlinks for the dotfiles, use `stow`. 
+To create symlinks for the dotfiles, use `stow`.
 
 A convenience script exists to do this:
 
