@@ -1,24 +1,9 @@
 import { css } from "uebersicht"
+import { cardStyle, headerStyle } from "./shared/Card.jsx"
 
 export const refreshFrequency = 5000
 
-export const className = css`
-  top: 20px;
-  right: 20px;
-  position: absolute;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  padding: 12px 16px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-`
+export const className = cardStyle({ top: '20px', right: '20px', alignItems: 'flex-end' })
 
 const rowStyle = css`
   display: flex;
@@ -71,6 +56,7 @@ export const render = ({ output, error }) => {
     // Treat no output as offline
     return (
       <div>
+        <div className={headerStyle}>Connection</div>
         <div className={rowStyle}>
           <div className={statusDot('#ff1744')} />
           <span>macOS Online</span>
@@ -126,6 +112,7 @@ export const render = ({ output, error }) => {
 
   return (
     <div>
+      <div className={headerStyle}>Connection</div>
       <div className={rowStyle}>
         <div className={statusDot(isOnline ? '#00e676' : '#ff1744')} />
         <span>macOS Online</span>

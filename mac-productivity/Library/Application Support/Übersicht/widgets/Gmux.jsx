@@ -1,36 +1,9 @@
 import { css, run } from "uebersicht"
+import { cardStyle, headerStyle } from "./shared/Card.jsx"
 
 export const refreshFrequency = 2000
 
-export const className = css`
-  bottom: 20px;
-  right: 20px;
-  position: absolute;
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  font-size: 13px;
-  line-height: 1.4;
-  color: #fff;
-  background-color: rgba(0, 0, 0, 0.4);
-  backdrop-filter: blur(10px);
-  padding: 12px 16px;
-  border-radius: 10px;
-  box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-  display: flex;
-  flex-direction: column;
-  min-width: 200px;
-  max-width: 300px;
-`
-
-const headerStyle = css`
-  font-weight: 600;
-  margin-bottom: 8px;
-  padding-bottom: 6px;
-  border-bottom: 1px solid rgba(255,255,255,0.2);
-  font-size: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  opacity: 0.8;
-`
+export const className = cardStyle({ bottom: '20px', right: '20px', maxWidth: '300px' })
 
 const sessionRowStyle = (isClickable) => css`
   display: flex;
@@ -87,10 +60,6 @@ export const command = `
     echo "SESSION:$name|$windows|$panes|$attached|$clients"
   done
   
-  # Get currently active session (the one you're viewing)
-  CURRENT=$(/opt/homebrew/bin/tmux list-sessions -F "#{session_name}" -f "#{session_attached}" 2>/dev/null | head -n 1 || echo "")
-  echo "CURRENT:$CURRENT"
-  
   # Get all possible projects from ~/greg_projects (same logic as gmux)
   if [ -d "$HOME/greg_projects" ]; then
     find "$HOME/greg_projects" -mindepth 1 -maxdepth 1 -type d 2>/dev/null | xargs -n 1 basename | sed 's/\.nvim$/_nvim/' | while read -r project; do
@@ -103,7 +72,7 @@ export const render = ({ output, error }) => {
   if (error) {
     return (
       <div>
-        <div className={headerStyle}>Tmux Sessions</div>
+        <div className={headerStyle}>Gmux Sessions</div>
         <div className={emptyStateStyle}>Error: {String(error)}</div>
       </div>
     )
@@ -112,15 +81,13 @@ export const render = ({ output, error }) => {
   if (typeof output !== 'string' || output.trim() === '') {
     return (
       <div>
-        <div className={headerStyle}>Tmux Sessions</div>
+        <div className={headerStyle}>Gmux Sessions</div>
         <div className={emptyStateStyle}>No sessions</div>
       </div>
     )
   }
 
   const lines = output.trim().split('\n').filter(line => line.trim() !== '')
-  const currentLine = lines.find(line => line.trim().startsWith('CURRENT:'))
-  const currentSession = currentLine ? currentLine.trim().replace('CURRENT:', '').trim() : ''
   
   // Parse sessions and projects
   const sessionsMap = new Map()
@@ -138,7 +105,6 @@ export const render = ({ output, error }) => {
           panes: parseInt(panes) || 0,
           attached: attached.trim() === '1',
           clients: parseInt(clients) || 0,
-          isActive: name.trim() === currentSession,
           isSession: true
         })
       }
@@ -165,7 +131,6 @@ export const render = ({ output, error }) => {
         windows: 0,
         panes: 0,
         attached: false,
-        isActive: false,
         isSession: false
       })
     }
@@ -178,10 +143,14 @@ export const render = ({ output, error }) => {
     }
   })
   
-  // Sort: active first, then sessions (blue), then projects (grey), then alphabetically
+  // Sort: sessions first (with clients), then sessions without clients, then projects, then alphabetically
   const sessions = allItems.sort((a, b) => {
-    if (a.isActive !== b.isActive) return b.isActive ? 1 : -1
+    // Sessions with clients first
+    if (a.isSession && a.clients > 0 && !(b.isSession && b.clients > 0)) return -1
+    if (b.isSession && b.clients > 0 && !(a.isSession && a.clients > 0)) return 1
+    // Then sessions vs projects
     if (a.isSession !== b.isSession) return b.isSession ? 1 : -1
+    // Then alphabetically
     return a.name.localeCompare(b.name)
   })
 
