@@ -98,6 +98,11 @@ install_host_packages() {
   prompt_and_install "plex-server" 'brew install --cask plex-media-server'
 }
 
+# Cloud storage.
+install_cloud_storage() {
+  prompt_and_install "google drive" 'brew install --cask google-drive'
+}
+
 # Developer environment.
 install_dev_packages() {
   prompt_and_install "dev packages" 'brew install neovim\
@@ -298,6 +303,9 @@ handle_arguments() {
     "host" )
       install_host_packages
       ;;
+    "cloud-storage" )
+      install_cloud_storage
+      ;;
     "dev-pkgs" )
       install_dev_packages
       ;;
@@ -432,6 +440,7 @@ install_everything() {
   install_1password
   install_tailscale
   install_host_packages
+  install_cloud_storage
   install_dev_packages
   install_gh
   install_docker_packages
