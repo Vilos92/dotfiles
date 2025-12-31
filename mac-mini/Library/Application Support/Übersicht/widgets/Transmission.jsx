@@ -183,7 +183,9 @@ export const render = ({output, error}) => {
             {isActive ? (
               <div className={metaStyle}>
                 {t.down && t.down !== '0.0' && t.down !== '0' ? `↓ ${t.down} kB/s` : ''}
-                {t.down && t.down !== '0.0' && t.down !== '0' && t.up && t.up !== '0.0' && t.up !== '0' ? ' ' : ''}
+                {t.down && t.down !== '0.0' && t.down !== '0' && t.up && t.up !== '0.0' && t.up !== '0'
+                  ? ' '
+                  : ''}
                 {t.up && t.up !== '0.0' && t.up !== '0' ? `↑ ${t.up} kB/s` : ''}
               </div>
             ) : null}
@@ -305,7 +307,7 @@ function parseOutput(output) {
       // Sort priority: Active (blue) > Idling/waiting (yellow) > Seeding (green) > Done (grey)
       const aStatus = (a.status || '').toLowerCase();
       const bStatus = (b.status || '').toLowerCase();
-      
+
       const aIsDownloading = aStatus.includes('download');
       const bIsDownloading = bStatus.includes('download');
       const aIsSeeding = aStatus.includes('seeding') || aStatus.includes('idle');
@@ -314,23 +316,23 @@ function parseOutput(output) {
       const bIsStopped = bStatus.includes('stopped');
       const aIsCheck = aStatus.includes('check') || aStatus.includes('meta');
       const bIsCheck = bStatus.includes('check') || bStatus.includes('meta');
-      
+
       // Yellow status = idling/waiting (not stopped, not idle/seeding, not check/meta, not downloading)
       const aIsYellow = !aIsStopped && !aIsCheck && !aIsSeeding && !aIsDownloading;
       const bIsYellow = !bIsStopped && !bIsCheck && !bIsSeeding && !bIsDownloading;
-      
+
       // 1. Active (blue) - downloading first
       if (aIsDownloading && !bIsDownloading) return -1;
       if (!aIsDownloading && bIsDownloading) return 1;
-      
+
       // 2. Idling/waiting (yellow) - queued, checking, etc.
       if (aIsYellow && !bIsYellow) return -1;
       if (!aIsYellow && bIsYellow) return 1;
-      
+
       // 3. Seeding (green) - seeding and idle (100% completed)
       if (aIsSeeding && !bIsSeeding) return -1;
       if (!aIsSeeding && bIsSeeding) return 1;
-      
+
       // 4. Done (grey) - stopped at bottom
       // (maintain original order for same priority)
       return 0;
