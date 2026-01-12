@@ -1,0 +1,45 @@
+#!/bin/sh
+
+# --- Add Cover Art to MP3 File ---
+#
+# Usage:
+#   add-mp3-cover <mp3_file> <jpeg_file> <output_file>
+#
+# Arguments:
+#   <mp3_file>    - The MP3 file to add cover art to
+#   <jpeg_file>   - The JPEG image to use as cover art
+#   <output_file> - The output MP3 filename
+#
+# Note: Requires FFmpeg
+
+# Check if all arguments are provided
+if [ -z "$1" ] || [ -z "$2" ] || [ -z "$3" ]; then
+    echo "Usage: $0 <mp3_file> <jpeg_file> <output_file>"
+    exit 1
+fi
+
+mp3_file="$1"
+jpeg_file="$2"
+output_file="$3"
+
+# Validate input files exist
+if [ ! -f "$mp3_file" ]; then
+    echo "Error: MP3 file '$mp3_file' not found."
+    exit 1
+fi
+
+if [ ! -f "$jpeg_file" ]; then
+    echo "Error: JPEG file '$jpeg_file' not found."
+    exit 1
+fi
+
+# Run ffmpeg to embed the cover art
+ffmpeg -i "$mp3_file" -i "$jpeg_file" -map 0 -map 1 -c copy -id3v2_version 3 "$output_file"
+
+if [ -f "$output_file" ]; then
+    echo "Success: Created '$output_file' with cover art."
+else
+    echo "Error: Failed to create output file."
+    exit 1
+fi
+
