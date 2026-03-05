@@ -1,0 +1,123 @@
+#!/bin/sh
+
+# ==============================================================================
+#
+#                            !!! IMPORTANT !!!
+#
+# This script uploads the Cloud Vault to Google Drive using rclone.
+#
+# Data flows FROM:
+#   - /Volumes/Wokyis M.2 SSD - Storage/Vaults/Cloud Vault/
+#
+# Data flows TO:
+#   - gdrive:Vaults/Cloud Vault
+#
+# This script performs a ONE-WAY MIRROR to Google Drive:
+# - It uses `rclone sync`, so files deleted locally ARE ALSO DELETED remotely.
+# - DO NOT store unique files only in Google Drive under `Vaults/Cloud Vault`.
+# - You can safely run it multiple times; Google Drive will match the local state.
+#
+# Bandwidth presets (approximate):
+#   - slow   → --bwlimit  6250k  (50 Mbps)
+#   - medium → --bwlimit 12500k  (100 Mbps)  [default]
+#   - fast   → --bwlimit 25000k  (200 Mbps)
+#   - max    → --bwlimit 62500k  (500 Mbps)
+#
+# Usage:
+#   gbackup-gcloud [--execute] [slow|medium|fast|max]
+#   - Without --execute: dry-run (no real changes), chosen speed still shown.
+#   - Without speed preset: defaults to "medium" (12500k).
+#
+# ==============================================================================
+
+# --- 🛡️ Argument Parsing & Global Options ---
+EXECUTE=false
+SPEED_PRESET="medium"
+
+for arg in "$@"; do
+    case "$arg" in
+        --execute)
+            EXECUTE=true
+            ;;
+        slow|medium|fast|max)
+            SPEED_PRESET="$arg"
+            ;;
+        *)
+            echo "❌ ERROR: Unknown argument: $arg"
+            echo "Usage: gbackup-gcloud [--execute] [slow|medium|fast|max]"
+            exit 1
+            ;;
+    esac
+done
+
+case "$SPEED_PRESET" in
+    slow)
+        BWLIMIT="6250k"
+        ;;
+    medium)
+        BWLIMIT="12500k"
+        ;;
+    fast)
+        BWLIMIT="25000k"
+        ;;
+    max)
+        BWLIMIT="62500k"
+        ;;
+esac
+
+# Build rclone option list safely using positional parameters
+set -- --bwlimit "$BWLIMIT" --transfers 4 --drive-chunk-size 128M --progress
+
+if [ "$EXECUTE" = true ]; then
+    echo "✅ --execute flag detected. Live sync mode engaged."
+else
+    echo "🛡️ SAFE MODE: Running in simulation (dry-run) mode."
+    set -- "$@" --dry-run
+fi
+
+echo "✅ Bandwidth preset: $SPEED_PRESET ($BWLIMIT)"
+echo "===================================================="
+
+
+# --- Safety Checks ---
+if ! command -v rclone >/dev/null 2>&1; then
+    echo "❌ ERROR: rclone is not installed or not in PATH"
+    echo "   Please install rclone and configure a 'gdrive' remote first."
+    exit 1
+fi
+
+if [ ! -d "/Volumes/Wokyis M.2 SSD - Storage" ]; then
+    echo "❌ ERROR: Wokyis drive not found at /Volumes/Wokyis M.2 SSD - Storage"
+    echo "   Please ensure your Wokyis drive is connected and mounted"
+    exit 1
+fi
+
+CV_SOURCE_BASE="/Volumes/Wokyis M.2 SSD - Storage/Vaults/Cloud Vault"
+if [ ! -d "$CV_SOURCE_BASE" ]; then
+    echo "❌ ERROR: Cloud Vault not found at $CV_SOURCE_BASE"
+    echo "   Please ensure the Cloud Vault directory exists"
+    exit 1
+fi
+
+GDRIVE_DEST="gdrive:Vaults/Cloud Vault"
+
+echo "✅ Source Cloud Vault found: $CV_SOURCE_BASE"
+echo "✅ Target Google Drive path: $GDRIVE_DEST"
+echo "===================================================="
+
+
+# --- Cloud Vault -> Google Drive Upload ---
+echo "▶️  Starting Cloud Vault sync to Google Drive"
+echo "🔄 Syncing:"
+echo "   From: $CV_SOURCE_BASE/"
+echo "   To:   $GDRIVE_DEST"
+
+if rclone sync "$CV_SOURCE_BASE/" "$GDRIVE_DEST" "$@"; then
+    echo "----------------------------------------------------"
+    echo "✅ Cloud Vault sync finished successfully."
+else
+    STATUS=$?
+    echo "----------------------------------------------------"
+    echo "❌ Cloud Vault sync FAILED (exit code: $STATUS). See rclone output above."
+    exit "$STATUS"
+fi

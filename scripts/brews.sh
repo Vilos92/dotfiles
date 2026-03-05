@@ -98,6 +98,11 @@ install_host_packages() {
   prompt_and_install "plex-server" 'brew install --cask plex-media-server'
 }
 
+# Rclone.
+install_rclone() {
+  prompt_and_install "rclone" 'brew install rclone'
+}
+
 # Cloud storage.
 install_cloud_storage() {
   prompt_and_install "google drive" 'brew install --cask google-drive'
@@ -303,6 +308,9 @@ handle_arguments() {
     "host" )
       install_host_packages
       ;;
+    "rclone" )
+      install_rclone
+      ;;
     "cloud-storage" )
       install_cloud_storage
       ;;
@@ -440,6 +448,7 @@ install_everything() {
   install_1password
   install_tailscale
   install_host_packages
+  install_rclone
   install_cloud_storage
   install_dev_packages
   install_gh
