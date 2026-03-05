@@ -11,7 +11,7 @@
 #
 # Data flows FROM:
 #   - /Volumes/T7/Vaults/Local Vault/media/
-#   - /Volumes/T7/Vaults/Cloud Vault/
+#   - /Volumes/Wokyis M.2 SSD - Storage/Vaults/Cloud Vault/
 #   - /Volumes/T7/Vaults/GregZone Vault/
 #   - /Volumes/T7/Vaults/Hobby Vault/
 #
@@ -89,16 +89,22 @@ done
 echo "----------------------------------------------------"
 
 
-# --- Stage 2: Cloud Vault Backup (T7 -> LaCie Small) ---
+# --- Stage 2: Cloud Vault Backup (Wokyis -> LaCie Small) ---
 echo "▶️  Starting Stage 2: Cloud Vault Backup"
 # --- Configuration for Stage 2 ---
-CV_SOURCE_DRIVE="/Volumes/T7/Vaults/Cloud Vault"
+CV_SOURCE_BASE="/Volumes/Wokyis M.2 SSD - Storage/Vaults/Cloud Vault"
 CV_DEST_DRIVE="/Volumes/LaCie Small/Cloud Vault"
 CV_DIRS_TO_SYNC=( "GoPro" "video renders" )
 
+if [ ! -d "$CV_SOURCE_BASE" ]; then
+    echo "❌ ERROR: Cloud Vault not found at $CV_SOURCE_BASE"
+    echo "   Please ensure your Wokyis drive is connected and mounted"
+    exit 1
+fi
+
 # --- Logic for Stage 2 ---
 for dir in "${CV_DIRS_TO_SYNC[@]}"; do
-    SOURCE_PATH="$CV_SOURCE_DRIVE/$dir/"
+    SOURCE_PATH="$CV_SOURCE_BASE/$dir/"
     DEST_PATH="$CV_DEST_DRIVE/$dir/"
     if [ -d "$SOURCE_PATH" ]; then
         echo "🔄 Syncing: $dir"
