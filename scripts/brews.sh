@@ -188,6 +188,7 @@ install_audio_packages() {
   prompt_and_install "pillow" 'brew install pillow'
   prompt_and_install "vlc" 'brew install --cask vlc'
   prompt_and_install "spotify" 'brew install --cask spotify'
+  prompt_and_install "elmedia" 'brew install --cask elmedia-player'
 }
 
 # Audio engineering.
