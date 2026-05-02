@@ -195,6 +195,7 @@ install_audio_engineering_packages() {
   prompt_and_install "audacity" 'brew install --cask audacity'
   prompt_and_install "ableton" 'brew install --cask ableton-live-suite'
   prompt_and_install "xld" 'brew install --cask xld'
+  prompt_and_install "musicbrainz-picard" 'brew install --cask musicbrainz-picard'
 }
 
 # Video engineering.
@@ -218,6 +219,7 @@ install_coding_packages() {
   prompt_and_install "visual studio code" 'brew install --cask visual-studio-code'
   prompt_and_install "cursor" 'brew install --cask cursor'
   prompt_and_install "cursor-cli" 'brew install --cask cursor-cli'
+  prompt_and_install "claude-code" 'brew install --cask claude-code'
 }
 
 # Text editor.
