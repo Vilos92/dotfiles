@@ -17,6 +17,19 @@
 # - DO NOT store unique files only in Google Drive under `Vaults/Cloud Vault`.
 # - You can safely run it multiple times; Google Drive will match the local state.
 #
+# Optional rename handling:
+#   --track-renames  → pass rclone's --track-renames (tries to match renames so
+#                      Drive can move/rename instead of delete+full re-upload).
+#                      Slightly more work on each run; use after bulk renames.
+#
+# Targeted sync (faster dry-runs / spot updates):
+#   --only RELATIVE_PATH  → sync only that folder under Cloud Vault (any depth).
+#   Examples:
+#       --only "media/concerts - official"
+#       --only "media/concerts - official/Coachella 2024/Week 1/Saturday"
+#   The second form is tiny (one day / one stage folder) — good for dry-run + --track-renames
+#   checks after Coachella renames. RELATIVE_PATH must not contain ".." or start with "/".
+#
 # Bandwidth presets (approximate):
 #   - slow   → --bwlimit  6250k  (50 Mbps)
 #   - medium → --bwlimit 12500k  (100 Mbps)  [default]
@@ -24,27 +37,45 @@
 #   - max    → --bwlimit 62500k  (500 Mbps)
 #
 # Usage:
-#   gbackup-gcloud [--execute] [slow|medium|fast|max]
+#   gbackup-gcloud [--execute] [--track-renames] [--only REL_PATH] [slow|medium|fast|max]
 #   - Without --execute: dry-run (no real changes), chosen speed still shown.
 #   - Without speed preset: defaults to "medium" (12500k).
+#   - Flags and speed can appear in any order (except --only must be followed by a path).
 #
 # ==============================================================================
 
 # --- 🛡️ Argument Parsing & Global Options ---
 EXECUTE=false
 SPEED_PRESET="medium"
+TRACK_RENAMES=false
+ONLY_REL=""
 
-for arg in "$@"; do
-    case "$arg" in
+while [ $# -gt 0 ]; do
+    case "$1" in
         --execute)
             EXECUTE=true
+            shift
+            ;;
+        --track-renames)
+            TRACK_RENAMES=true
+            shift
+            ;;
+        --only)
+            shift
+            ONLY_REL=${1-}
+            if [ -z "$ONLY_REL" ]; then
+                echo "❌ ERROR: --only requires a relative path under Cloud Vault"
+                exit 1
+            fi
+            shift
             ;;
         slow|medium|fast|max)
-            SPEED_PRESET="$arg"
+            SPEED_PRESET="$1"
+            shift
             ;;
         *)
-            echo "❌ ERROR: Unknown argument: $arg"
-            echo "Usage: gbackup-gcloud [--execute] [slow|medium|fast|max]"
+            echo "❌ ERROR: Unknown argument: $1"
+            echo "Usage: gbackup-gcloud [--execute] [--track-renames] [--only REL_PATH] [slow|medium|fast|max]"
             exit 1
             ;;
     esac
@@ -68,6 +99,10 @@ esac
 # Build rclone option list safely using positional parameters
 set -- --bwlimit "$BWLIMIT" --transfers 4 --drive-chunk-size 128M --progress
 
+if [ "$TRACK_RENAMES" = true ]; then
+    set -- "$@" --track-renames
+fi
+
 if [ "$EXECUTE" = true ]; then
     echo "✅ --execute flag detected. Live sync mode engaged."
 else
@@ -76,6 +111,9 @@ else
 fi
 
 echo "✅ Bandwidth preset: $SPEED_PRESET ($BWLIMIT)"
+if [ "$TRACK_RENAMES" = true ]; then
+    echo "✅ rclone --track-renames enabled"
+fi
 echo "===================================================="
 
 
@@ -101,6 +139,36 @@ fi
 
 GDRIVE_DEST="gdrive:Vaults/Cloud Vault"
 
+# --- Optional subtree (--only) ---
+SYNC_SRC="$CV_SOURCE_BASE/"
+SYNC_DST="$GDRIVE_DEST"
+
+if [ -n "$ONLY_REL" ]; then
+    case "$ONLY_REL" in
+        /*)
+            echo "❌ ERROR: --only path must be relative (no leading /): $ONLY_REL"
+            exit 1
+            ;;
+        *..*)
+            echo "❌ ERROR: --only path must not contain ..: $ONLY_REL"
+            exit 1
+            ;;
+    esac
+    # Trim leading/trailing slashes
+    ONLY_REL=$(printf %s "$ONLY_REL" | sed -e 's|^/*||' -e 's|/*$||')
+    if [ -z "$ONLY_REL" ]; then
+        echo "❌ ERROR: --only resolved to an empty path"
+        exit 1
+    fi
+    SYNC_SRC="$CV_SOURCE_BASE/$ONLY_REL/"
+    SYNC_DST="$GDRIVE_DEST/$ONLY_REL"
+    if [ ! -d "$CV_SOURCE_BASE/$ONLY_REL" ]; then
+        echo "❌ ERROR: Local subtree not found: $CV_SOURCE_BASE/$ONLY_REL"
+        exit 1
+    fi
+    echo "✅ Subtree mode: only \"$ONLY_REL\""
+fi
+
 echo "✅ Source Cloud Vault found: $CV_SOURCE_BASE"
 echo "✅ Target Google Drive path: $GDRIVE_DEST"
 echo "===================================================="
@@ -109,10 +177,10 @@ echo "===================================================="
 # --- Cloud Vault -> Google Drive Upload ---
 echo "▶️  Starting Cloud Vault sync to Google Drive"
 echo "🔄 Syncing:"
-echo "   From: $CV_SOURCE_BASE/"
-echo "   To:   $GDRIVE_DEST"
+echo "   From: $SYNC_SRC"
+echo "   To:   $SYNC_DST"
 
-if rclone sync "$CV_SOURCE_BASE/" "$GDRIVE_DEST" "$@"; then
+if rclone sync "$SYNC_SRC" "$SYNC_DST" "$@"; then
     echo "----------------------------------------------------"
     echo "✅ Cloud Vault sync finished successfully."
 else
