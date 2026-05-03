@@ -256,8 +256,6 @@ This AGENTS.md should be kept up-to-date as the environment evolves. Feel free t
 - Dependencies change
 - Binary commands are added or modified
 
-**Important:** When updating this file, also update `AGENTS_TEMPLATE.md` to keep the "Greg's System Context" section in sync with any universally useful tools, aliases, or practices that would be valuable in other repositories.
-
 ### Testing Expectations
 
 - Test all changes locally before committing (dogfooding approach)
