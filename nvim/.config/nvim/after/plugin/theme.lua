@@ -5,6 +5,7 @@ end
 require("rose-pine")
 require("catppuccin")
 require("tokyonight")
+require("nord").setup({})
 
 local themes = {
   {

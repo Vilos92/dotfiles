@@ -2,6 +2,12 @@ if vim.g.vscode then
   return
 end
 
+require("oil").setup({
+  view_options = {
+    show_hidden = true,
+  },
+})
+
 -- Open Oil.
 vim.keymap.set("n", "<C-o>", "<CMD>Oil<CR>", { desc = "Open parent directory" })
 
