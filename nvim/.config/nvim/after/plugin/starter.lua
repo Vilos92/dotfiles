@@ -34,7 +34,7 @@ require("mini.starter").setup({
     { name = "Oil", action = ":Oil", section = "Explorer" },
     -- Configuration
     { name = "Theme", action = ":Themery", section = "Config" },
-    { name = "Plugins (pack update)", action = ":lua vim.pack.update()", section = "Config" },
+    { name = "Pack Update", action = ":lua vim.pack.update()", section = "Config" },
     { name = "Check Health", action = ":checkhealth", section = "Config" },
     -- Neovim
     { name = "Create Buffer", action = "enew", section = "Neovim" },
