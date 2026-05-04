@@ -19,4 +19,4 @@ end)
 -- Leader based shortcut for opening Oil in a split.
 vim.keymap.set("n", "<leader>pe", function()
   vim.cmd("rightbelow vsplit | Oil")
-end, { desc = "Open parent directory" })
+end, { desc = "Oil (vsplit)" })

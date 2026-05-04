@@ -17,4 +17,4 @@ null_ls.setup({
 })
 
 -- Display code actions.
-vim.keymap.set("n", "<C-m>", vim.lsp.buf.code_action)
+vim.keymap.set("n", "<C-m>", vim.lsp.buf.code_action, { desc = "Code action" })

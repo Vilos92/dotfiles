@@ -24,6 +24,7 @@ vim.pack.add({
   -- Shared dependencies first (load order follows spec order after install)
   { src = gh("nvim-lua/plenary.nvim"), version = "74b06c6c75e4eeb3108ec01852001636d85a932b" },
   { src = gh("nvim-tree/nvim-web-devicons"), version = "4fc505ac7bd7692824a142e96e5f529c133862f8" },
+  { src = gh("folke/which-key.nvim"), version = "3aab2147e74890957785941f0c1ad87d0a44c15a" },
 
   { src = gh("nvim-treesitter/nvim-treesitter"), version = "cf12346a3414fa1b06af75c79faebe7f76df080a" },
   { src = gh("nvim-treesitter/playground"), version = "ba48c6a62a280eefb7c85725b0915e021a1a0749" },

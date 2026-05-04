@@ -8,10 +8,10 @@ local builtin = require("telescope.builtin")
 -- Directly using ripgrep (rg) with these additional flags is necessary for this to work.
 vim.keymap.set("n", "<leader>pf", function()
   builtin.find_files({ find_command = { "rg", "--files", "--hidden", "-g", "!.git" } })
-end)
+end, { desc = "Find files (hidden, no .git)" })
 
 -- Recent files.
-vim.keymap.set("n", "<leader>pr", builtin.oldfiles, {})
+vim.keymap.set("n", "<leader>pr", builtin.oldfiles, { desc = "Recent files" })
 
 -- Fuzzy search for text using ripgrep.
 vim.keymap.set("n", "<leader>ps", function()
@@ -29,7 +29,7 @@ vim.keymap.set("n", "<leader>ps", function()
       "--smart-case",
     },
   })
-end)
+end, { desc = "Grep string (ripgrep)" })
 
 -- Fuzzy search through the results of `git ls-files`.
-vim.keymap.set("n", "<leader>pg", builtin.git_files, {})
+vim.keymap.set("n", "<leader>pg", builtin.git_files, { desc = "Git files" })

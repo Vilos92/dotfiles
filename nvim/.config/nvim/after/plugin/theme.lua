@@ -98,4 +98,4 @@ require("themery").setup({
 
 vim.keymap.set("n", "<leader>t", function()
   vim.cmd("Themery")
-end)
+end, { desc = "Theme picker (Themery)" })
