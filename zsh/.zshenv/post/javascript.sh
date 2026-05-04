@@ -10,3 +10,6 @@ export BUN_INSTALL="$HOME/.bun"
 
 # bun completions
 [ -s "/Users/greg.linscheid/.bun/_bun" ] && . "/Users/greg.linscheid/.bun/_bun"
+
+# Vite+ (https://viteplus.dev) — PATH, vp() wrapper, completions
+[ -f "$HOME/.vite-plus/env" ] && . "$HOME/.vite-plus/env"
