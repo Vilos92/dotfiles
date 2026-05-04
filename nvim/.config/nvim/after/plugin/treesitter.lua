@@ -2,7 +2,7 @@ if vim.g.vscode then
   return
 end
 
--- nvim-treesitter rewrite (main branch): no nvim-treesitter.configs — see plugin README.
+-- nvim-treesitter `main` (rewrite): Neovim 0.12+ — see https://github.com/nvim-treesitter/nvim-treesitter/blob/main/README.md
 local parsers = {
   "bash",
   "c",
@@ -25,7 +25,9 @@ local parsers = {
   "yaml",
 }
 
-require("nvim-treesitter").setup({})
+require("nvim-treesitter").setup({
+  install_dir = vim.fn.stdpath("data") .. "/site",
+})
 
 vim.schedule(function()
   require("nvim-treesitter").install(parsers)
@@ -55,6 +57,6 @@ vim.api.nvim_create_autocmd("FileType", {
   },
   callback = function(ev)
     pcall(vim.treesitter.start, ev.buf)
-    vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()'"
+    vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()"
   end,
 })

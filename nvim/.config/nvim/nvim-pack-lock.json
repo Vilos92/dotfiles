@@ -96,9 +96,9 @@
       "version": "'8ac59883de84e9cd1850ea25cf087031c5ba7d54'"
     },
     "nvim-treesitter": {
-      "rev": "cf12346a3414fa1b06af75c79faebe7f76df080a",
+      "rev": "4916d6592ede8c07973490d9322f187e07dfefac",
       "src": "https://github.com/nvim-treesitter/nvim-treesitter",
-      "version": "'cf12346a3414fa1b06af75c79faebe7f76df080a'"
+      "version": "'main'"
     },
     "nvim-web-devicons": {
       "rev": "4fc505ac7bd7692824a142e96e5f529c133862f8",
@@ -125,9 +125,9 @@
       "src": "https://github.com/folke/sidekick.nvim"
     },
     "telescope.nvim": {
-      "rev": "6312868392331c9c0f22725041f1ec2bef57c751",
+      "rev": "ec009610d5d259ec59a6edf0219ef3f7ee4732e5",
       "src": "https://github.com/nvim-telescope/telescope.nvim",
-      "version": "'6312868392331c9c0f22725041f1ec2bef57c751'"
+      "version": "'ec009610d5d259ec59a6edf0219ef3f7ee4732e5'"
     },
     "themery.nvim": {
       "rev": "bfa58f4b279d21cb515b28023e1b68ec908584b2",

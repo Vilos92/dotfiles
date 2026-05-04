@@ -8,7 +8,7 @@ local gh = function(repo)
   return "https://github.com/" .. repo
 end
 
--- Pinned revisions (previously lazy-lock.json). Run `vim.pack.update()` to refresh.
+-- Pinned revisions in `nvim-pack-lock.json` (except nvim-treesitter: branch `main`). Run `vim.pack.update()` to refresh.
 vim.api.nvim_create_autocmd("PackChanged", {
   callback = function(ev)
     local name, kind = ev.data.spec.name, ev.data.kind
@@ -26,7 +26,7 @@ vim.pack.add({
   { src = gh("nvim-tree/nvim-web-devicons"), version = "4fc505ac7bd7692824a142e96e5f529c133862f8" },
   { src = gh("folke/which-key.nvim"), version = "3aab2147e74890957785941f0c1ad87d0a44c15a" },
 
-  { src = gh("nvim-treesitter/nvim-treesitter"), version = "cf12346a3414fa1b06af75c79faebe7f76df080a" },
+  { src = gh("nvim-treesitter/nvim-treesitter"), version = "main" },
   { src = gh("OXY2DEV/markview.nvim"), version = "dbf74b6db11c1468d5128a38b26b6d99dc7316e9" },
 
   { src = gh("williamboman/mason.nvim"), version = "cb8445f8ce85d957416c106b780efd51c6298f89" },
@@ -50,7 +50,8 @@ vim.pack.add({
   { src = gh("echasnovski/mini.starter"), version = "7bdc9decc8b623f245c1e42a64bc41e61d574c5e" },
 
   { src = gh("stevearc/oil.nvim"), version = "0fcc83805ad11cf714a949c98c605ed717e0b83e" },
-  { src = gh("nvim-telescope/telescope.nvim"), version = "6312868392331c9c0f22725041f1ec2bef57c751" },
+  -- Nvim 0.12 + nvim-treesitter main: preview uses vim.treesitter.language (older pins call removed parsers.ft_to_lang).
+  { src = gh("nvim-telescope/telescope.nvim"), version = "ec009610d5d259ec59a6edf0219ef3f7ee4732e5" },
   { src = gh("ThePrimeagen/harpoon"), version = "1bc17e3e42ea3c46b33c0bbad6a880792692a1b3" },
 
   { src = gh("zaldih/themery.nvim"), version = "bfa58f4b279d21cb515b28023e1b68ec908584b2" },
