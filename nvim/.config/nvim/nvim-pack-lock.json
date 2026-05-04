@@ -110,11 +110,6 @@
       "src": "https://github.com/stevearc/oil.nvim",
       "version": "'0fcc83805ad11cf714a949c98c605ed717e0b83e'"
     },
-    "playground": {
-      "rev": "ba48c6a62a280eefb7c85725b0915e021a1a0749",
-      "src": "https://github.com/nvim-treesitter/playground",
-      "version": "'ba48c6a62a280eefb7c85725b0915e021a1a0749'"
-    },
     "plenary.nvim": {
       "rev": "74b06c6c75e4eeb3108ec01852001636d85a932b",
       "src": "https://github.com/nvim-lua/plenary.nvim",
@@ -124,6 +119,10 @@
       "rev": "6a961effd67f6130d36df6d1c05c48c739796dd2",
       "src": "https://github.com/rose-pine/neovim",
       "version": "'6a961effd67f6130d36df6d1c05c48c739796dd2'"
+    },
+    "sidekick.nvim": {
+      "rev": "208e1c5b8170c01fd1d07df0139322a76479b235",
+      "src": "https://github.com/folke/sidekick.nvim"
     },
     "telescope.nvim": {
       "rev": "6312868392331c9c0f22725041f1ec2bef57c751",

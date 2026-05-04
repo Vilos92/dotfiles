@@ -111,6 +111,7 @@ install_cloud_storage() {
 # Developer environment.
 install_dev_packages() {
   prompt_and_install "dev packages" 'brew install neovim\
+    tree-sitter-cli\
     font-meslo-lg-nerd-font\
     stow\
     ripgrep\

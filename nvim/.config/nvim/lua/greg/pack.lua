@@ -27,7 +27,6 @@ vim.pack.add({
   { src = gh("folke/which-key.nvim"), version = "3aab2147e74890957785941f0c1ad87d0a44c15a" },
 
   { src = gh("nvim-treesitter/nvim-treesitter"), version = "cf12346a3414fa1b06af75c79faebe7f76df080a" },
-  { src = gh("nvim-treesitter/playground"), version = "ba48c6a62a280eefb7c85725b0915e021a1a0749" },
   { src = gh("OXY2DEV/markview.nvim"), version = "dbf74b6db11c1468d5128a38b26b6d99dc7316e9" },
 
   { src = gh("williamboman/mason.nvim"), version = "cb8445f8ce85d957416c106b780efd51c6298f89" },

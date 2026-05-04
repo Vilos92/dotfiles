@@ -2,33 +2,59 @@ if vim.g.vscode then
   return
 end
 
-require("nvim-treesitter.configs").setup({
-  ensure_installed = {
+-- nvim-treesitter rewrite (main branch): no nvim-treesitter.configs — see plugin README.
+local parsers = {
+  "bash",
+  "c",
+  "gleam",
+  "go",
+  "html",
+  "javascript",
+  "json",
+  "lua",
+  "markdown",
+  "markdown_inline",
+  "python",
+  "query",
+  "regex",
+  "rust",
+  "tsx",
+  "typescript",
+  "vim",
+  "vimdoc",
+  "yaml",
+}
+
+require("nvim-treesitter").setup({})
+
+vim.schedule(function()
+  require("nvim-treesitter").install(parsers)
+end)
+
+vim.api.nvim_create_autocmd("FileType", {
+  pattern = {
     "bash",
+    "sh",
     "c",
     "gleam",
     "go",
     "html",
     "javascript",
+    "javascriptreact",
     "json",
     "lua",
     "markdown",
-    "markdown_inline",
     "python",
     "query",
-    "regex",
     "rust",
-    "tsx",
     "typescript",
+    "typescriptreact",
     "vim",
-    "vimdoc",
+    "help",
     "yaml",
   },
-  sync_install = false,
-  auto_install = true,
-  highlight = {
-    enable = true,
-    additional_vim_regex_highlighting = false,
-  },
-  indent = { enable = true },
+  callback = function(ev)
+    pcall(vim.treesitter.start, ev.buf)
+    vim.bo[ev.buf].indentexpr = "v:lua.require'nvim-treesitter'.indentexpr()'"
+  end,
 })
