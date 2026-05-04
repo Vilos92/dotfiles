@@ -33,3 +33,6 @@ end, { desc = "Grep string (ripgrep)" })
 
 -- Fuzzy search through the results of `git ls-files`.
 vim.keymap.set("n", "<leader>pg", builtin.git_files, { desc = "Git files" })
+
+-- Telescope built-in: fuzzy search normal-mode keymaps (global + buffer-local).
+vim.keymap.set("n", "<leader>pk", builtin.keymaps, { desc = "Search keymaps" })
