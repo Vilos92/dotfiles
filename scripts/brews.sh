@@ -120,6 +120,7 @@ install_dev_packages() {
     eza\
     zoxide\
     tealdeer\
+    wget\
     shellcheck'
 }
 
@@ -140,6 +141,7 @@ install_lua_packages() {
     lua-language-server\
     luarocks\
     stylua'
+  prompt_and_install "jsregexp" 'sudo luarocks install jsregexp'
 }
 
 # Python development tools.
