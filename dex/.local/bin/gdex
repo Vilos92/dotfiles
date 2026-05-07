@@ -1,0 +1,64 @@
+#!/bin/sh
+set -eu
+
+usage() {
+  cat <<'EOF'
+gdex: opinionated dex wrapper for Greg's machines
+
+Usage:
+  gdex <greg|front> <dex-subcommand> [args...]
+
+Examples:
+  gdex greg list
+  gdex greg create --title "Follow up"
+  gdex front list
+
+Notes:
+  - This just calls dex with the correct --config and --storage-path.
+  - For full dex CLI help, run: dex --help
+EOF
+}
+
+if ! command -v dex >/dev/null 2>&1; then
+  echo "gdex: dex not found on PATH" >&2
+  exit 127
+fi
+
+if [ "${1:-}" = "--help" ] || [ "${1:-}" = "-h" ]; then
+  usage
+  exit 0
+fi
+
+profile="${1:-}"
+shift 1 || true
+
+if [ -z "${profile:-}" ]; then
+  usage >&2
+  exit 2
+fi
+
+case "$profile" in
+  greg|front) ;;
+  *)
+    echo "gdex: first arg must be 'greg' or 'front' (got: $profile)" >&2
+    usage >&2
+    exit 2
+    ;;
+esac
+
+config_path="$HOME/.dex/projects/$profile/config.toml"
+storage_path="$HOME/.dex/task-db/$profile.jsonl"
+
+if [ ! -f "$config_path" ]; then
+  echo "gdex: missing config: $config_path" >&2
+  echo "gdex: (expected to be stowed/symlinked from this repo)" >&2
+  exit 2
+fi
+
+if [ ! -d "$storage_path" ]; then
+  echo "gdex: missing storage directory: $storage_path" >&2
+  echo "gdex: (expected dex storage root, e.g. contains tasks.jsonl)" >&2
+  exit 2
+fi
+
+exec dex --config "$config_path" --storage-path "$storage_path" "$@"
