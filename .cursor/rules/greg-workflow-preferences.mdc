@@ -25,6 +25,8 @@ Assume these are installed on my machine. **Use them first** when proposing or r
 
 If something is missing in a given environment, fall back to standard tools and note it briefly.
 
+**Scope:** These preferences target everyday repo work (search, navigation, diffs). One-off diagnostics (**`dex dir`**, **`ls`** on a known path, **`head`**/**`cat`** on a single file) do not need to be forced through **`fd`**/**`rg`**/**`eza`** when that only adds friction—the dex/storage pitfalls below are unrelated to grep-vs-**`rg`**.
+
 ---
 
 ## Progress tracking with dex
@@ -63,11 +65,15 @@ Then report, for each name they care about (`greg`, `front`), whether **`$HOME/.
 
 **`--config` means a file, not a registry:** Global option **`--config <path>`** selects that TOML file for the invocation. Dex does **not** maintain a separate registry of profile names—folder names under `$HOME/.dex/projects/` are your dotfiles/stow layout, not something `dex` enumerates.
 
-**Reading `dex --help` efficiently:** Scan **COMMANDS** once. If a verb is not listed, do not assume undocumented aliases unless you have other docs. **`dex config`** needs a key or **`dex config --list`** (use **`-g`** for global settings); bare **`dex config`** errors. **`dex dir`** prints task storage for **this** invocation (cwd plus optional `--config`); it does **not** list profile folders under **`~/.dex/projects`**. Run **`dex --version`** when behavior might depend on release.
+**Task storage vs config (`dex dir`, `--storage-path`):** **`--config`** alone does **not** magically attach task data to a dotfiles checkout. A **comment-only or empty `config.toml`** does not bind tasks to **`…/dotfiles/dex/.dex/task-db/…`**—dex still resolves storage from **cwd**, global defaults, and whatever the project file sets. **Always run `dex dir`** for the same cwd / **`--config`** / optional **`--storage-path`** you use for **`list`** before concluding a DB is empty or “wrong.”
 
-**Fast path:** (1) **`ls "$HOME/.dex/projects"`** (or **`fd`**) for profile names. (2) **`dex --help`** only to confirm verbs and flags for task workflows (**list**, **create**, **dir**, **config**, …)—**not** to discover profile names.
+Global option **`--storage-path <dir>`** sets the **storage root directory** dex uses for this invocation (see **`dex --help`**). Pass the directory dex expects as the backend root—typically the parent of the JSONL tree (e.g. the folder named like **`greg.jsonl`** that contains **`tasks.jsonl`**), **not** the full path to **`tasks.jsonl`**. Pointing **`--storage-path`** at **`tasks.jsonl`** itself can show **no tasks** even when the file has lines.
 
-**Dotfiles provenance (only when editing personal dotfiles):** In Greg’s dotfiles repo, versioned stubs live at `dex/.dex/projects/greg/config.toml` (stow package `dex`) and, in the **front** submodule, `front/.dex/projects/front/config.toml` (stow package `front`). Agents in **other** repositories should still use **`$HOME/.dex/projects/...`** for `--config` unless the user explicitly asks to work from repo paths.
+**Reading `dex --help` efficiently:** Scan **COMMANDS** once. If a verb is not listed, do not assume undocumented aliases unless you have other docs. **`dex config`** needs a key or **`dex config --list`** (use **`-g`** for global settings); bare **`dex config`** errors. **`dex dir`** prints the **resolved** task storage for **this** invocation (**cwd**, optional **`--config`**, optional **`--storage-path`**); it does **not** list profile folders under **`~/.dex/projects`**. Run **`dex --version`** when behavior might depend on release.
+
+**Fast path:** (1) **`ls "$HOME/.dex/projects"`** (or **`fd`**) for profile names. (2) **`dex --help`** only to confirm verbs and flags for task workflows (**list**, **create**, **`dir`**, **`config`**, **`--storage-path`**, …)—**not** to discover profile names. (3) **`dex dir`** before trusting **`list`** output; add **`--storage-path <storage-dir>`** when tasks must come from a specific store.
+
+**Dotfiles provenance (only when editing personal dotfiles):** In Greg’s dotfiles repo, versioned stubs live at **`dex/.dex/projects/greg/config.toml`** (stow package **`dex`**) and, in the **front** submodule, **`front/.dex/projects/front/config.toml`** (stow package **`front`**). Task JSONL may sit under **`dex/.dex/task-db/greg.jsonl/tasks.jsonl`** and **`front/.dex/task-db/front.jsonl/tasks.jsonl`** (a **`*.jsonl`** directory next to **`tasks.jsonl`**); Greg may version those separately from the profile **`config.toml`**. **`--config`** alone does **not** imply dex reads that checkout-local **`task-db`**—confirm with **`dex dir`** and pass **`--storage-path`** to the **storage directory** (see above), not to **`tasks.jsonl`**. Agents in **other** repositories should still use **`$HOME/.dex/projects/...`** for **`--config`** unless the user explicitly asks to work from repo paths.
 
 **Repo-local `.dex/`:** Folders named `.dex/` inside some clone are **not** the default dex profile for agents. Ignore them for normal dex workflows unless the user explicitly opts into repo-local dex; prefer **`$HOME/.dex/projects/<name>/config.toml`** for every `dex --config`.
 
