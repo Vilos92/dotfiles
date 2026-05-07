@@ -125,6 +125,11 @@ install_dev_packages() {
     shellcheck'
 }
 
+# FFF — fast file search / MCP server (dmtrKovalenko/fff).
+install_fff() {
+  prompt_and_install "fff (MCP file search)" 'curl -fsSL https://raw.githubusercontent.com/dmtrKovalenko/fff/main/install-mcp.sh | bash'
+}
+
 # GitHub CLI.
 install_gh() {
   prompt_and_install "gh" 'brew install gh'
@@ -322,6 +327,9 @@ handle_arguments() {
     "dev-pkgs" )
       install_dev_packages
       ;;
+    "fff" )
+      install_fff
+      ;;
     "gh" )
       install_gh
       ;;
@@ -412,6 +420,7 @@ handle_arguments() {
       echo "  1password       - 1Password password manager"
       echo "  host             - hosting and server tools"
       echo "  dev-pkgs         - development tools and utilities"
+      echo "  fff              - FFF MCP file search (dmtrKovalenko/fff)"
       echo "  gh               - GitHub CLI"
       echo "  docker-pkgs      - Docker and related tools"
       echo "  lua-pkgs         - Lua development tools"
@@ -456,6 +465,7 @@ install_everything() {
   install_rclone
   install_cloud_storage
   install_dev_packages
+  install_fff
   install_gh
   install_docker_packages
   install_lua_packages
