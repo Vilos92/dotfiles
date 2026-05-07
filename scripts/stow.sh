@@ -50,5 +50,8 @@ prompt_and_stow mac-mini
 # Arch specific dotfiles.
 prompt_and_stow arch
 
+# dex task tracking for agents.
+prompt_and_stow dex
+
 # Submodules for private dotfiles.
 prompt_and_stow front

@@ -125,9 +125,15 @@ install_dev_packages() {
     shellcheck'
 }
 
-# FFF — fast file search / MCP server (dmtrKovalenko/fff).
-install_fff() {
-  prompt_and_install "fff (MCP file search)" 'curl -fsSL https://raw.githubusercontent.com/dmtrKovalenko/fff/main/install-mcp.sh | bash'
+# Agent-oriented CLIs (Dex: ~/.bun/bin on PATH via zsh when ~/.zshrc runs javascript.sh).
+install_agent_dev_tools() {
+  # dmtrKovalenko/fff — MCP server + CLI for indexed ripgrep-style search.
+  prompt_and_install "fff (MCP file search)" \
+    'curl -fsSL https://raw.githubusercontent.com/dmtrKovalenko/fff/main/install-mcp.sh | bash'
+
+  # @zeeg/dex - global CLI for agent workflows.
+  prompt_and_install "Dex CLI (@zeeg/dex)" \
+    'bun add -g @zeeg/dex'
 }
 
 # GitHub CLI.
@@ -327,8 +333,8 @@ handle_arguments() {
     "dev-pkgs" )
       install_dev_packages
       ;;
-    "fff" )
-      install_fff
+    "agent-dev-tools" )
+      install_agent_dev_tools
       ;;
     "gh" )
       install_gh
@@ -420,7 +426,7 @@ handle_arguments() {
       echo "  1password       - 1Password password manager"
       echo "  host             - hosting and server tools"
       echo "  dev-pkgs         - development tools and utilities"
-      echo "  fff              - FFF MCP file search (dmtrKovalenko/fff)"
+      echo "  agent-dev-tools  - Agent CLIs: FFF MCP search + Dex CLI"
       echo "  gh               - GitHub CLI"
       echo "  docker-pkgs      - Docker and related tools"
       echo "  lua-pkgs         - Lua development tools"
@@ -465,7 +471,7 @@ install_everything() {
   install_rclone
   install_cloud_storage
   install_dev_packages
-  install_fff
+  install_agent_dev_tools
   install_gh
   install_docker_packages
   install_lua_packages

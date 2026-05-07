@@ -1,0 +1,87 @@
+---
+description: Preferred CLI tools (fd, rg, bat, …), git conventions, fff, and dex task tracking workflow
+alwaysApply: true
+---
+
+## Preferred CLI tools
+
+Assume these are installed on my machine. **Use them first** when proposing or running terminal workflows (local dev, scripts, agents, CI that mirrors my setup)—not bare POSIX defaults unless portability or policy requires it.
+
+| Need                                          | Prefer                                                        |
+| --------------------------------------------- | ------------------------------------------------------------- |
+| Find files / trees                            | `fd`                                                          |
+| Search file contents                          | `rg` (ripgrep)                                                |
+| Fuzzy selection (files, commands, history)    | `fzf` (my setup uses `fd` as the default file source for fzf) |
+| Directory listing                             | `eza`                                                         |
+| Jump to directories by habit / recency        | `zoxide` (`z`, …)                                             |
+| View file contents with paging / highlighting | `bat`                                                         |
+| Quick command usage summaries                 | `tealdeer` (`tldr`)                                           |
+
+**Shell overrides:** In my interactive zsh, `cd` is hooked to **zoxide** (`z`) and `ls` is aliased to **eza**. For behavior that must match normal **`cd` / `ls`** (scripts, subshells, docs, CI, or when flags don't line up), use **`command cd`**, **`builtin cd`**, or **`command ls`** / **`/bin/ls`** as needed instead of the preferred tools above.
+
+**Git aliases:** Prefer **`git bat-diff`** over raw **`git diff`** when reviewing changed files with **`bat`** highlighting (when you want a readable, syntax-highlighted view of modified file contents). Use **`git merge-main`** to update the current branch from **`origin/main`** or **`origin/master`** (whichever exists)—it **requires a clean working tree** (no staged/uncommitted changes) and **prompts for confirmation** before fetching and merging; skip it for non-interactive or scripted flows unless you replicate the same steps explicitly.
+
+**Indexed / fast repo search:** Where the environment exposes **fff** (e.g. MCP server, editor integration, or project tooling), prefer **fff** for search and file discovery over long chains of generic grep/find when it reduces noise and round-trips.
+
+If something is missing in a given environment, fall back to standard tools and note it briefly.
+
+---
+
+## Progress tracking with dex
+
+[**dex**](https://dex.rip/) is a local-first task and milestone tracker. Before using it, verify it's available:
+
+```sh
+command -v dex
+```
+
+If `dex` is not found, skip this section entirely and note it briefly—don't block the workflow.
+
+**Choosing a profile:** When work should be tracked under a named profile (`front`, `greg`, etc.):
+
+1. Resolve the profile once from what the user said (explicit name, or phrases like "front dex", "use my front profile"). Do not infer the profile from the repo path unless they explicitly link dex to that name.
+2. Use that config for every dex command in the conversation (until they name a different profile): `dex --config "$HOME/.dex/projects/<name>/config.toml" <subcommand> …`
+3. Discover names if needed: list **`$HOME/.dex/projects`** with `ls` / `fd` / `eza` — each subdirectory name is a profile, with config at `$HOME/.dex/projects/<name>/config.toml` (always `config.toml`, not `<name>.toml`). **Dex does not expose a subcommand to list those names** (typical installs, e.g. v0.16.x); do not hunt the CLI for `dex projects` or similar.
+4. If `dex` is missing or `$HOME/.dex/projects/<name>` does not exist, say so and skip dex for that thread unless they fix paths or install it.
+
+**Runtime source of truth (any repo):** Dex profiles live only under **`$HOME/.dex/projects/`**. The git repo you have open does **not** change profile locations or names. Do not infer profile from `pwd`, from `GREG_DOTFILES_PATH`, or from whether the project is “work” vs “personal” unless the user ties that to a profile name.
+
+**Standard profile names:** **`greg`** and **`front`** are the usual dex project folder names (they match subdirectories of `$HOME/.dex/projects/`). Their configs are always:
+
+- **greg:** `$HOME/.dex/projects/greg/config.toml`
+- **front:** `$HOME/.dex/projects/front/config.toml`
+
+When the user asks what dex projects exist “for **front** / **greg**” (or similar), **enumerate from the home directory**, not from the codebase:
+
+```sh
+command ls "$HOME/.dex/projects"
+# or every project config on disk:
+fd -t f config.toml "$HOME/.dex/projects"
+```
+
+Then report, for each name they care about (`greg`, `front`), whether **`$HOME/.dex/projects/<name>/config.toml`** is present (and if it is a symlink, `readlink` / `ls -l` is fair game). If `$HOME/.dex` is missing or a named folder is absent, say so plainly.
+
+**`--config` means a file, not a registry:** Global option **`--config <path>`** selects that TOML file for the invocation. Dex does **not** maintain a separate registry of profile names—folder names under `$HOME/.dex/projects/` are your dotfiles/stow layout, not something `dex` enumerates.
+
+**Reading `dex --help` efficiently:** Scan **COMMANDS** once. If a verb is not listed, do not assume undocumented aliases unless you have other docs. **`dex config`** needs a key or **`dex config --list`** (use **`-g`** for global settings); bare **`dex config`** errors. **`dex dir`** prints task storage for **this** invocation (cwd plus optional `--config`); it does **not** list profile folders under **`~/.dex/projects`**. Run **`dex --version`** when behavior might depend on release.
+
+**Fast path:** (1) **`ls "$HOME/.dex/projects"`** (or **`fd`**) for profile names. (2) **`dex --help`** only to confirm verbs and flags for task workflows (**list**, **create**, **dir**, **config**, …)—**not** to discover profile names.
+
+**Dotfiles provenance (only when editing personal dotfiles):** In Greg’s dotfiles repo, versioned stubs live at `dex/.dex/projects/greg/config.toml` (stow package `dex`) and, in the **front** submodule, `front/.dex/projects/front/config.toml` (stow package `front`). Agents in **other** repositories should still use **`$HOME/.dex/projects/...`** for `--config` unless the user explicitly asks to work from repo paths.
+
+**Repo-local `.dex/`:** Folders named `.dex/` inside some clone are **not** the default dex profile for agents. Ignore them for normal dex workflows unless the user explicitly opts into repo-local dex; prefer **`$HOME/.dex/projects/<name>/config.toml`** for every `dex --config`.
+
+**When to prompt:** At the start of any significant new task (new feature, refactor, bug investigation, multi-step build, etc.), ask once:
+
+> "Would you like to track this work in dex?"
+
+Don't ask for trivial one-offs, quick lookups, or single-file edits.
+
+**How to work with dex iteratively:**
+
+1. **Define milestones up front.** Before starting, propose a milestone breakdown based on the task scope and confirm it with the user before creating anything in dex.
+2. **Tie commits to milestones.** Each commit should map to forward progress on a milestone. Reference the relevant dex milestone or task ID in the commit message where applicable.
+3. **Run the workspace's quality checks before committing.** At each milestone boundary, look for and run whatever the project uses—tests, linting, typechecking, formatting checks, etc. Infer the right commands from the project's tooling (e.g. `package.json` scripts, `Makefile`, `pyproject.toml`, `Cargo.toml`, CI config). Prefer running `test`, `lint`, `typecheck`, and `format:check` targets (or their equivalents) rather than invoking tools directly, so the project's own configuration is respected. If checks fail: fix straightforward technical issues (type errors, lint violations, broken assertions) autonomously and re-run to confirm. If a failure involves ambiguity, a product decision, or non-trivial tradeoffs, surface it clearly with enough context for the user to make the call—don't guess or paper over it.
+4. **Always pause before staging or committing.** Show the user what files will be added (`git status`, `git bat-diff`) and get explicit confirmation before running `git add` or `git commit`. The user should be able to review changes locally before the work is locked in.
+5. **Check in at milestone boundaries.** When a milestone is complete and quality checks pass, surface a short summary of what changed and what's next, then wait for the user to confirm before moving to the next milestone.
+6. **Don't rush ahead.** Prefer smaller, reviewable commits over large batches. If unsure whether to bundle or split changes, ask.
