@@ -6,3 +6,6 @@ alacritty/.config/alacritty/theme.toml
 
 # Python
 __pycache__/
+
+# Claude
+.claude/
