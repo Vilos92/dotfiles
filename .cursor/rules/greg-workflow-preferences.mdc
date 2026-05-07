@@ -25,7 +25,7 @@ Assume these are installed on my machine. **Use them first** when proposing or r
 
 If something is missing in a given environment, fall back to standard tools and note it briefly.
 
-**Scope:** These preferences target everyday repo work (search, navigation, diffs). One-off diagnostics (**`dex dir`**, **`ls`** on a known path, **`head`**/**`cat`** on a single file) do not need to be forced through **`fd`**/**`rg`**/**`eza`** when that only adds friction—the dex/storage pitfalls below are unrelated to grep-vs-**`rg`**.
+**Scope:** These preferences target everyday repo work (search, navigation, diffs). One-off diagnostics (**`dex dir`**, **`ls`** on a known path, **`head`**/**`cat`** on a single file) do not need to be forced through **`fd`**/**`rg`**/**`eza`** when that only adds friction.
 
 ---
 
