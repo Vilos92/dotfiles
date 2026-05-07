@@ -2,6 +2,7 @@ if vim.g.vscode then
   return
 end
 
+-- nvim-treesitter `main` runs `tree-sitter build`; needs CLI on PATH (`brew install tree-sitter-cli`, see scripts/brews.sh).
 -- nvim-treesitter `main` (rewrite): Neovim 0.12+ — see https://github.com/nvim-treesitter/nvim-treesitter/blob/main/README.md
 local parsers = {
   "bash",
