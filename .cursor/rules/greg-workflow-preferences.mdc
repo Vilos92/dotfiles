@@ -31,7 +31,9 @@ If something is missing in a given environment, fall back to standard tools and 
 
 ## Progress tracking with dex
 
-[**dex**](https://dex.rip/) is a local-first task and milestone tracker. Before using it, verify it's available:
+[**dex**](https://dex.rip/) is a local-first task and milestone tracker. These dotfiles also provide **`gdex`**, a small wrapper that runs `dex` with the correct `--config` and `--storage-path` for the `greg` / `front` profiles (when `gdex` is installed/stowed on the machine).
+
+Before using dex (or `gdex`), verify dex is available:
 
 ```sh
 command -v dex
@@ -39,21 +41,40 @@ command -v dex
 
 If `dex` is not found, skip this section entirely and note it briefly—don't block the workflow.
 
-**Choosing a profile:** When work should be tracked under a named profile (`front`, `greg`, etc.):
+### Use `gdex`
 
-1. Resolve the profile once from what the user said (explicit name, or phrases like "front dex", "use my front profile"). Do not infer the profile from the repo path unless they explicitly link dex to that name.
-2. Use that config for every dex command in the conversation (until they name a different profile): `dex --config "$HOME/.dex/projects/<name>/config.toml" <subcommand> …`
-3. Discover names if needed: list **`$HOME/.dex/projects`** with `ls` / `fd` / `eza` — each subdirectory name is a profile, with config at `$HOME/.dex/projects/<name>/config.toml` (always `config.toml`, not `<name>.toml`). **Dex does not expose a subcommand to list those names** (typical installs, e.g. v0.16.x); do not hunt the CLI for `dex projects` or similar.
-4. If `dex` is missing or `$HOME/.dex/projects/<name>` does not exist, say so and skip dex for that thread unless they fix paths or install it.
+If `gdex` is available, **always use `gdex`** instead of running `dex` directly. `gdex` wraps `dex` with the correct `--config` and `--storage-path` so tasks come from the right store.
 
-**Runtime source of truth (any repo):** Dex profiles live only under **`$HOME/.dex/projects/`**. The git repo you have open does **not** change profile locations or names. Do not infer profile from `pwd`, from `GREG_DOTFILES_PATH`, or from whether the project is “work” vs “personal” unless the user ties that to a profile name.
+```sh
+gdex <greg|front> <dex-subcommand> [args...]
+```
 
-**Standard profile names:** **`greg`** and **`front`** are the usual dex project folder names (they match subdirectories of `$HOME/.dex/projects/`). Their configs are always:
+Examples:
 
-- **greg:** `$HOME/.dex/projects/greg/config.toml`
-- **front:** `$HOME/.dex/projects/front/config.toml`
+```sh
+gdex greg list
+gdex greg create --title "Follow up"
+gdex front list
+```
 
-When the user asks what dex projects exist “for **front** / **greg**” (or similar), **enumerate from the home directory**, not from the codebase:
+Wrapper help:
+
+```sh
+gdex --help
+```
+
+Full CLI reference (everything after the wrapper is just `dex`):
+
+```sh
+dex --help
+```
+
+**Choosing a profile:** Use the first argument to `gdex`:
+
+- `gdex greg …`
+- `gdex front …`
+
+**Discovering available profiles:** Enumerate from `$HOME/.dex/projects`:
 
 ```sh
 command ls "$HOME/.dex/projects"
@@ -61,13 +82,23 @@ command ls "$HOME/.dex/projects"
 fd -t f config.toml "$HOME/.dex/projects"
 ```
 
-Then report, for each name they care about (`greg`, `front`), whether **`$HOME/.dex/projects/<name>/config.toml`** is present (and if it is a symlink, `readlink` / `ls -l` is fair game). If `$HOME/.dex` is missing or a named folder is absent, say so plainly.
+**Runtime source of truth (any repo):** Dex profiles live only under **`$HOME/.dex/projects/`**. The git repo you have open does **not** change profile locations or names. Do not infer profile from `pwd`, from `GREG_DOTFILES_PATH`, or from whether the project is “work” vs “personal” unless explicitly tied to a profile.
 
-**`--config` means a file, not a registry:** Global option **`--config <path>`** selects that TOML file for the invocation. Dex does **not** maintain a separate registry of profile names—folder names under `$HOME/.dex/projects/` are your dotfiles/stow layout, not something `dex` enumerates.
+**Standard profile names:** **`greg`** and **`front`** are the usual dex project folder names. Their configs are:
 
-**Task storage vs config (`dex dir`, `--storage-path`):** **`--config`** alone does **not** magically attach task data to a dotfiles checkout. A **comment-only or empty `config.toml`** does not bind tasks to **`…/dotfiles/dex/.dex/task-db/…`**—dex still resolves storage from **cwd**, global defaults, and whatever the project file sets. **Always run `dex dir`** for the same cwd / **`--config`** / optional **`--storage-path`** you use for **`list`** before concluding a DB is empty or “wrong.”
+- **greg:** `$HOME/.dex/projects/greg/config.toml`
+- **front:** `$HOME/.dex/projects/front/config.toml`
 
-Global option **`--storage-path <dir>`** sets the **storage root directory** dex uses for this invocation (see **`dex --help`**). Pass the directory dex expects as the backend root—typically the parent of the JSONL tree (e.g. the folder named like **`greg.jsonl`** that contains **`tasks.jsonl`**), **not** the full path to **`tasks.jsonl`**. Pointing **`--storage-path`** at **`tasks.jsonl`** itself can show **no tasks** even when the file has lines.
+**`--config` means a file, not a registry:** Dex does **not** maintain a separate registry of profile names—folder names under `$HOME/.dex/projects/` are your dotfiles/stow layout, not something `dex` enumerates.
+
+**Task storage vs config (`dex dir`, `--storage-path`):** `--config` alone does not bind tasks to a particular DB. If you’re debugging “missing tasks,” run `dex dir` using the **same** resolved config + storage path that `gdex` uses (or just use `gdex` for the command you’re running, and only drop to raw `dex` when diagnosing).
+
+**Raw `dex` fallback (debugging only):**
+
+```sh
+dex --config "$HOME/.dex/projects/greg/config.toml" --storage-path "$HOME/.dex/task-db/greg.jsonl" list
+# swap greg/front as needed
+```
 
 **Reading `dex --help` efficiently:** Scan **COMMANDS** once. If a verb is not listed, do not assume undocumented aliases unless you have other docs. **`dex config`** needs a key or **`dex config --list`** (use **`-g`** for global settings); bare **`dex config`** errors. **`dex dir`** prints the **resolved** task storage for **this** invocation (**cwd**, optional **`--config`**, optional **`--storage-path`**); it does **not** list profile folders under **`~/.dex/projects`**. Run **`dex --version`** when behavior might depend on release.
 
