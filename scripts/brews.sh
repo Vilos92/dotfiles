@@ -203,6 +203,12 @@ install_gleam() {
   prompt_and_install "gleam" brew install gleam
 }
 
+# Rust (rustup: rustc, cargo, etc. under ~/.cargo; PATH via zsh/.zshenv/post/rust.sh).
+install_rust_packages() {
+  prompt_and_install_shell "Rust packages" \
+    'brew install rustup && PATH="$(brew --prefix rustup)/bin:$PATH" rustup-init -y --default-toolchain stable --no-modify-path'
+}
+
 # Browsers.
 install_browsers() {
   prompt_and_install "zen browser" brew install --cask zen
@@ -337,6 +343,7 @@ TASKS=(
   "lua-pkgs|Lua development tools|install_lua_packages"
   "javascript-pkgs|Node.js and JavaScript tools|install_javascript_packages"
   "gleam|Gleam programming language|install_gleam"
+  "rust-pkgs|Rust toolchain (rustup, cargo) for Tauri and native builds|install_rust_packages"
   "browsers|Zen + Firefox browsers|install_browsers"
   "alfred|Alfred productivity launcher|install_alfred"
   "notion|Notion note-taking app|install_notion"
