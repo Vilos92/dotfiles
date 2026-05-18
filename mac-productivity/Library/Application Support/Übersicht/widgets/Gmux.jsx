@@ -75,9 +75,9 @@ export const command = `
     echo "SESSION:$name|$windows|$panes|$attached|$clients"
   done
   
-  # Get all possible projects from ~/greg_projects (same logic as gmux)
+  # Directory basenames for display; gmux uses tr '.' '_' only for tmux session names.
   if [ -d "$HOME/greg_projects" ]; then
-    /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" 2>/dev/null | xargs -n 1 basename | sed 's/\.nvim$/_nvim/' | while read -r project; do
+    /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" 2>/dev/null | xargs -n 1 basename | while read -r project; do
       echo "PROJECT:$project"
     done
   fi
@@ -115,10 +115,10 @@ export const render = ({output, error}) => {
           key={session.name}
           className={sessionRowStyle(true)}
           onClick={() => handleSessionClick(session.name)}
-          title={`Click to open ${session.name} in Alacritty`}
+          title={`Click to open ${session.displayName} in Alacritty`}
         >
           <div className={statusDot(getStatusColor(session))} />
-          <div className={sessionNameStyle}>{session.name}</div>
+          <div className={sessionNameStyle}>{session.displayName}</div>
           {session.isSession && (
             <div className={sessionInfoStyle}>
               {session.windows}w/{session.panes}p/{session.clients}c
@@ -134,14 +134,13 @@ export const render = ({output, error}) => {
  * Helpers.
  */
 
+/** tmux maps '.' to '_' in session names; match gmux canonical names. */
+function toSessionName(name) {
+  return name.replaceAll('.', '_');
+}
+
 /**
  * Parse a session line from command output.
- * @param {string} line - A line starting with "SESSION:"
- * @returns {Object|undefined} Session object or undefined if invalid
- * @example
- * parseSessionLine("SESSION:dotfiles|1|1|1|2")
- * // => { name: "dotfiles", windows: 1, panes: 1, attached: true, clients: 2, isSession: true }
- * parseSessionLine("SESSION:invalid") // => undefined
  */
 function parseSessionLine(line) {
   if (!line.startsWith('SESSION:')) return undefined;
@@ -150,8 +149,10 @@ function parseSessionLine(line) {
   if (parts.length < 5) return undefined;
 
   const [name, windows, panes, attached, clients] = parts;
+  const sessionName = toSessionName(name.trim());
   return {
-    name: name.trim(),
+    name: sessionName,
+    displayName: sessionName,
     windows: parseInt(windows) ?? 0,
     panes: parseInt(panes) ?? 0,
     attached: attached.trim() === '1',
@@ -162,30 +163,25 @@ function parseSessionLine(line) {
 
 /**
  * Parse a project line from command output.
- * @param {string} line - A line starting with "PROJECT:"
- * @returns {string|undefined} Project name or undefined if invalid
- * @example
- * parseProjectLine("PROJECT:astor-greg") // => "astor-greg"
- * parseProjectLine("PROJECT:") // => undefined
  */
 function parseProjectLine(line) {
   if (!line.startsWith('PROJECT:')) return undefined;
 
-  const projectName = line.replace('PROJECT:', '').trim();
-  return projectName ?? undefined;
+  const displayName = line.replace('PROJECT:', '').trim();
+  if (!displayName) return undefined;
+
+  return {
+    sessionName: toSessionName(displayName),
+    displayName
+  };
 }
 
 /**
  * Parse all lines from command output into sessions and projects.
- * @param {string[]} lines - Array of trimmed lines from command output
- * @returns {Object} Object with sessionsMap and projectsSet
- * @example
- * // Input: ["SESSION:dotfiles|1|1|1|2", "PROJECT:astor-greg"]
- * // Output: { sessionsMap: Map([["dotfiles", {...}]]), projectsSet: Set(["astor-greg"]) }
  */
 function parseLines(lines) {
   const sessionsMap = new Map();
-  const projectsSet = new Set();
+  const projectDisplays = new Map();
 
   lines.forEach(line => {
     const trimmed = line.trim();
@@ -197,24 +193,25 @@ function parseLines(lines) {
 
     const project = parseProjectLine(trimmed);
     if (project) {
-      projectsSet.add(project);
+      projectDisplays.set(project.sessionName, project.displayName);
     }
   });
 
-  return {sessionsMap, projectsSet};
+  return {sessionsMap, projectDisplays};
+}
+
+function withDisplayName(item, projectDisplays) {
+  const displayName = projectDisplays.get(item.name) ?? item.displayName ?? item.name;
+  return {...item, displayName};
 }
 
 /**
  * Create a project item (no session exists yet).
- * @param {string} projectName - Name of the project
- * @returns {Object} Project item object
- * @example
- * createProjectItem("astor-greg")
- * // => { name: "astor-greg", windows: 0, panes: 0, attached: false, isSession: false }
  */
-function createProjectItem(projectName) {
+function createProjectItem(sessionName, displayName) {
   return {
-    name: projectName,
+    name: sessionName,
+    displayName,
     windows: 0,
     panes: 0,
     attached: false,
@@ -224,31 +221,23 @@ function createProjectItem(projectName) {
 
 /**
  * Combine sessions and projects into a single array.
- * @param {Map} sessionsMap - Map of session name to session object
- * @param {Set} projectsSet - Set of project names
- * @returns {Object[]} Array of combined session and project items
- * @example
- * // Input: sessionsMap with "dotfiles", projectsSet with ["dotfiles", "astor-greg"]
- * // Output: [session("dotfiles"), project("astor-greg")]
  */
-function combineSessionsAndProjects(sessionsMap, projectsSet) {
+function combineSessionsAndProjects(sessionsMap, projectDisplays) {
   const allItems = [];
+  const seen = new Set();
 
-  // Add all projects (sessions or not)
-  projectsSet.forEach(projectName => {
-    if (sessionsMap.has(projectName)) {
-      // It's a session, use the session data
-      allItems.push(sessionsMap.get(projectName));
+  projectDisplays.forEach((displayName, sessionName) => {
+    seen.add(sessionName);
+    if (sessionsMap.has(sessionName)) {
+      allItems.push(withDisplayName(sessionsMap.get(sessionName), projectDisplays));
     } else {
-      // It's just a project, no session exists
-      allItems.push(createProjectItem(projectName));
+      allItems.push(createProjectItem(sessionName, displayName));
     }
   });
 
-  // Add any sessions that aren't in the projects list (edge case)
-  sessionsMap.forEach((session, name) => {
-    if (!projectsSet.has(name)) {
-      allItems.push(session);
+  sessionsMap.forEach((session, sessionName) => {
+    if (!seen.has(sessionName)) {
+      allItems.push(withDisplayName(session, projectDisplays));
     }
   });
 
@@ -257,12 +246,6 @@ function combineSessionsAndProjects(sessionsMap, projectsSet) {
 
 /**
  * Check if an item is a session with attached clients.
- * @param {Object} item - Session or project item
- * @returns {boolean} True if session has clients > 0
- * @example
- * checkHasAttachedClients({ isSession: true, clients: 2 }) // => true
- * checkHasAttachedClients({ isSession: true, clients: 0 }) // => false
- * checkHasAttachedClients({ isSession: false }) // => false
  */
 function checkHasAttachedClients(item) {
   return item.isSession && item.clients > 0;
@@ -270,46 +253,33 @@ function checkHasAttachedClients(item) {
 
 /**
  * Sort sessions: sessions with clients first, then sessions, then projects, then alphabetically.
- * @param {Object} a - First item to compare
- * @param {Object} b - Second item to compare
- * @returns {number} Comparison result for sort
  */
 function sortSessions(a, b) {
-  // Sessions with clients first
   const aHasClients = checkHasAttachedClients(a);
   const bHasClients = checkHasAttachedClients(b);
   if (aHasClients && !bHasClients) return -1;
   if (bHasClients && !aHasClients) return 1;
 
-  // Then sessions vs projects
   if (a.isSession !== b.isSession) return b.isSession ? 1 : -1;
 
-  // Then alphabetically
-  return a.name.localeCompare(b.name);
+  return a.displayName.localeCompare(b.displayName);
 }
 
 /**
  * Get status color for a session or project.
- * @param {Object} item - Session or project item
- * @returns {string} Color hex code
- * @example
- * getStatusColor({ isSession: true, clients: 2 }) // => '#00e676' (green)
- * getStatusColor({ isSession: true, clients: 0 }) // => '#2196f3' (blue)
- * getStatusColor({ isSession: false }) // => '#9e9e9e' (grey)
  */
 function getStatusColor(item) {
   if (item.isSession && item.clients > 0) {
-    return '#00e676'; // Green - session has attached clients
+    return '#00e676';
   }
   if (item.isSession) {
-    return '#2196f3'; // Blue - session exists but detached
+    return '#2196f3';
   }
-  return '#9e9e9e'; // Grey - project exists but no session
+  return '#9e9e9e';
 }
 
 /**
  * Handle clicking on a session to open it in Alacritty.
- * @param {string} sessionName - Name of the session to open
  */
 function handleSessionClick(sessionName) {
   run(
@@ -321,16 +291,6 @@ function handleSessionClick(sessionName) {
 
 /**
  * Parse command output into structured session and project data.
- * @param {string} output - Raw command output from the shell script
- * @returns {Object[]|undefined} Array of session/project items or undefined if invalid
- * @example
- * // Input:
- * // "SESSION:dotfiles|1|1|1|2\nPROJECT:astor-greg"
- * // Output:
- * // [
- * //   { name: "dotfiles", windows: 1, panes: 1, attached: true, clients: 2, isSession: true },
- * //   { name: "astor-greg", windows: 0, panes: 0, attached: false, isSession: false }
- * // ]
  */
 function parseOutput(output) {
   if (typeof output !== 'string' || output.trim() === '') {
@@ -341,8 +301,8 @@ function parseOutput(output) {
     .trim()
     .split('\n')
     .filter(line => line.trim() !== '');
-  const {sessionsMap, projectsSet} = parseLines(lines);
-  const allItems = combineSessionsAndProjects(sessionsMap, projectsSet);
+  const {sessionsMap, projectDisplays} = parseLines(lines);
+  const allItems = combineSessionsAndProjects(sessionsMap, projectDisplays);
 
   return allItems.sort(sortSessions);
 }
