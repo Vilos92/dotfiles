@@ -1,0 +1,23 @@
+#!/bin/sh
+set -eu
+
+command -v gh >/dev/null 2>&1 || {
+  echo "gpro: gh not found. Install with: brew install gh" >&2
+  exit 127
+}
+
+if ! gh auth status >/dev/null 2>&1; then
+  echo "gpro: gh not authenticated. Run: gh auth login" >&2
+  exit 1
+fi
+
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  echo "gpro: not a git repository." >&2
+  exit 1
+fi
+
+if gh pr view >/dev/null 2>&1; then
+  exec gh pr view --web
+fi
+
+exec gh pr create --web --fill
