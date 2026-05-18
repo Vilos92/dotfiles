@@ -39,7 +39,11 @@ printf 'Path:       %s\n' "$PWD"
 printf '\n'
 
 printf 'Contents:\n'
-eza --tree --level=2 --color=always --group-directories-first --icons=always
+if command -v eza >/dev/null 2>&1; then
+  eza --tree --level=2 --color=always --group-directories-first --icons=always
+else
+  find . -mindepth 1 -maxdepth 2 -print
+fi
 printf '\n'
 
 if git rev-parse --git-dir >/dev/null 2>&1; then

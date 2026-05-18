@@ -77,7 +77,9 @@ export const command = `
   
   # Directory basenames for display; gmux uses tr '.' '_' only for tmux session names.
   if [ -d "$HOME/greg_projects" ]; then
-    /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" 2>/dev/null | xargs -n 1 basename | while read -r project; do
+    /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" -0 2>/dev/null \
+      | xargs -0 -n 1 basename \
+      | while IFS= read -r project; do
       echo "PROJECT:$project"
     done
   fi
@@ -139,6 +141,11 @@ function toSessionName(name) {
   return name.replaceAll('.', '_');
 }
 
+function parseIntOrZero(value) {
+  const parsed = Number.parseInt(value, 10);
+  return Number.isNaN(parsed) ? 0 : parsed;
+}
+
 /**
  * Parse a session line from command output.
  */
@@ -153,10 +160,10 @@ function parseSessionLine(line) {
   return {
     name: sessionName,
     displayName: sessionName,
-    windows: parseInt(windows) ?? 0,
-    panes: parseInt(panes) ?? 0,
+    windows: parseIntOrZero(windows),
+    panes: parseIntOrZero(panes),
     attached: attached.trim() === '1',
-    clients: parseInt(clients) ?? 0,
+    clients: parseIntOrZero(clients),
     isSession: true
   };
 }

@@ -7,4 +7,6 @@ find . -type f -name '*.sh' -not -name "ohmyzsh.sh" -exec shellcheck --shell sh 
 find ./zsh/.local/bin -type f -exec shellcheck --shell bash {} + 2>/dev/null || true
 
 # Check git/.local/bin/* (POSIX sh)
-find ./git/.local/bin -type f -exec shellcheck --shell sh {} + 2>/dev/null || true
+if [ -d ./git/.local/bin ]; then
+  find ./git/.local/bin -type f -exec shellcheck --shell sh {} +
+fi

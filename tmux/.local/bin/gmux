@@ -7,26 +7,36 @@ to_session_name() {
 
 display_name_for_session() {
     session_name=$1
+    _old_ifs=$IFS
+    IFS='
+'
     for path in $project_paths; do
         [ -z "$path" ] && continue
         dir=$(basename "$path")
         if [ "$(to_session_name "$dir")" = "$session_name" ]; then
+            IFS=$_old_ifs
             echo "$dir"
             return 0
         fi
     done
+    IFS=$_old_ifs
     echo "$session_name"
 }
 
 project_path_for_session() {
     session_name=$1
+    _old_ifs=$IFS
+    IFS='
+'
     for path in $project_paths; do
         [ -z "$path" ] && continue
         if [ "$(to_session_name "$(basename "$path")")" = "$session_name" ]; then
+            IFS=$_old_ifs
             echo "$path"
             return 0
         fi
     done
+    IFS=$_old_ifs
 }
 
 project_paths_command="find \"$GREG_PROJECTS_PATH\""
@@ -36,12 +46,20 @@ if [ -d "$FRONTAPP_DIR" ]; then
 fi
 
 project_paths=$(eval "$project_paths_command -mindepth 1 -maxdepth 1 -type d")
-project_dirs=$(echo "$project_paths" | xargs -n 1 basename)
-projects=$(echo "$project_dirs" | tr '.' '_')
+projects=""
+_old_ifs=$IFS
+IFS='
+'
+for path in $project_paths; do
+    [ -z "$path" ] && continue
+    projects="$projects$(to_session_name "$(basename "$path")")
+"
+done
+IFS=$_old_ifs
 
 if [ -n "$1" ]; then
     session_name=$(to_session_name "$1")
-    if echo "$projects" | grep -qx "$session_name"; then
+    if echo "$projects" | grep -Fqx "$session_name"; then
         selected_project_path=$(project_path_for_session "$session_name")
         attach-tmux-session "$session_name" "$selected_project_path"
         exit 0
@@ -60,7 +78,7 @@ select_options=$(echo "$gmux_options" | while read -r session_name; do
     display=$(display_name_for_session "$session_name")
     if [ "$session_name" = "$current_session" ]; then
         printf '🟢 %s\t%s\n' "$display" "$session_name"
-    elif echo "$sessions" | grep -qx "$session_name"; then
+    elif echo "$sessions" | grep -Fqx "$session_name"; then
         printf '🔵 %s\t%s\n' "$display" "$session_name"
     else
         printf '🌑 %s\t%s\n' "$display" "$session_name"
