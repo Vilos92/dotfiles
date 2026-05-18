@@ -1,0 +1,94 @@
+#!/bin/sh
+set -eu
+
+command -v gh >/dev/null 2>&1 || {
+  echo "ginit: gh not found. Install with: brew install gh" >&2
+  exit 127
+}
+
+if ! gh auth status >/dev/null 2>&1; then
+  echo "ginit: gh not authenticated. Run: gh auth login" >&2
+  exit 1
+fi
+
+name=$(basename "$PWD")
+
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  toplevel=$(git rev-parse --show-toplevel)
+  if [ "$(pwd -P)" != "$(cd "$toplevel" && pwd -P)" ]; then
+    echo "ginit: already inside git repository: $toplevel" >&2
+    exit 1
+  fi
+  if git remote get-url origin >/dev/null 2>&1; then
+    exec gh repo view --web
+  fi
+fi
+
+if gh repo view "$name" >/dev/null 2>&1; then
+  exec gh repo view "$name" --web
+fi
+
+if [ -z "$(find . -mindepth 1 -maxdepth 1 ! -name .git 2>/dev/null | head -1)" ]; then
+  echo "ginit: directory is empty; nothing to ship." >&2
+  exit 1
+fi
+
+printf '\n'
+printf 'Repository: %s (private)\n' "$name"
+printf 'Path:       %s\n' "$PWD"
+printf '\n'
+
+printf 'Contents:\n'
+eza --tree --level=2 --color=always --group-directories-first --icons=always
+printf '\n'
+
+if git rev-parse --git-dir >/dev/null 2>&1; then
+  printf 'Git status (before staging):\n'
+  git status --short
+  printf '\n'
+else
+  printf 'Will run: git init -b main\n\n'
+fi
+
+printf "Create private GitHub repo '%s' and push all files? (y/n): " "$name"
+answer=
+read -r answer
+
+case "$answer" in
+  [Yy]* ) ;;
+  [Nn]* )
+    echo "Aborted."
+    exit 0
+    ;;
+  * )
+    echo "Please answer y or n."
+    exit 1
+    ;;
+esac
+
+if ! git rev-parse --git-dir >/dev/null 2>&1; then
+  git init -b main
+fi
+
+git add -A
+
+if ! git diff --cached --quiet 2>/dev/null; then
+  printf '\nStaged for commit:\n'
+  git diff --cached --stat
+  printf '\n'
+  git commit -m "Initial commit"
+elif ! git rev-parse HEAD >/dev/null 2>&1; then
+  echo "ginit: nothing to commit after staging." >&2
+  exit 1
+fi
+
+if gh repo create "$name" --private --source=. --remote=origin --push; then
+  exec gh repo view --web
+fi
+
+if gh repo view "$name" >/dev/null 2>&1; then
+  exec gh repo view "$name" --web
+fi
+
+echo "ginit: failed to create repository" >&2
+exit 1
