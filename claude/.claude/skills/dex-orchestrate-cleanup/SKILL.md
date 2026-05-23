@@ -71,5 +71,6 @@ No final `git worktree prune` needed — it already ran at the start of discover
 - Do not remove worktrees outside `.claude/worktrees/agent-*` / branches outside `agent/*`. This skill is scoped to orchestrated-agent work only.
 - Do not delete unmerged or dirty work without explicit user confirmation per item.
 - Do not push or merge anything. This skill is purely a sweeper.
-- Do not `git worktree prune` before doing the classification — that could clear metadata you need.
+- Do not use `git worktree prune` as a substitute for `git worktree remove` on live agent worktrees — prune only drops metadata for directories already gone from disk; sweeping still requires explicit removal per candidate.
+- Do not run discovery or removal while your shell CWD is inside an agent worktree — `cd` to the repo root first.
 - Do not assume `main` is the default branch — check for `origin/main` first, then `origin/master`, then local `main` / `master`. If none exist, ask the user which branch is the integration target.
