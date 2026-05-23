@@ -16,6 +16,7 @@ This repository uses GNU Stow for dotfile management. Run `scripts/stow.sh` to i
 - `nvim/` - Neovim editor config
 - `vim/` - Vim editor config
 - `git/` - Git configuration
+- `claude/` - Claude Code config (`~/.claude`: skills, settings, CLAUDE.md)
 - `remote/` - Remote server connection configs
 - `mac-mini/` - Mac Mini specific configurations
 - `front/` - Work laptop specific configurations (symlinked submodule)
