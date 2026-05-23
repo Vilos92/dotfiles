@@ -53,5 +53,8 @@ prompt_and_stow arch
 # dex task tracking for agents.
 prompt_and_stow dex
 
+# Claude Code user config (skills, settings, CLAUDE.md).
+prompt_and_stow claude
+
 # Submodules for private dotfiles.
 prompt_and_stow front
