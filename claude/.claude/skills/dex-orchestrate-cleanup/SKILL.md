@@ -14,9 +14,14 @@ Sweep `.claude/worktrees/agent-*` worktrees + `agent/*` branches that came from 
 
 ## Discover worktrees
 
-Run `git worktree list --porcelain`. From that output, collect every worktree whose path matches `.claude/worktrees/agent-*` OR whose branch matches `agent/*`. Ignore everything else (the main worktree, fallow temp worktrees in `/tmp` or `/private/var/folders`, etc.).
+First, `cd` to the repo root (`git rev-parse --show-toplevel`) and stay there for the rest of the sweep. Running git commands while the shell CWD is inside a worktree being deleted causes `fatal: Unable to read current working directory` errors.
+
+Next, run `git worktree prune` to clear stale metadata (e.g. fallow temp worktrees in `/tmp` or `/private/var/folders/` that are already gone). Do this *before* classification so you're reading a clean worktree list.
+
+Then run `git worktree list --porcelain`. From that output, collect every worktree whose path matches `.claude/worktrees/agent-*` OR whose branch matches `agent/*`. Ignore everything else (the main worktree, fallow temp worktrees, etc.).
 
 For each candidate, capture:
+
 - worktree path
 - branch name
 - whether the working tree is dirty (run `git -C <path> status --porcelain` — non-empty = dirty)
@@ -36,11 +41,11 @@ For each candidate, capture:
 For each `clean+merged` / `orphaned` / `empty`:
 
 ```sh
-git worktree remove --force <path>
+git worktree remove -f -f <path>
 git branch -D <branch>   # skip if branch is gone (orphaned)
 ```
 
-`--force` is required because `/dex-orchestrate` locks worktrees. Equivalent: `git worktree unlock <path>` then `git worktree remove <path>` — either is fine.
+`-f -f` (double force) is required — `/dex-orchestrate` sets a Claude Code lock file that single `--force` respects but won't override. Single `--force` will fail on every normal agent worktree.
 
 For each `dirty` / `unmerged`: list it in the report with classification, branch name, commit count ahead, last commit subject, and worktree path. **Ask the user explicitly per item** (or in a single multi-select if you have a UI affordance) before removing. Never silent-delete.
 
@@ -54,11 +59,12 @@ If the user passes neither, the default safe behavior applies.
 ## After sweeping
 
 Report:
+
 - N worktrees removed (with branch names)
 - M worktrees skipped (with classification + reason per item)
 - Any errors (locked worktrees that wouldn't budge, branches that wouldn't delete)
 
-Then suggest a final `git worktree prune` to clear any stale metadata.
+No final `git worktree prune` needed — it already ran at the start of discovery.
 
 ## What NOT to do
 

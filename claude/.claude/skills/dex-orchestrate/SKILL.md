@@ -21,6 +21,7 @@ Before spawning anything, verify:
 ## Inputs
 
 The user provides:
+
 - A list of dex task IDs (required).
 - Optional: per-task model override (default: Sonnet). Use Haiku only for genuinely mechanical tasks; Opus only when ambiguity or architecture decisions are at stake.
 - Optional: a richer orchestrator prompt with hand-tuned per-task context. **Prefer this verbatim if given** — the user's hand-authored prompt is higher signal than anything you'd derive from dex alone.
@@ -36,7 +37,6 @@ For each dex task ID:
 1. **Fetch the task.** `gdex <profile> show <id>`. If the task isn't found or its description is too thin to act on, **pause and ask the user to flesh it out in dex** rather than guessing. Do not proceed with thin tasks — quality belongs upstream in dex.
 
 2. **Compose the subagent prompt** with the dex task description **verbatim** as the core. Layer on this deterministic boilerplate (do not paraphrase the task itself):
-
    - "You are in a fresh git worktree. Run `pwd` first to confirm location. Do NOT touch the original repo at `<repo-root>` — only work in your worktree."
    - The full dex task description (verbatim).
    - Reference: "Read `CLAUDE.md` at the repo root for conventions before starting; also read `AGENTS.md` if the repo has one." (Skip this line if neither file exists.)
