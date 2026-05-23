@@ -16,7 +16,7 @@ Sweep `.claude/worktrees/agent-*` worktrees + `agent/*` branches that came from 
 
 First, `cd` to the repo root (`git rev-parse --show-toplevel`) and stay there for the rest of the sweep. Running git commands while the shell CWD is inside a worktree being deleted causes `fatal: Unable to read current working directory` errors.
 
-Next, run `git worktree prune` to clear stale metadata (e.g. fallow temp worktrees in `/tmp` or `/private/var/folders/` that are already gone). Do this *before* classification so you're reading a clean worktree list.
+Next, run `git worktree prune` to clear stale metadata (e.g. fallow temp worktrees in `/tmp` or `/private/var/folders/` that are already gone). Do this _before_ classification so you're reading a clean worktree list.
 
 Then run `git worktree list --porcelain`. From that output, collect every worktree whose path matches `.claude/worktrees/agent-*` OR whose branch matches `agent/*`. Ignore everything else (the main worktree, fallow temp worktrees, etc.).
 
