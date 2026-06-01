@@ -9,12 +9,11 @@ Assume these are installed on my machine. **Use them first** when proposing or r
 | Fuzzy selection (files, commands, history)    | `fzf` (my setup uses `fd` as the default file source for fzf) |
 | Directory listing                             | `eza`                                                         |
 | Jump to directories by habit / recency        | `zoxide` (`z`, …)                                             |
-| View file contents with paging / highlighting | `bat`                                                         |
 | Quick command usage summaries                 | `tealdeer` (`tldr`)                                           |
 
 **Shell overrides:** In my interactive zsh, `cd` is hooked to **zoxide** (`z`) and `ls` is aliased to **eza**. For behavior that must match normal **`cd` / `ls`** (scripts, subshells, docs, CI, or when flags don't line up), use **`command cd`**, **`builtin cd`**, or **`command ls`** / **`/bin/ls`** as needed instead of the preferred tools above.
 
-**Git aliases:** Prefer **`git bat-diff`** over raw **`git diff`** when reviewing changed files with **`bat`** highlighting (when you want a readable, syntax-highlighted view of modified file contents). Use **`git merge-main`** to update the current branch from **`origin/main`** or **`origin/master`** (whichever exists)—it **requires a clean working tree** (no staged/uncommitted changes) and **prompts for confirmation** before fetching and merging; skip it for non-interactive or scripted flows unless you replicate the same steps explicitly.
+**Git aliases:** Use **`git merge-main`** to update the current branch from **`origin/main`** or **`origin/master`** (whichever exists)—it **requires a clean working tree** (no staged/uncommitted changes) and **prompts for confirmation** before fetching and merging; skip it for non-interactive or scripted flows unless you replicate the same steps explicitly.
 
 **Indexed / fast repo search:** Where the environment exposes **fff** (e.g. MCP server, editor integration, or project tooling), prefer **fff** for search and file discovery over long chains of generic grep/find when it reduces noise and round-trips.
 
