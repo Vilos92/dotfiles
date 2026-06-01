@@ -74,11 +74,6 @@ install_better_display() {
   prompt_and_install "better-display" brew install --cask betterdisplay
 }
 
-# Window management packages (alt-tab).
-install_window_management_packages() {
-  prompt_and_install "alt-tab" brew install --cask alt-tab
-}
-
 # Mouse packages.
 install_mouse_packages() {
   prompt_and_install "mos" brew install mos
@@ -330,7 +325,6 @@ TASKS=(
   "dotfile-pkgs|stow for dotfile management|install_dotfile_packages"
   "forklift|ForkLift file manager|install_forklift"
   "better-display|BetterDisplay for scalable displays|install_better_display"
-  "window-mgmt-pkgs|Window management tools (alt-tab)|install_window_management_packages"
   "mouse-pkgs|mouse management tools|install_mouse_packages"
   "terminal-pkgs|terminal emulator and shell tools|install_terminal_packages"
   "1password|1Password password manager|install_1password"
