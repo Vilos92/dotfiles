@@ -25,9 +25,9 @@ If something is missing in a given environment, fall back to standard tools and 
 
 ## Progress tracking with dex
 
-[**dex**](https://dex.rip/) is a local-first task and milestone tracker. These dotfiles also provide **`gdex`**, a small wrapper that runs `dex` with the correct `--config` and `--storage-path` for the `greg` / `front` profiles (when `gdex` is installed/stowed on the machine).
+[**dex**](https://dex.rip/) is a local-first task and milestone tracker.
 
-Before using dex (or `gdex`), verify dex is available:
+Before using dex, verify it's available:
 
 ```sh
 command -v dex
@@ -35,38 +35,37 @@ command -v dex
 
 If `dex` is not found, skip this section entirely and note it briefly—don't block the workflow.
 
-### Use `gdex`
+### Invoking dex
 
-If `gdex` is available, **always use `gdex`** instead of running `dex` directly. `gdex` wraps `dex` with the correct `--config` and `--storage-path` so tasks come from the right store.
+Always pass an explicit `--config` and `--storage-path` so tasks come from the intended store. Without both flags, dex may resolve to a different config or DB than you expect (e.g. via `cwd`-based discovery or a default location).
 
 ```sh
-gdex <greg|front> <dex-subcommand> [args...]
+dex --config "$HOME/.dex/projects/<profile>/config.toml" \
+    --storage-path "$HOME/.dex/task-db/<profile>.jsonl" \
+    <subcommand> [args...]
 ```
 
 Examples:
 
 ```sh
-gdex greg list
-gdex greg create --title "Follow up"
-gdex front list
+dex --config "$HOME/.dex/projects/greg/config.toml" \
+    --storage-path "$HOME/.dex/task-db/greg.jsonl" list
+
+dex --config "$HOME/.dex/projects/front/config.toml" \
+    --storage-path "$HOME/.dex/task-db/front.jsonl" \
+    create --title "Follow up"
 ```
 
-Wrapper help:
-
-```sh
-gdex --help
-```
-
-Full CLI reference (everything after the wrapper is just `dex`):
+Full CLI reference:
 
 ```sh
 dex --help
 ```
 
-**Choosing a profile:** Use the first argument to `gdex`:
+**Choosing a profile:** Profiles correspond to folders under `$HOME/.dex/projects/`. The standard ones are `greg` and `front`:
 
-- `gdex greg …`
-- `gdex front …`
+- **greg:** `$HOME/.dex/projects/greg/config.toml`
+- **front:** `$HOME/.dex/projects/front/config.toml`
 
 **Discovering available profiles:** Enumerate from `$HOME/.dex/projects`:
 
@@ -78,25 +77,13 @@ fd -t f config.toml "$HOME/.dex/projects"
 
 **Runtime source of truth (any repo):** Dex profiles live only under **`$HOME/.dex/projects/`**. The git repo you have open does **not** change profile locations or names. Do not infer profile from `pwd`, from `GREG_DOTFILES_PATH`, or from whether the project is "work" vs "personal" unless explicitly tied to a profile.
 
-**Standard profile names:** **`greg`** and **`front`** are the usual dex project folder names. Their configs are:
-
-- **greg:** `$HOME/.dex/projects/greg/config.toml`
-- **front:** `$HOME/.dex/projects/front/config.toml`
-
 **`--config` means a file, not a registry:** Dex does **not** maintain a separate registry of profile names—folder names under `$HOME/.dex/projects/` are your dotfiles/stow layout, not something `dex` enumerates.
 
-**Task storage vs config (`dex dir`, `--storage-path`):** `--config` alone does not bind tasks to a particular DB. If you're debugging "missing tasks," run `dex dir` using the **same** resolved config + storage path that `gdex` uses (or just use `gdex` for the command you're running, and only drop to raw `dex` when diagnosing).
-
-**Raw `dex` fallback (debugging only):**
-
-```sh
-dex --config "$HOME/.dex/projects/greg/config.toml" --storage-path "$HOME/.dex/task-db/greg.jsonl" list
-# swap greg/front as needed
-```
+**Task storage vs config (`dex dir`, `--storage-path`):** `--config` alone does not bind tasks to a particular DB. If you're debugging "missing tasks," run `dex dir` with the **same** resolved `--config` + `--storage-path` you plan to use for `list` / `create`—if `dex dir` points somewhere unexpected, your `list` will too.
 
 **Reading `dex --help` efficiently:** Scan **COMMANDS** once. If a verb is not listed, do not assume undocumented aliases unless you have other docs. **`dex config`** needs a key or **`dex config --list`** (use **`-g`** for global settings); bare **`dex config`** errors. **`dex dir`** prints the **resolved** task storage for **this** invocation (**cwd**, optional **`--config`**, optional **`--storage-path`**); it does **not** list profile folders under **`~/.dex/projects`**. Run **`dex --version`** when behavior might depend on release.
 
-**Fast path:** (1) **`ls "$HOME/.dex/projects"`** (or **`fd`**) for profile names. (2) **`dex --help`** only to confirm verbs and flags for task workflows (**list**, **create**, **`dir`**, **`config`**, **`--storage-path`**, …)—**not** to discover profile names. (3) **`dex dir`** before trusting **`list`** output; add **`--storage-path <storage-dir>`** when tasks must come from a specific store.
+**Fast path:** (1) **`ls "$HOME/.dex/projects"`** (or **`fd`**) for profile names. (2) **`dex --help`** only to confirm verbs and flags for task workflows (**list**, **create**, **`dir`**, **`config`**, **`--storage-path`**, …)—**not** to discover profile names. (3) **`dex dir`** before trusting **`list`** output; always pass **`--storage-path <storage-dir>`** so tasks come from a specific store.
 
 **Dotfiles provenance (only when editing personal dotfiles):** In Greg's dotfiles repo, versioned stubs live at **`dex/.dex/projects/greg/config.toml`** (stow package **`dex`**) and, in the **front** submodule, **`front/.dex/projects/front/config.toml`** (stow package **`front`**). Task JSONL may sit under **`dex/.dex/task-db/greg.jsonl/tasks.jsonl`** and **`front/.dex/task-db/front.jsonl/tasks.jsonl`** (a **`*.jsonl`** directory next to **`tasks.jsonl`**); Greg may version those separately from the profile **`config.toml`**. **`--config`** alone does **not** imply dex reads that checkout-local **`task-db`**—confirm with **`dex dir`** and pass **`--storage-path`** to the **storage directory** (see above), not to **`tasks.jsonl`**. Agents in **other** repositories should still use **`$HOME/.dex/projects/...`** for **`--config`** unless the user explicitly asks to work from repo paths.
 
@@ -113,6 +100,6 @@ Don't ask for trivial one-offs, quick lookups, or single-file edits.
 1. **Define milestones up front.** Before starting, propose a milestone breakdown based on the task scope and confirm it with the user before creating anything in dex.
 2. **Tie commits to milestones.** Each commit should map to forward progress on a milestone. Reference the relevant dex milestone or task ID in the commit message where applicable.
 3. **Run the workspace's quality checks before committing.** At each milestone boundary, look for and run whatever the project uses—tests, linting, typechecking, formatting checks, etc. Infer the right commands from the project's tooling (e.g. `package.json` scripts, `Makefile`, `pyproject.toml`, `Cargo.toml`, CI config). Prefer running `test`, `lint`, `typecheck`, and `format:check` targets (or their equivalents) rather than invoking tools directly, so the project's own configuration is respected. If checks fail: fix straightforward technical issues (type errors, lint violations, broken assertions) autonomously and re-run to confirm. If a failure involves ambiguity, a product decision, or non-trivial tradeoffs, surface it clearly with enough context for the user to make the call—don't guess or paper over it.
-4. **Always pause before staging or committing.** Show the user what files will be added (`git status`, `git bat-diff`) and get explicit confirmation before running `git add` or `git commit`. The user should be able to review changes locally before the work is locked in.
+4. **Always pause before staging or committing.** Show the user what files will be added (`git status`, `git diff`) and get explicit confirmation before running `git add` or `git commit`. The user should be able to review changes locally before the work is locked in.
 5. **Check in at milestone boundaries.** When a milestone is complete and quality checks pass, surface a short summary of what changed and what's next, then wait for the user to confirm before moving to the next milestone.
 6. **Don't rush ahead.** Prefer smaller, reviewable commits over large batches. If unsure whether to bundle or split changes, ask.
