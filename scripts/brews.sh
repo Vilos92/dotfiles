@@ -262,7 +262,6 @@ install_coding_packages() {
   prompt_and_install "visual studio code" brew install --cask visual-studio-code
   prompt_and_install "cursor" brew install --cask cursor
   prompt_and_install "cursor-cli" brew install --cask cursor-cli
-  prompt_and_install "claude" brew install --cask claude
   prompt_and_install "claude-code" brew install --cask claude-code
 }
 
@@ -312,6 +311,8 @@ install_chats() {
 install_ai_packages() {
   prompt_and_install "llama.cpp" brew install llama.cpp
   prompt_and_install "draw-things" brew install --cask draw-things
+  prompt_and_install "claude" brew install --cask claude
+  prompt_and_install "google gemini" brew install --cask google-gemini
 }
 
 # Install Kiwix for offline Wikipedia access.
