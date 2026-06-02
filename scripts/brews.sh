@@ -211,9 +211,10 @@ install_browsers() {
   prompt_and_install "microsoft edge" brew install --cask microsoft-edge
 }
 
-# Alfred.
-install_alfred() {
+# Mac productivity (Alfred, Rectangle, etc.).
+install_mac_productivity() {
   prompt_and_install "alfred" brew install --cask alfred
+  prompt_and_install "rectangle" brew install --cask rectangle
 }
 
 # Notes.
@@ -341,7 +342,7 @@ TASKS=(
   "gleam|Gleam programming language|install_gleam"
   "rust-pkgs|Rust toolchain (rustup, cargo) for Tauri and native builds|install_rust_packages"
   "browsers|Zen + Firefox browsers|install_browsers"
-  "alfred|Alfred productivity launcher|install_alfred"
+  "mac-productivity|Alfred launcher and Rectangle window manager|install_mac_productivity"
   "notion|Notion note-taking app|install_notion"
   "audio-pkgs|audio and video utilities|install_audio_packages"
   "audio-engineering-pkgs|audio engineering tools|install_audio_engineering_packages"
