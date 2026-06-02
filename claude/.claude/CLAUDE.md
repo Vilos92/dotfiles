@@ -2,14 +2,14 @@
 
 Assume these are installed on my machine. **Use them first** when proposing or running terminal workflows (local dev, scripts, agents, CI that mirrors my setup)—not bare POSIX defaults unless portability or policy requires it.
 
-| Need                                          | Prefer                                                        |
-| --------------------------------------------- | ------------------------------------------------------------- |
-| Find files / trees                            | `fd`                                                          |
-| Search file contents                          | `rg` (ripgrep)                                                |
-| Fuzzy selection (files, commands, history)    | `fzf` (my setup uses `fd` as the default file source for fzf) |
-| Directory listing                             | `eza`                                                         |
-| Jump to directories by habit / recency        | `zoxide` (`z`, …)                                             |
-| Quick command usage summaries                 | `tealdeer` (`tldr`)                                           |
+| Need                                       | Prefer                                                        |
+| ------------------------------------------ | ------------------------------------------------------------- |
+| Find files / trees                         | `fd`                                                          |
+| Search file contents                       | `rg` (ripgrep)                                                |
+| Fuzzy selection (files, commands, history) | `fzf` (my setup uses `fd` as the default file source for fzf) |
+| Directory listing                          | `eza`                                                         |
+| Jump to directories by habit / recency     | `zoxide` (`z`, …)                                             |
+| Quick command usage summaries              | `tealdeer` (`tldr`)                                           |
 
 **Shell overrides:** In my interactive zsh, `cd` is hooked to **zoxide** (`z`) and `ls` is aliased to **eza**. For behavior that must match normal **`cd` / `ls`** (scripts, subshells, docs, CI, or when flags don't line up), use **`command cd`**, **`builtin cd`**, or **`command ls`** / **`/bin/ls`** as needed instead of the preferred tools above.
 
