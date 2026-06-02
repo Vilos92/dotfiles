@@ -1,6 +1,6 @@
 ---
 name: dex-orchestrate
-description: Run multiple dex tasks in parallel as orchestrated Claude Code subagents. Each task gets its own Sonnet subagent in an isolated git worktree, producing a single squashed commit on a sensibly-named branch ready for IDE review. Trigger when the user lists multiple dex task IDs and asks to "orchestrate", "run in parallel", "knock out these tasks", or hands you an explicit orchestrator prompt referencing dex IDs. Requires `gdex` (or `dex`) on PATH and a git repo.
+description: Run multiple dex tasks in parallel as orchestrated Claude Code subagents. Each task gets its own Sonnet subagent in an isolated git worktree, producing a single squashed commit on a sensibly-named branch ready for IDE review. Trigger when the user lists multiple dex task IDs and asks to "orchestrate", "run in parallel", "knock out these tasks", or hands you an explicit orchestrator prompt referencing dex IDs. Requires `dex` on PATH and a git repo.
 ---
 
 # dex-orchestrate
@@ -9,13 +9,23 @@ You are the orchestrator. The user has given you a list of dex task IDs to work 
 
 You do **not** push, open PRs, or merge anything. The user reviews each worktree in Cursor and pushes manually when satisfied.
 
+## Dex invocation
+
+Always pass explicit `--config` and `--storage-path` for the chosen profile (`greg` or `front`):
+
+```sh
+dex --config "$HOME/.dex/projects/<profile>/config.toml" \
+    --storage-path "$HOME/.dex/task-db/<profile>.jsonl" \
+    <subcommand> [args...]
+```
+
 ## Preconditions
 
 Before spawning anything, verify:
 
 1. **Working directory is a git repo.** Run `git rev-parse --show-toplevel`. If it fails, stop and tell the user.
-2. **dex/gdex is available.** Prefer `gdex` if `command -v gdex` succeeds; otherwise `dex`. If neither, stop.
-3. **Dex profile is known.** If the user didn't specify (e.g. `gdex greg` vs `gdex front`), ask once — list profiles via `ls "$HOME/.dex/projects"` if you need options. Default to the profile from prior conversation context if obvious.
+2. **dex is available.** Run `command -v dex`. If missing, stop.
+3. **Dex profile is known.** If the user didn't specify (`greg` vs `front`), ask once — list profiles via `ls "$HOME/.dex/projects"` if you need options. Default to the profile from prior conversation context if obvious.
 4. **Repo conventions are discoverable.** `CLAUDE.md` at the repo root is the primary source for validation and workflow (Claude Code reads this file). Also check `AGENTS.md` when present — many repos keep shared details there or import it from `CLAUDE.md`. If both are missing or silent, infer from project tooling (`package.json`, `Makefile`, CI, etc.) or ask the user before spawning.
 
 ## Inputs
@@ -26,7 +36,7 @@ The user provides:
 - Optional: per-task model override (default: Sonnet). Use Haiku only for genuinely mechanical tasks; Opus only when ambiguity or architecture decisions are at stake.
 - Optional: a richer orchestrator prompt with hand-tuned per-task context. **Prefer this verbatim if given** — the user's hand-authored prompt is higher signal than anything you'd derive from dex alone.
 
-If no IDs are given, ask. Do not guess from `gdex <profile> list`.
+If no IDs are given, ask. Do not guess from `dex ... list`.
 
 ## Per-task prompt construction
 
@@ -34,16 +44,16 @@ If no IDs are given, ask. Do not guess from `gdex <profile> list`.
 
 For each dex task ID:
 
-1. **Fetch the task.** `gdex <profile> show <id>`. If the task isn't found or its description is too thin to act on, **pause and ask the user to flesh it out in dex** rather than guessing. Do not proceed with thin tasks — quality belongs upstream in dex.
+1. **Fetch the task.** `dex --config "$HOME/.dex/projects/<profile>/config.toml" --storage-path "$HOME/.dex/task-db/<profile>.jsonl" show <id>`. If the task isn't found or its description is too thin to act on, **pause and ask the user to flesh it out in dex** rather than guessing. Do not proceed with thin tasks — quality belongs upstream in dex.
 
 2. **Compose the subagent prompt** with the dex task description **verbatim** as the core. Layer on this deterministic boilerplate (do not paraphrase the task itself):
    - "You are in a fresh git worktree. Run `pwd` first to confirm location. Do NOT touch the original repo at `<repo-root>` — only work in your worktree."
    - The full dex task description (verbatim).
    - Reference: "Read `CLAUDE.md` at the repo root for conventions before starting; also read `AGENTS.md` if the repo has one." (Skip this line if neither file exists.)
    - **Branch:** "Create a branch named `agent/<dex-id>-<slug>` where `<slug>` is a short kebab-case version of the dex task title (≤6 words). Check it out before committing."
-   - **Validation:** Before commit and `gdex complete`, run this ordered command list (from the orchestrator's repo discovery above): `<paste commands here>`. It should cover whatever that repo documents — tests, lint, format checks, typecheck, and related gates in `CLAUDE.md`, `AGENTS.md`, or project scripts. If the list is empty or unclear, read those files and manifests yourself; if still undiscoverable, stop and report back. Run every applicable check, stop on first failure, fix and re-run until green.
-   - **Commit:** "Stage all changes and create a **single commit** on the agent branch. Subject line = the dex task title. Body = the one-line summary you'll pass to `gdex complete --result`. Do not push."
-   - **Dex completion:** "After validations pass AND the commit lands, run `gdex <profile> complete <dex-id> --result '<one-sentence summary>'`."
+   - **Validation:** Before commit and `dex complete`, run this ordered command list (from the orchestrator's repo discovery above): `<paste commands here>`. It should cover whatever that repo documents — tests, lint, format checks, typecheck, and related gates in `CLAUDE.md`, `AGENTS.md`, or project scripts. If the list is empty or unclear, read those files and manifests yourself; if still undiscoverable, stop and report back. Run every applicable check, stop on first failure, fix and re-run until green.
+   - **Commit:** "Stage all changes and create a **single commit** on the agent branch. Subject line = the dex task title. Body = the one-line summary you'll pass to `dex complete --result`. Do not push."
+   - **Dex completion:** "After validations pass AND the commit lands, run `dex --config \"$HOME/.dex/projects/<profile>/config.toml\" --storage-path \"$HOME/.dex/task-db/<profile>.jsonl\" complete <dex-id> --result '<one-sentence summary>'`."
    - **Reporting back:** ask the subagent to return files touched, summary of behavior, validation outcomes, and anything surprising.
 
 3. **Choose the model.** Default Sonnet. Use Haiku only for clearly mechanical tasks (formatting, renaming, file moves). If a task feels Opus-shaped, flag it to the user before spawning — don't escalate silently.
@@ -57,7 +67,7 @@ For each dex task ID:
 
 ## After all subagents return
 
-1. **Verify dex.** Run `gdex <profile> list` and confirm each orchestrated task is no longer in the list. If any is still pending, surface that — the subagent failed to mark complete.
+1. **Verify dex.** Run `dex --config "$HOME/.dex/projects/<profile>/config.toml" --storage-path "$HOME/.dex/task-db/<profile>.jsonl" list` and confirm each orchestrated task is no longer in the list. If any is still pending, surface that — the subagent failed to mark complete.
 
 2. **Report to the user**, one block per task:
    - Dex ID + title
