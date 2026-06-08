@@ -51,13 +51,23 @@ vim.keymap.set({ "n", "v" }, "<leader>y", [["+y]], { desc = "Yank to system clip
 vim.keymap.set("n", "<leader>Y", [["+Y]], { desc = "Yank line to system clipboard" })
 
 -- Allow replacing the currently highlighted term.
-vim.keymap.set("n", "<leader>s", [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]], { desc = "Substitute word (buffer)" })
+vim.keymap.set(
+  "n",
+  "<leader>s",
+  [[:%s/\<<C-r><C-w>\>/<C-r><C-w>/gI<Left><Left><Left>]],
+  { desc = "Substitute word (buffer)" }
+)
 
 -- Make executable.
 vim.keymap.set("n", "<leader>x", "<cmd>!chmod +x %<CR>", { silent = true, desc = "chmod +x current file" })
 
 -- Rename all occurrences from quick fix navigation.
-vim.keymap.set("n", "<leader>r", [[:cfdo %s/\<<C-r><C-w>\>/<C-r><C-w>/g<Left><Left><Left>]], { desc = "Substitute word (quickfix list)" })
+vim.keymap.set(
+  "n",
+  "<leader>r",
+  [[:cfdo %s/\<<C-r><C-w>\>/<C-r><C-w>/g<Left><Left><Left>]],
+  { desc = "Substitute word (quickfix list)" }
+)
 
 -- Write current buffer (`:so` would source buffer text; breaks on mini.starter welcome).
 vim.keymap.set("n", "<leader><leader>", function()
