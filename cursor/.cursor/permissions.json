@@ -1,0 +1,12 @@
+{
+  "autoRun": {
+    "allow_instructions": [
+      "Allow read-only shell commands that inspect files, directories, git state, logs, process status, or command output without modifying files or external state.",
+      "Allow read-only MCP, WebFetch, and WebSearch calls that retrieve or inspect data without creating, updating, deleting, posting, triggering, or deploying anything."
+    ],
+    "block_instructions": [
+      "Block ephemeral package-runner commands — including npx, npm exec, bunx, pnpm dlx, pnpm exec, yarn dlx, and similar tools that download and execute packages on demand — regardless of arguments or apparent intent.",
+      "Block commands that create, edit, move, delete, chmod, chown, format, install, generate, or otherwise modify files outside the current project directory."
+    ]
+  }
+}
