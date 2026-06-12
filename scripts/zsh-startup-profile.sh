@@ -93,7 +93,7 @@ if [ "$mode" = "--detail" ] || [ "$mode" = "--zprof" ]; then
                 (( ${+_zsh_post_sourced[$_name]} )) && continue
                 [[ -f $file ]] || continue
                 source "$file"
-                _tick "post-zsh/$(_name)"
+                _tick "post-zsh/${_name}"
                 _zsh_post_sourced[$_name]=1
             done
         done
@@ -136,23 +136,48 @@ fi
 echo
 
 echo "--- gitstatus / p10k health ---"
-if [ -x "$HOME/.cache/gitstatus/gitstatusd-darwin-arm64" ]; then
-    gitstatus_date=$(stat -f '%Sm' -t '%Y-%m-%d' "$HOME/.cache/gitstatus/gitstatusd-darwin-arm64" 2>/dev/null || echo unknown)
-    gitstatus_ver=$("$HOME/.cache/gitstatus/gitstatusd-darwin-arm64" --version 2>/dev/null || echo unknown)
-    echo "cached gitstatusd: version=$gitstatus_ver built=$gitstatus_date"
+_gs_cache="${HOME}/.cache/gitstatus"
+_gs_bin=
+for _cand in "$_gs_cache"/gitstatusd-*; do
+    [ -x "$_cand" ] || continue
+    _gs_bin=$_cand
+    break
+done
+if [ -n "$_gs_bin" ]; then
+    if gitstatus_date=$(stat -f '%Sm' -t '%Y-%m-%d' "$_gs_bin" 2>/dev/null); then
+        :
+    elif gitstatus_date=$(stat -c '%y' "$_gs_bin" 2>/dev/null | cut -d' ' -f1); then
+        :
+    else
+        gitstatus_date=unknown
+    fi
+    gitstatus_ver=$("$_gs_bin" --version 2>/dev/null || echo unknown)
+    echo "cached gitstatusd: $_gs_bin version=$gitstatus_ver built=$gitstatus_date"
 else
     echo "cached gitstatusd: (missing)"
 fi
+unset _gs_cache _gs_bin _cand
 if [ -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k/.git" ]; then
     p10k_rev=$(git -C "$HOME/.oh-my-zsh/custom/themes/powerlevel10k" log -1 --oneline 2>/dev/null || echo unknown)
     echo "powerlevel10k: $p10k_rev"
 fi
-if zsh -ic 'exit' 2>&1 | rg -q 'gitstatus failed to initialize'; then
+_zsh_ic_err=$(zsh -ic 'exit' 2>&1) || true
+if command -v rg >/dev/null 2>&1; then
+    _gs_err_pat='gitstatus failed to initialize'
+    if printf '%s\n' "$_zsh_ic_err" | rg -q "$_gs_err_pat"; then
+        echo "gitstatus init: ERROR on last zsh -ic (see message above when starting zsh)"
+        echo "  try: rm -rf ~/.cache/gitstatus && exec zsh"
+        echo "  then: git -C ~/.oh-my-zsh/custom/themes/powerlevel10k pull"
+    else
+        echo "gitstatus init: ok (no error seen on last zsh -ic)"
+    fi
+elif printf '%s\n' "$_zsh_ic_err" | grep -Fq 'gitstatus failed to initialize'; then
     echo "gitstatus init: ERROR on last zsh -ic (see message above when starting zsh)"
     echo "  try: rm -rf ~/.cache/gitstatus && exec zsh"
     echo "  then: git -C ~/.oh-my-zsh/custom/themes/powerlevel10k pull"
 else
     echo "gitstatus init: ok (no error seen on last zsh -ic)"
 fi
+unset _zsh_ic_err _gs_err_pat
 echo
 echo "Tip: run with --detail or --zprof for deeper breakdowns."

@@ -18,9 +18,6 @@ if [[ -f "$_pybin_cache" ]]; then
   if [[ -d "$_pybin" ]]; then
     export PATH="$_pybin:$PATH"
     _pybin_added=1
-  elif [[ -d "$_pybin/bin" ]]; then
-    export PATH="$_pybin/bin:$PATH"
-    _pybin_added=1
   fi
 fi
 unset _pybin
@@ -57,9 +54,14 @@ unset _dir _file _name _zsh_post_sourced
 _gs_cache="${XDG_CACHE_HOME:-$HOME/.cache}/gitstatus"
 _gs_bin=( "$_gs_cache"/gitstatusd-darwin-*(N) )
 # Cached daemon older than 90 days — wipe the dir so p10k fetches a fresh one.
-if (( ${+_gs_bin[1]} )) && (( $(date +%s) - $(stat -f %m ${_gs_bin[1]}) > 90 * 86400 )); then
+_gs_mtime=
+if (( ${+_gs_bin[1]} )); then
+  _gs_mtime=$(stat -f %m -- "$_gs_bin[1]" 2>/dev/null) || _gs_mtime=$(stat -c %Y -- "$_gs_bin[1]" 2>/dev/null)
+fi
+if (( ${+_gs_bin[1]} )) && [[ -n $_gs_mtime ]] && (( $(date +%s) - _gs_mtime > 90 * 86400 )); then
   rm -rf "$_gs_cache"
 fi
+unset _gs_mtime
 unset _gs_cache _gs_bin
 
 autoload -Uz compinit
