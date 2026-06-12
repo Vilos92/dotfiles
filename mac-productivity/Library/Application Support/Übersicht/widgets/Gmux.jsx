@@ -64,6 +64,7 @@ const emptyStateStyle = css`
  * Command.
  */
 
+/** Poll tmux for session stats and greg_projects for project names. */
 export const command = `
   TMUX=/opt/homebrew/bin/tmux
 
@@ -152,6 +153,9 @@ function parseIntOrZero(value) {
   return Number.isNaN(parsed) ? 0 : parsed;
 }
 
+/**
+ * Parse a SESSION: line from the shell command output.
+ */
 function parseSessionLine(line) {
   if (!line.startsWith('SESSION:')) return undefined;
 
@@ -171,6 +175,9 @@ function parseSessionLine(line) {
   };
 }
 
+/**
+ * Parse a PROJECT: line from the shell command output.
+ */
 function parseProjectLine(line) {
   if (!line.startsWith('PROJECT:')) return undefined;
 
@@ -183,6 +190,9 @@ function parseProjectLine(line) {
   };
 }
 
+/**
+ * Split command output into session and project maps.
+ */
 function parseLines(lines) {
   const sessionsMap = new Map();
   const projectDisplays = new Map();
@@ -209,7 +219,10 @@ function withDisplayName(item, projectDisplays) {
   return {...item, displayName};
 }
 
-// A project with no live tmux session: zeroed counts, sorted below real sessions.
+/**
+ * Build a project row when no live tmux session exists yet.
+ * Zeroed counts — sorted below real sessions.
+ */
 function createProjectItem(sessionName, displayName) {
   return {
     name: sessionName,
@@ -221,7 +234,9 @@ function createProjectItem(sessionName, displayName) {
   };
 }
 
-// Merge by canonical name so a project and its live session collapse into one row.
+/**
+ * Merge sessions and projects by canonical name so one row per project.
+ */
 function combineSessionsAndProjects(sessionsMap, projectDisplays) {
   const allItems = [];
   const seen = new Set();
@@ -244,11 +259,16 @@ function combineSessionsAndProjects(sessionsMap, projectDisplays) {
   return allItems;
 }
 
+/**
+ * True when a live session has at least one attached client.
+ */
 function checkHasAttachedClients(item) {
   return item.isSession && item.clients > 0;
 }
 
-// Ordering policy: attached sessions, then other sessions, then projects, each alphabetical.
+/**
+ * Sort order: attached sessions, then other sessions, then projects, alphabetical within each.
+ */
 function sortSessions(a, b) {
   const aHasClients = checkHasAttachedClients(a);
   const bHasClients = checkHasAttachedClients(b);
@@ -260,7 +280,9 @@ function sortSessions(a, b) {
   return a.displayName.localeCompare(b.displayName);
 }
 
-// Green = attached, blue = live but detached session, gray = project with no session.
+/**
+ * Status dot color. Green = attached, blue = detached session, gray = project only.
+ */
 function getStatusColor(item) {
   if (item.isSession && item.clients > 0) {
     return '#00e676';
@@ -271,8 +293,10 @@ function getStatusColor(item) {
   return '#9e9e9e';
 }
 
+/**
+ * Open a session in Alacritty. Login shell + sourced .zshrc so gmux is on PATH.
+ */
 function handleSessionClick(sessionName) {
-  // Login + sourced .zshrc so gmux and friends are on PATH inside the spawned terminal.
   run(
     `/opt/homebrew/bin/alacritty -e zsh -lc "source ~/.zshrc 2>/dev/null || true; gmux ${sessionName}"`
   ).catch(err => {
@@ -280,6 +304,9 @@ function handleSessionClick(sessionName) {
   });
 }
 
+/**
+ * Parse command output into the sorted session/project list for render.
+ */
 function parseOutput(output) {
   if (typeof output !== 'string' || output.trim() === '') {
     return undefined;

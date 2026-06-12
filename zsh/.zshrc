@@ -1,4 +1,4 @@
-# Fast startup — instant prompt first, full p10k right after, lazy zoxide.
+# Tiered startup — instant prompt first, then PATH/exports, lazy tools, full theme, pre/post hooks.
 
 # 1. Instant prompt. Nothing slow can run before this.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
