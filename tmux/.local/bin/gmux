@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# tmux maps '.' to '_' in session names on create; keep one canonical name everywhere.
+# tmux maps '.' to '_' in session names on create. Keep one canonical name everywhere.
 # Sets $_session (no subprocess) so hot loops don't fork per directory.
 set_session_name() {
     _s=$1
@@ -24,7 +24,7 @@ list_depth1_dirs() {
     fi
 }
 
-# O(1) lookups over delimited strings; no per-row subprocesses.
+# O(1) lookups over delimited strings, no per-row subprocesses.
 resolve_display() {
     case "$display_lookup" in
         *"|$1|"*)
@@ -61,8 +61,8 @@ path_lookup="|"
 display_lookup="|"
 projects=
 
-# Build project lists + lookups. fd appends a trailing slash, find does not;
-# strip it so basename extraction works for either tool.
+# Build project lists + lookups. fd appends a trailing slash, find does not.
+# Strip it so basename extraction works for either tool.
 while IFS= read -r path; do
     [ -z "$path" ] && continue
     path=${path%/}

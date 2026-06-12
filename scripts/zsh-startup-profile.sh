@@ -107,7 +107,6 @@ if [ "$mode" = "--detail" ] || [ "$mode" = "--zprof" ]; then
         _tick "p10k theme"
 
         for file in $zshenv_path/pre/*.sh(N); do
-            [[ $(basename "$file") == ohmyzsh.sh ]] && continue
             [[ -f $file ]] || continue
             source "$file"
             _tick "pre/$(basename $file)"

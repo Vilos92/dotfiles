@@ -70,7 +70,6 @@ _p10k_theme="$HOME/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-them
 unset _p10k_theme
 
 for _file in "$zshenv_path/pre"/*.sh(N); do
-  [[ "$(basename "$_file")" == ohmyzsh.sh ]] && continue
   [[ -f "$_file" ]] && source "$_file"
 done
 unset _file
