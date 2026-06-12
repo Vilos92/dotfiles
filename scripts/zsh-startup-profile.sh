@@ -70,21 +70,50 @@ if [ "$mode" = "--detail" ] || [ "$mode" = "--zprof" ]; then
         }
 
         zshenv_path="$HOME/.zshenv"
-        for file in $zshenv_path/init/*.sh(N); do
-            source "$file"
-            _tick "init/$(basename $file)"
-        done
+        export PATH="$HOME/.local/bin:$PATH"
+        export GREG_PROJECTS_PATH="$HOME/greg_projects"
+        export GREG_DOTFILES_PATH="$GREG_PROJECTS_PATH/dotfiles"
+        _tick "path exports"
 
         if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
             source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
             _tick "p10k-instant-prompt"
         fi
 
+        for file in $zshenv_path/init/*.sh(N); do
+            [[ -f $file ]] || continue
+            source "$file"
+            _tick "init/$(basename $file)"
+        done
+
+        typeset -A _zsh_post_sourced
+        for _dir in "$zshenv_path/post" "$GREG_DOTFILES_PATH/zsh/.zshenv/post"(N); do
+            for file in "$_dir"/*.zsh(N); do
+                _name=${file:t}
+                (( ${+_zsh_post_sourced[$_name]} )) && continue
+                [[ -f $file ]] || continue
+                source "$file"
+                _tick "post-zsh/$(_name)"
+                _zsh_post_sourced[$_name]=1
+            done
+        done
+
+        autoload -Uz compinit
+        compinit -C
+        _tick "compinit"
+
+        _p10k_theme="$HOME/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme"
+        [[ -f "$_p10k_theme" ]] && source "$_p10k_theme"
+        _tick "p10k theme"
+
         for file in $zshenv_path/pre/*.sh(N); do
+            [[ $(basename "$file") == ohmyzsh.sh ]] && continue
+            [[ -f $file ]] || continue
             source "$file"
             _tick "pre/$(basename $file)"
         done
         for file in $zshenv_path/post/*.sh(N); do
+            [[ -f $file ]] || continue
             source "$file"
             _tick "post/$(basename $file)"
         done
