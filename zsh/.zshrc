@@ -1,33 +1,85 @@
-# zsh environment setup.
-zshenv_path="$HOME/.zshenv"
+# Tiered startup — instant prompt first, then PATH/exports, lazy tools, full theme, pre/post hooks.
 
-# Run all environment init scripts.
-for file in $zshenv_path/init/*.sh; do
-  if [ -f "$file" ]; then
-    source "$file"
-  fi
-done
-
-# Enable Powerlevel10k instant prompt. Should stay close to the top of ~/.zshrc.
-# Initialization code that may require console input (password prompts, [y/n]
-# confirmations, etc.) must go above this block; everything else may go below.
+# 1. Instant prompt. Nothing slow can run before this.
 if [[ -r "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh" ]]; then
   source "${XDG_CACHE_HOME:-$HOME/.cache}/p10k-instant-prompt-${(%):-%n}.zsh"
 fi
 
-# Run all environment pre-scripts.
-for file in $zshenv_path/pre/*.sh; do
-  if [ -f "$file" ]; then
-    source "$file"
-  fi
-done
+# 2. PATH and exports. Builtins and cache reads only.
+export PATH="$HOME/.local/bin:$PATH"
+export GREG_PROJECTS_PATH="$HOME/greg_projects"
+export GREG_DOTFILES_PATH="$GREG_PROJECTS_PATH/dotfiles"
+export ALACRITTY_PATH="$HOME/.config/alacritty"
 
-# Run all environment post-scripts.
-for file in $zshenv_path/post/*.sh; do
-  if [ -f "$file" ]; then
-    source "$file"
+_pybin_cache="${XDG_CACHE_HOME:-$HOME/.cache}/python-user-bin.path"
+_pybin_added=
+if [[ -f "$_pybin_cache" ]]; then
+  _pybin="$(<"$_pybin_cache")"
+  if [[ -d "$_pybin" ]]; then
+    export PATH="$_pybin:$PATH"
+    _pybin_added=1
   fi
-done
+fi
+unset _pybin
 
-# Refresh config.
-alias zshsource="source ~/.zshrc"
+if [[ -z $_pybin_added ]] && command -v python3 >/dev/null; then
+  ( _c="$_pybin_cache"; mkdir -p "${_c:h}"; print -r -- "$(python3 -m site --user-base)/bin" >| "$_c" ) &!
+fi
+unset _pybin_cache _pybin_added
+
+zshenv_path="$HOME/.zshenv"
+
+# Early hooks from other stow packages (arch, mac-mini). Not core zsh config.
+for _file in "$zshenv_path/init"/*.sh(N); do
+  [[ -f "$_file" ]] && source "$_file"
+done
+unset _file
+
+# 3. Lazy tool wrappers. No subprocess until first use.
+# Stowed post/*.zsh first, then dotfiles checkout so new files work before restow.
+typeset -A _zsh_post_sourced
+for _dir in "$zshenv_path/post" "$GREG_DOTFILES_PATH/zsh/.zshenv/post"(N); do
+  for _file in "$_dir"/*.zsh(N); do
+    _name=${_file:t}
+    (( ${+_zsh_post_sourced[$_name]} )) && continue
+    [[ -f "$_file" ]] || continue
+    source "$_file"
+    _zsh_post_sourced[$_name]=1
+  done
+done
+unset _dir _file _name _zsh_post_sourced
+
+# 4. Full p10k at open — instant prompt alone is too bare.
+# Stale gitstatusd stderrs on load and triggers instant-prompt warnings.
+_gs_cache="${XDG_CACHE_HOME:-$HOME/.cache}/gitstatus"
+_gs_bin=( "$_gs_cache"/gitstatusd-darwin-*(N) )
+# Cached daemon older than 90 days — wipe the dir so p10k fetches a fresh one.
+_gs_mtime=
+if (( ${+_gs_bin[1]} )); then
+  _gs_mtime=$(stat -f %m -- "$_gs_bin[1]" 2>/dev/null) || _gs_mtime=$(stat -c %Y -- "$_gs_bin[1]" 2>/dev/null)
+fi
+if (( ${+_gs_bin[1]} )) && [[ -n $_gs_mtime ]] && (( $(date +%s) - _gs_mtime > 90 * 86400 )); then
+  rm -rf "$_gs_cache"
+fi
+unset _gs_mtime
+unset _gs_cache _gs_bin
+
+autoload -Uz compinit
+compinit -C
+
+_p10k_theme="$HOME/.oh-my-zsh/custom/themes/powerlevel10k/powerlevel10k.zsh-theme"
+[[ -f "$_p10k_theme" ]] && source "$_p10k_theme"
+unset _p10k_theme
+
+for _file in "$zshenv_path/pre"/*.sh(N); do
+  [[ -f "$_file" ]] && source "$_file"
+done
+unset _file
+
+# 5. Aliases and the rest of post/*.sh.
+for _file in "$zshenv_path/post"/*.sh(N); do
+  [[ -f "$_file" ]] && source "$_file"
+done
+unset _file
+
+alias zshsource='source ~/.zshrc'

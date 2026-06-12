@@ -5,7 +5,7 @@ import {cardStyle, headerStyle} from './shared/Card.jsx';
  * Constants.
  */
 
-export const refreshFrequency = 2000;
+export const refreshFrequency = 5000;
 
 /*
  * Styles.
@@ -64,25 +64,32 @@ const emptyStateStyle = css`
  * Command.
  */
 
-/**
- * Get all tmux sessions with details, plus all possible projects.
- */
+/** Poll tmux for session stats and greg_projects for project names. */
 export const command = `
-  # Get all tmux sessions with details
-  /opt/homebrew/bin/tmux list-sessions -F "#{session_name}|#{session_windows}|#{session_attached}" 2>/dev/null | while IFS='|' read -r name windows attached; do
-    panes=$(/opt/homebrew/bin/tmux list-panes -t "$name" 2>/dev/null | wc -l | tr -d " " || echo "0")
-    clients=$(/opt/homebrew/bin/tmux list-clients -t "$name" 2>/dev/null | wc -l | tr -d " " || echo "0")
-    echo "SESSION:$name|$windows|$panes|$attached|$clients"
-  done
-  
-  # Directory basenames for display; gmux uses tr '.' '_' only for tmux session names.
-  if [ -d "$HOME/greg_projects" ]; then
-    /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" -0 2>/dev/null \
-      | xargs -0 -n 1 basename \
-      | while IFS= read -r project; do
-      echo "PROJECT:$project"
-    done
+  TMUX=/opt/homebrew/bin/tmux
+
+  # One tmux call, not 2N: each invocation is a ~0.25s round-trip. list-panes -a
+  # already carries session-level fields, and #{session_attached} doubles as the
+  # client count, so windows/panes/clients all fall out of a single pass. Every
+  # session has >=1 pane, so none are missed.
+  $TMUX list-panes -a -F "#{session_name}|#{session_windows}|#{session_attached}" 2>/dev/null | awk -F'|' '
+    { count[$1]++; win[$1]=$2; att[$1]=$3 }
+    END { for (s in count) print "SESSION:" s "|" win[s] "|" count[s] "|" att[s] "|" att[s] }
+  '
+
+  # Project dirs rarely change, so cache the fd scan (60s TTL) to keep the poll cheap.
+  CACHE="\${TMPDIR:-/tmp}/ubersicht-gmux-projects"
+  if [ ! -f "$CACHE" ] || [ $(( $(date +%s) - $(stat -f %m "$CACHE") )) -gt 60 ]; then
+    if [ -d "$HOME/greg_projects" ]; then
+      /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" -0 2>/dev/null \
+        | xargs -0 -n 1 basename > "$CACHE"
+    else
+      : > "$CACHE"
+    fi
   fi
+  while IFS= read -r project; do
+    [ -n "$project" ] && echo "PROJECT:$project"
+  done < "$CACHE"
 `;
 
 /*
@@ -147,7 +154,7 @@ function parseIntOrZero(value) {
 }
 
 /**
- * Parse a session line from command output.
+ * Parse a SESSION: line from the shell command output.
  */
 function parseSessionLine(line) {
   if (!line.startsWith('SESSION:')) return undefined;
@@ -169,7 +176,7 @@ function parseSessionLine(line) {
 }
 
 /**
- * Parse a project line from command output.
+ * Parse a PROJECT: line from the shell command output.
  */
 function parseProjectLine(line) {
   if (!line.startsWith('PROJECT:')) return undefined;
@@ -184,7 +191,7 @@ function parseProjectLine(line) {
 }
 
 /**
- * Parse all lines from command output into sessions and projects.
+ * Split command output into session and project maps.
  */
 function parseLines(lines) {
   const sessionsMap = new Map();
@@ -213,7 +220,8 @@ function withDisplayName(item, projectDisplays) {
 }
 
 /**
- * Create a project item (no session exists yet).
+ * Build a project row when no live tmux session exists yet.
+ * Zeroed counts — sorted below real sessions.
  */
 function createProjectItem(sessionName, displayName) {
   return {
@@ -227,7 +235,7 @@ function createProjectItem(sessionName, displayName) {
 }
 
 /**
- * Combine sessions and projects into a single array.
+ * Merge sessions and projects by canonical name so one row per project.
  */
 function combineSessionsAndProjects(sessionsMap, projectDisplays) {
   const allItems = [];
@@ -252,14 +260,14 @@ function combineSessionsAndProjects(sessionsMap, projectDisplays) {
 }
 
 /**
- * Check if an item is a session with attached clients.
+ * True when a live session has at least one attached client.
  */
 function checkHasAttachedClients(item) {
   return item.isSession && item.clients > 0;
 }
 
 /**
- * Sort sessions: sessions with clients first, then sessions, then projects, then alphabetically.
+ * Sort order: attached sessions, then other sessions, then projects, alphabetical within each.
  */
 function sortSessions(a, b) {
   const aHasClients = checkHasAttachedClients(a);
@@ -273,7 +281,7 @@ function sortSessions(a, b) {
 }
 
 /**
- * Get status color for a session or project.
+ * Status dot color. Green = attached, blue = detached session, gray = project only.
  */
 function getStatusColor(item) {
   if (item.isSession && item.clients > 0) {
@@ -286,7 +294,7 @@ function getStatusColor(item) {
 }
 
 /**
- * Handle clicking on a session to open it in Alacritty.
+ * Open a session in Alacritty. Login shell + sourced .zshrc so gmux is on PATH.
  */
 function handleSessionClick(sessionName) {
   run(
@@ -297,7 +305,7 @@ function handleSessionClick(sessionName) {
 }
 
 /**
- * Parse command output into structured session and project data.
+ * Parse command output into the sorted session/project list for render.
  */
 function parseOutput(output) {
   if (typeof output !== 'string' || output.trim() === '') {
