@@ -5,7 +5,7 @@ import {cardStyle, headerStyle} from './shared/Card.jsx';
  * Constants.
  */
 
-export const refreshFrequency = 2000;
+export const refreshFrequency = 5000;
 
 /*
  * Styles.
@@ -68,21 +68,35 @@ const emptyStateStyle = css`
  * Get all tmux sessions with details, plus all possible projects.
  */
 export const command = `
-  # Get all tmux sessions with details
-  /opt/homebrew/bin/tmux list-sessions -F "#{session_name}|#{session_windows}|#{session_attached}" 2>/dev/null | while IFS='|' read -r name windows attached; do
-    panes=$(/opt/homebrew/bin/tmux list-panes -t "$name" 2>/dev/null | wc -l | tr -d " " || echo "0")
-    clients=$(/opt/homebrew/bin/tmux list-clients -t "$name" 2>/dev/null | wc -l | tr -d " " || echo "0")
-    echo "SESSION:$name|$windows|$panes|$attached|$clients"
+  TMUX=/opt/homebrew/bin/tmux
+
+  # Each tmux invocation is a fixed ~0.25s round-trip, so cost scales with the
+  # number of calls. Fetch pane/client counts once globally (2 calls) instead of
+  # per session (2N calls), then look them up locally with awk.
+  pane_counts=$($TMUX list-panes -a -F "#{session_name}" 2>/dev/null | sort | uniq -c)
+  client_counts=$($TMUX list-clients -F "#{session_name}" 2>/dev/null | sort | uniq -c)
+
+  $TMUX list-sessions -F "#{session_name}|#{session_windows}|#{session_attached}" 2>/dev/null | while IFS='|' read -r name windows attached; do
+    panes=$(printf '%s\\n' "$pane_counts" | awk -v s="$name" '$2==s{print $1; exit}')
+    clients=$(printf '%s\\n' "$client_counts" | awk -v s="$name" '$2==s{print $1; exit}')
+    echo "SESSION:$name|$windows|\${panes:-0}|$attached|\${clients:-0}"
   done
-  
-  # Directory basenames for display; gmux uses tr '.' '_' only for tmux session names.
-  if [ -d "$HOME/greg_projects" ]; then
-    /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" -0 2>/dev/null \
-      | xargs -0 -n 1 basename \
-      | while IFS= read -r project; do
-      echo "PROJECT:$project"
-    done
+
+  # Project dirs change rarely; cache the scan for 60s instead of running fd
+  # on every poll. Directory basenames are for display; gmux uses tr '.' '_'
+  # only for tmux session names.
+  CACHE="\${TMPDIR:-/tmp}/ubersicht-gmux-projects"
+  if [ ! -f "$CACHE" ] || [ $(( $(date +%s) - $(stat -f %m "$CACHE") )) -gt 60 ]; then
+    if [ -d "$HOME/greg_projects" ]; then
+      /opt/homebrew/bin/fd -t d -d 1 . "$HOME/greg_projects" -0 2>/dev/null \
+        | xargs -0 -n 1 basename > "$CACHE"
+    else
+      : > "$CACHE"
+    fi
   fi
+  while IFS= read -r project; do
+    [ -n "$project" ] && echo "PROJECT:$project"
+  done < "$CACHE"
 `;
 
 /*

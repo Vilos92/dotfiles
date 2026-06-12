@@ -1,14 +1,15 @@
 #!/bin/sh
 
 # tmux maps '.' to '_' in session names on create; keep one canonical name everywhere.
-to_session_name() {
+# Sets $_session (no subprocess) so hot loops don't fork per directory.
+set_session_name() {
     _s=$1
     _result=
     while case $_s in *.*) true ;; *) false ;; esac; do
         _result="${_result}${_s%%.*}_"
         _s=${_s#*.}
     done
-    printf '%s%s' "$_result" "$_s"
+    _session="${_result}${_s}"
 }
 
 # Depth-1 directories under each root. Prefer fd, fall back to find.
@@ -66,16 +67,17 @@ while IFS= read -r path; do
     [ -z "$path" ] && continue
     path=${path%/}
     dir=${path##*/}
-    session=$(to_session_name "$dir")
-    projects="${projects}${session}${nl}"
-    path_lookup="${path_lookup}${session}|${path}|"
-    display_lookup="${display_lookup}${session}|${dir}|"
+    set_session_name "$dir"
+    projects="${projects}${_session}${nl}"
+    path_lookup="${path_lookup}${_session}|${path}|"
+    display_lookup="${display_lookup}${_session}|${dir}|"
 done <<EOF
 $(list_depth1_dirs "$GREG_PROJECTS_PATH"; list_depth1_dirs "$FRONTAPP_DIR")
 EOF
 
 if [ -n "$1" ]; then
-    session_name=$(to_session_name "$1")
+    set_session_name "$1"
+    session_name=$_session
     case "$path_lookup" in
         *"|${session_name}|"*)
             attach-tmux-session "$session_name" "$(path_for_session "$session_name")"
