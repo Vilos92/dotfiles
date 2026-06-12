@@ -2,96 +2,131 @@
 
 # tmux maps '.' to '_' in session names on create; keep one canonical name everywhere.
 to_session_name() {
-    echo "$1" | tr '.' '_'
-}
-
-display_name_for_session() {
-    session_name=$1
-    _old_ifs=$IFS
-    IFS='
-'
-    for path in $project_paths; do
-        [ -z "$path" ] && continue
-        dir=$(basename "$path")
-        if [ "$(to_session_name "$dir")" = "$session_name" ]; then
-            IFS=$_old_ifs
-            echo "$dir"
-            return 0
-        fi
+    _s=$1
+    _result=
+    while case $_s in *.*) true ;; *) false ;; esac; do
+        _result="${_result}${_s%%.*}_"
+        _s=${_s#*.}
     done
-    IFS=$_old_ifs
-    echo "$session_name"
+    printf '%s%s' "$_result" "$_s"
 }
 
-project_path_for_session() {
-    session_name=$1
-    _old_ifs=$IFS
-    IFS='
-'
-    for path in $project_paths; do
-        [ -z "$path" ] && continue
-        if [ "$(to_session_name "$(basename "$path")")" = "$session_name" ]; then
-            IFS=$_old_ifs
-            echo "$path"
-            return 0
-        fi
-    done
-    IFS=$_old_ifs
+# Depth-1 directories under each root. Prefer fd, fall back to find.
+# -H -I make fd match `find -type d` (include hidden, ignore gitignore).
+list_depth1_dirs() {
+    root=$1
+    [ -d "$root" ] || return 0
+    if command -v fd >/dev/null 2>&1; then
+        fd -H -I -t d -d 1 . "$root" 2>/dev/null
+    else
+        find "$root" -mindepth 1 -maxdepth 1 -type d 2>/dev/null
+    fi
 }
 
-project_paths_command="find \"$GREG_PROJECTS_PATH\""
+# O(1) lookups over delimited strings; no per-row subprocesses.
+resolve_display() {
+    case "$display_lookup" in
+        *"|$1|"*)
+            _rest=${display_lookup#*"|$1|"}
+            _display=${_rest%%|*}
+            ;;
+        *)
+            _display=$1
+            ;;
+    esac
+}
 
-if [ -d "$FRONTAPP_DIR" ]; then
-    project_paths_command="$project_paths_command \"$FRONTAPP_DIR\""
-fi
+path_for_session() {
+    case "$path_lookup" in
+        *"|$1|"*)
+            _rest=${path_lookup#*"|$1|"}
+            printf '%s' "${_rest%%|*}"
+            ;;
+    esac
+}
 
-project_paths=$(eval "$project_paths_command -mindepth 1 -maxdepth 1 -type d")
-projects=""
-_old_ifs=$IFS
-IFS='
+is_tmux_session() {
+    case "$tmux_lookup" in
+        *"|$1|"*) return 0 ;;
+    esac
+    return 1
+}
+
+tab=$(printf '\t')
+nl='
 '
-for path in $project_paths; do
+
+path_lookup="|"
+display_lookup="|"
+projects=
+
+# Build project lists + lookups. fd appends a trailing slash, find does not;
+# strip it so basename extraction works for either tool.
+while IFS= read -r path; do
     [ -z "$path" ] && continue
-    projects="$projects$(to_session_name "$(basename "$path")")
-"
-done
-IFS=$_old_ifs
+    path=${path%/}
+    dir=${path##*/}
+    session=$(to_session_name "$dir")
+    projects="${projects}${session}${nl}"
+    path_lookup="${path_lookup}${session}|${path}|"
+    display_lookup="${display_lookup}${session}|${dir}|"
+done <<EOF
+$(list_depth1_dirs "$GREG_PROJECTS_PATH"; list_depth1_dirs "$FRONTAPP_DIR")
+EOF
 
 if [ -n "$1" ]; then
     session_name=$(to_session_name "$1")
-    if echo "$projects" | grep -Fqx "$session_name"; then
-        selected_project_path=$(project_path_for_session "$session_name")
-        attach-tmux-session "$session_name" "$selected_project_path"
-        exit 0
-    fi
+    case "$path_lookup" in
+        *"|${session_name}|"*)
+            attach-tmux-session "$session_name" "$(path_for_session "$session_name")"
+            exit 0
+            ;;
+    esac
     attach-tmux-session "$session_name" "$2"
     exit 0
 fi
 
-sessions=$(tmux list-sessions 2>/dev/null | awk -F: '{ print $1 }')
+# Single tmux call: session names, attached flag, and lookup table in one pass.
+sessions=
+tmux_lookup="|"
+current_session=
+tmux_out=$(tmux list-sessions -F '#{session_name}|#{session_attached}' 2>/dev/null) || tmux_out=
+while IFS='|' read -r name attached; do
+    [ -z "$name" ] && continue
+    sessions="${sessions}${name}${nl}"
+    tmux_lookup="${tmux_lookup}${name}|"
+    [ "$attached" = "1" ] && current_session=$name
+done <<EOF
+$tmux_out
+EOF
 
-gmux_options=$(printf "%s\n%s\n" "$projects" "$sessions" | sort -u | sed '/^$/d')
+gmux_options=$(printf '%s\n%s\n' "$projects" "$sessions" | sort -u | sed '/^$/d')
 
-current_session=$(tmux list-sessions -F "#{session_name}" -f "#{session_attached}" 2>/dev/null)
-
-select_options=$(echo "$gmux_options" | while read -r session_name; do
-    display=$(display_name_for_session "$session_name")
+# Build the menu with literal newlines (command substitution strips them) and
+# builtin-only lookups (no grep/basename/tr per row).
+select_options=
+while IFS= read -r session_name; do
+    [ -z "$session_name" ] && continue
+    resolve_display "$session_name"
     if [ "$session_name" = "$current_session" ]; then
-        printf '🟢 %s\t%s\n' "$display" "$session_name"
-    elif echo "$sessions" | grep -Fqx "$session_name"; then
-        printf '🔵 %s\t%s\n' "$display" "$session_name"
+        emoji='🟢'
+    elif is_tmux_session "$session_name"; then
+        emoji='🔵'
     else
-        printf '🌑 %s\t%s\n' "$display" "$session_name"
+        emoji='🌑'
     fi
-done)
+    select_options="${select_options}${emoji} ${_display}${tab}${session_name}${nl}"
+done <<EOF
+$gmux_options
+EOF
 
-selected_option=$(echo "$select_options" | sort -r | fzf --ansi --tmux 80% --delimiter="$(printf '\t')" --with-nth=1)
+selected_option=$(printf '%s' "$select_options" | sort -r | fzf --ansi --tmux 80% --delimiter="$tab" --with-nth=1)
 
 if [ -z "$selected_option" ]; then
     exit 0
 fi
 
 selected_project=$(printf '%s\n' "$selected_option" | cut -f2)
-selected_project_path=$(project_path_for_session "$selected_project")
+selected_project_path=$(path_for_session "$selected_project")
 
 attach-tmux-session "$selected_project" "$selected_project_path"
