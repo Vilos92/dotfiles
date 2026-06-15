@@ -144,17 +144,10 @@ for _cand in "$_gs_cache"/gitstatusd-*; do
     break
 done
 if [ -n "$_gs_bin" ]; then
-    if gitstatus_date=$(stat -f '%Sm' -t '%Y-%m-%d' "$_gs_bin" 2>/dev/null); then
-        :
-    elif gitstatus_date=$(stat -c '%y' "$_gs_bin" 2>/dev/null | cut -d' ' -f1); then
-        :
-    else
-        gitstatus_date=unknown
-    fi
     gitstatus_ver=$("$_gs_bin" --version 2>/dev/null || echo unknown)
-    echo "cached gitstatusd: $_gs_bin version=$gitstatus_ver built=$gitstatus_date"
+    echo "cached gitstatusd: $_gs_bin ($gitstatus_ver; file mtime is the release build date, not cache age)"
 else
-    echo "cached gitstatusd: (missing)"
+    echo "cached gitstatusd: (missing — first shell will download v1.5.4 from p10k)"
 fi
 unset _gs_cache _gs_bin _cand
 if [ -d "$HOME/.oh-my-zsh/custom/themes/powerlevel10k/.git" ]; then
@@ -165,16 +158,14 @@ _zsh_ic_err=$(zsh -ic 'exit' 2>&1) || true
 if command -v rg >/dev/null 2>&1; then
     _gs_err_pat='gitstatus failed to initialize'
     if printf '%s\n' "$_zsh_ic_err" | rg -q "$_gs_err_pat"; then
-        echo "gitstatus init: ERROR on last zsh -ic (see message above when starting zsh)"
+        echo "gitstatus init: ERROR on last zsh -ic"
         echo "  try: rm -rf ~/.cache/gitstatus && exec zsh"
-        echo "  then: git -C ~/.oh-my-zsh/custom/themes/powerlevel10k pull"
     else
         echo "gitstatus init: ok (no error seen on last zsh -ic)"
     fi
 elif printf '%s\n' "$_zsh_ic_err" | grep -Fq 'gitstatus failed to initialize'; then
-    echo "gitstatus init: ERROR on last zsh -ic (see message above when starting zsh)"
+    echo "gitstatus init: ERROR on last zsh -ic"
     echo "  try: rm -rf ~/.cache/gitstatus && exec zsh"
-    echo "  then: git -C ~/.oh-my-zsh/custom/themes/powerlevel10k pull"
 else
     echo "gitstatus init: ok (no error seen on last zsh -ic)"
 fi

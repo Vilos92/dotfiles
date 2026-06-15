@@ -50,20 +50,6 @@ done
 unset _dir _file _name _zsh_post_sourced
 
 # 4. Full p10k at open — instant prompt alone is too bare.
-# Stale gitstatusd stderrs on load and triggers instant-prompt warnings.
-_gs_cache="${XDG_CACHE_HOME:-$HOME/.cache}/gitstatus"
-_gs_bin=( "$_gs_cache"/gitstatusd-darwin-*(N) )
-# Cached daemon older than 90 days — wipe the dir so p10k fetches a fresh one.
-_gs_mtime=
-if (( ${+_gs_bin[1]} )); then
-  _gs_mtime=$(stat -f %m -- "$_gs_bin[1]" 2>/dev/null) || _gs_mtime=$(stat -c %Y -- "$_gs_bin[1]" 2>/dev/null)
-fi
-if (( ${+_gs_bin[1]} )) && [[ -n $_gs_mtime ]] && (( $(date +%s) - _gs_mtime > 90 * 86400 )); then
-  rm -rf "$_gs_cache"
-fi
-unset _gs_mtime
-unset _gs_cache _gs_bin
-
 autoload -Uz compinit
 compinit -C
 
