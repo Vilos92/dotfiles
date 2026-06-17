@@ -306,6 +306,8 @@ install_chats() {
 # Install AI packages.
 install_ai_packages() {
   prompt_and_install "llama.cpp" brew install llama.cpp
+  prompt_and_install "ollama" brew install ollama
+  prompt_and_install "grepai" brew install yoanbernabeu/tap/grepai
   prompt_and_install "draw-things" brew install --cask draw-things
   prompt_and_install "claude" brew install --cask claude
   prompt_and_install "google gemini" brew install --cask google-gemini
