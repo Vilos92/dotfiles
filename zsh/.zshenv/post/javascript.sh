@@ -12,6 +12,20 @@ export PNPM_HOME="/Users/greg.linscheid/Library/pnpm"
 export PATH="$PNPM_HOME:$PATH"
 # pnpm end
 
+# pnpm completions — lazy, generated on first use. Zsh only.
+if [ -n "${ZSH_VERSION-}" ]; then
+  pnpm() {
+    unfunction pnpm 2>/dev/null
+    _pnpm_comp="$HOME/.local/share/pnpm-completion.zsh"
+    if [ ! -s "$_pnpm_comp" ]; then
+      command pnpm completion zsh > "$_pnpm_comp" 2>/dev/null
+    fi
+    [ -s "$_pnpm_comp" ] && . "$_pnpm_comp"
+    unset _pnpm_comp
+    pnpm "$@"
+  }
+fi
+
 # bun completions — lazy (compinit on every shell is expensive). Zsh only.
 if [ -n "${ZSH_VERSION-}" ]; then
   bun() {
