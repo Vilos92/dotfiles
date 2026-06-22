@@ -1,18 +1,47 @@
 #!/bin/sh
 
+NVIM_STATE="$HOME/.local/share/nvim/theme.json"
+
 current_theme=$(grep import "$ALACRITTY_PATH"/theme.toml | sed 's/.*\///;s/\.toml.*//')
 
+# Alacritty and nvim use different names for some themes, so we translate before syncing.
+#   tokyonight_* -> tokyonight-* (alacritty uses underscores, nvim uses dashes)
+#   rose-pine -> rose-pine-moon (base variant has no nvim equivalent, moon is closest)
 new_theme=$(
     find "$ALACRITTY_THEME_DIR_PATH" -maxdepth 1 -type f -name '*.toml' -exec basename {} .toml \; \
     | sort \
     | fzf --tmux 60% \
-          --preview "alacritty-theme {} > /dev/null && bat --color=always \"$ALACRITTY_THEME_DIR_PATH\"/{}.toml"
+          --preview "
+            alacritty-theme {} > /dev/null 2>&1
+            _s=\$(echo {} | sed 's/tokyonight_/tokyonight-/; s/^rose-pine$/rose-pine-moon/')
+            case \"\$_s\" in
+              rose-pine-moon|rose-pine-dawn|\
+              catppuccin-latte|catppuccin-frappe|catppuccin-macchiato|catppuccin-mocha|\
+              nord|\
+              tokyonight-night|tokyonight-storm|tokyonight-day|tokyonight-moon)
+                printf '{\"colorscheme\":\"%s\"}' \"\$_s\" > \"$NVIM_STATE\";;
+            esac
+            bat --color=always \"$ALACRITTY_THEME_DIR_PATH\"/{}.toml
+          "
 )
 
+sync_nvim() {
+  _s=$(echo "$1" | sed 's/tokyonight_/tokyonight-/; s/^rose-pine$/rose-pine-moon/')
+  case "$_s" in
+    rose-pine-moon|rose-pine-dawn|\
+    catppuccin-latte|catppuccin-frappe|catppuccin-macchiato|catppuccin-mocha|\
+    nord|\
+    tokyonight-night|tokyonight-storm|tokyonight-day|tokyonight-moon)
+      printf '{"colorscheme":"%s"}' "$_s" > "$NVIM_STATE"
+      ;;
+  esac
+}
+
 if [ -z "$new_theme" ]; then
-  echo "Theme not selected."
   alacritty-theme "$current_theme"
+  sync_nvim "$current_theme"
   exit 1
 fi
 
 alacritty-theme "$new_theme"
+sync_nvim "$new_theme"

@@ -143,4 +143,14 @@ vim.api.nvim_create_autocmd("ColorScheme", {
 
 load_theme()
 
+-- Reload when alacritty-theme-select writes theme.json externally.
+local watcher = vim.uv.new_fs_event()
+if watcher then
+  watcher:start(state_file, {}, vim.schedule_wrap(function(err)
+    if not err then
+      load_theme()
+    end
+  end))
+end
+
 vim.keymap.set("n", "<leader>t", open_picker, { desc = "Theme picker" })
