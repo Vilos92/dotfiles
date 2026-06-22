@@ -25,6 +25,11 @@
       "src": "https://github.com/stevearc/conform.nvim",
       "version": "'dca1a190aa85f9065979ef35802fb77131911106'"
     },
+    "gitsigns.nvim": {
+      "rev": "2038c666bd9d8a0b7349a0b6ee00dc83104b9ecf",
+      "src": "https://github.com/lewis6991/gitsigns.nvim",
+      "version": "'2038c666bd9d8a0b7349a0b6ee00dc83104b9ecf'"
+    },
     "harpoon": {
       "rev": "1bc17e3e42ea3c46b33c0bbad6a880792692a1b3",
       "src": "https://github.com/ThePrimeagen/harpoon",

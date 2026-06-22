@@ -32,6 +32,11 @@ require("mini.starter").setup({
     },
     -- Oil
     { name = "Oil", action = ":Oil", section = "Explorer" },
+    {
+      name = "Git Changed Tabs",
+      action = ":lua require('greg.git').open_changed_tabs()",
+      section = "Explorer",
+    },
     -- Configuration
     { name = "Theme", action = ":Themery", section = "Config" },
     { name = "Pack Update", action = ":lua vim.pack.update()", section = "Config" },

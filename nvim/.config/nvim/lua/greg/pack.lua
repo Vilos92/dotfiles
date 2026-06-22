@@ -17,6 +17,11 @@ vim.api.nvim_create_autocmd("PackChanged", {
         pcall(vim.cmd, "TSUpdate")
       end)
     end
+    if name == "gitsigns.nvim" and (kind == "install" or kind == "update") then
+      vim.schedule(function()
+        pcall(require, "greg.gitsigns")
+      end)
+    end
   end,
 })
 
@@ -45,6 +50,7 @@ vim.pack.add({
   { src = gh("mbbill/undotree"), version = "6fa6b57cda8459e1e4b2ca34df702f55242f4e4d" },
   { src = gh("numToStr/Comment.nvim"), version = "e30b7f2008e52442154b66f7c519bfd2f1e32acb" },
   { src = gh("tpope/vim-fugitive"), version = "3b753cf8c6a4dcde6edee8827d464ba9b8c4a6f0" },
+  { src = gh("lewis6991/gitsigns.nvim"), version = "2038c666bd9d8a0b7349a0b6ee00dc83104b9ecf" },
 
   { src = gh("nvim-lualine/lualine.nvim"), version = "131a558e13f9f28b15cd235557150ccb23f89286" },
   { src = gh("echasnovski/mini.starter"), version = "7bdc9decc8b623f245c1e42a64bc41e61d574c5e" },
