@@ -50,7 +50,9 @@ local function load_theme()
     -- Migrate from themery's state file on first run.
     f = io.open(vim.fn.stdpath("data") .. "/themery/state.json", "r")
   end
-  if not f then return end
+  if not f then
+    return
+  end
   local content = f:read("*a")
   f:close()
   local ok, data = pcall(vim.fn.json_decode, content)
@@ -81,55 +83,57 @@ local function open_picker()
     end
   end
 
-  pickers.new({}, {
-    prompt_title = "Theme",
-    finder = finders.new_table({ results = themes }),
-    sorter = conf.generic_sorter({}),
-    attach_mappings = function(prompt_bufnr, map)
-      local function nav_next()
-        actions.move_selection_next(prompt_bufnr)
-        apply_selected()
-      end
+  pickers
+    .new({}, {
+      prompt_title = "Theme",
+      finder = finders.new_table({ results = themes }),
+      sorter = conf.generic_sorter({}),
+      attach_mappings = function(prompt_bufnr, map)
+        local function nav_next()
+          actions.move_selection_next(prompt_bufnr)
+          apply_selected()
+        end
 
-      local function nav_prev()
-        actions.move_selection_previous(prompt_bufnr)
-        apply_selected()
-      end
+        local function nav_prev()
+          actions.move_selection_previous(prompt_bufnr)
+          apply_selected()
+        end
 
-      local function confirm()
-        local sel = action_state.get_selected_entry()
-        actions.close(prompt_bufnr)
-        if sel then
-          pcall(vim.cmd, "colorscheme " .. sel.value)
-          save_theme(sel.value)
-        else
+        local function confirm()
+          local sel = action_state.get_selected_entry()
+          actions.close(prompt_bufnr)
+          if sel then
+            pcall(vim.cmd, "colorscheme " .. sel.value)
+            save_theme(sel.value)
+          else
+            restore()
+          end
+        end
+
+        local function cancel()
+          actions.close(prompt_bufnr)
           restore()
         end
-      end
 
-      local function cancel()
-        actions.close(prompt_bufnr)
-        restore()
-      end
+        map("i", "<C-n>", nav_next)
+        map("i", "<Down>", nav_next)
+        map("n", "j", nav_next)
+        map("n", "<Down>", nav_next)
+        map("i", "<C-p>", nav_prev)
+        map("i", "<Up>", nav_prev)
+        map("n", "k", nav_prev)
+        map("n", "<Up>", nav_prev)
+        map("i", "<CR>", confirm)
+        map("n", "<CR>", confirm)
+        map("i", "<Esc>", cancel)
+        map("n", "<Esc>", cancel)
+        map("i", "<C-c>", cancel)
+        map("n", "q", cancel)
 
-      map("i", "<C-n>", nav_next)
-      map("i", "<Down>", nav_next)
-      map("n", "j", nav_next)
-      map("n", "<Down>", nav_next)
-      map("i", "<C-p>", nav_prev)
-      map("i", "<Up>", nav_prev)
-      map("n", "k", nav_prev)
-      map("n", "<Up>", nav_prev)
-      map("i", "<CR>", confirm)
-      map("n", "<CR>", confirm)
-      map("i", "<Esc>", cancel)
-      map("n", "<Esc>", cancel)
-      map("i", "<C-c>", cancel)
-      map("n", "q", cancel)
-
-      return true
-    end,
-  }):find()
+        return true
+      end,
+    })
+    :find()
 end
 
 -- Expose for mini.starter and other callers.
@@ -146,11 +150,15 @@ load_theme()
 -- Reload when alacritty-theme-select writes theme.json externally.
 local watcher = vim.uv.new_fs_event()
 if watcher then
-  watcher:start(state_file, {}, vim.schedule_wrap(function(err)
-    if not err then
-      load_theme()
-    end
-  end))
+  watcher:start(
+    state_file,
+    {},
+    vim.schedule_wrap(function(err)
+      if not err then
+        load_theme()
+      end
+    end)
+  )
 end
 
 vim.keymap.set("n", "<leader>t", open_picker, { desc = "Theme picker" })

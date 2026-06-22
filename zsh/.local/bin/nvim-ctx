@@ -36,4 +36,14 @@ if [ -z "$socket" ]; then
   exit 1
 fi
 
-nvim --server "$socket" --remote-expr 'v:lua.NvimCtxJSON()'
+nvim --server "$socket" --remote-expr 'v:lua.NvimCtxJSON()' &
+_bg=$!
+( sleep 5; kill "$_bg" 2>/dev/null ) &
+_watcher=$!
+wait "$_bg"
+_exit=$?
+kill "$_watcher" 2>/dev/null
+if [ "$_exit" -ne 0 ]; then
+  printf 'nvim-ctx: timed out or failed connecting to nvim socket\n' >&2
+  exit 1
+fi
