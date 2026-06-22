@@ -35,5 +35,15 @@ transparent.setup({
   extra_groups = {
     "NormalFloat", -- float panels (Mason, LspInfo, etc.)
   },
-  exclude_groups = {},
+  exclude_groups = {
+    "GitSignsAdd",
+    "GitSignsChange",
+    "GitSignsDelete",
+    "GitSignsAddNr",
+    "GitSignsChangeNr",
+    "GitSignsDeleteNr",
+    "GitSignsAddLn",
+    "GitSignsChangeLn",
+    "GitSignsDeleteLn",
+  },
 })
