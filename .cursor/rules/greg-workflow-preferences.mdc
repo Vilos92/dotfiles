@@ -1,5 +1,5 @@
 ---
-description: Preferred CLI tools (fd, rg, bat, …), git conventions, fff, and dex task tracking workflow
+description: Workflow preferences for CLI tools, git, and task tracking
 alwaysApply: true
 ---
 
