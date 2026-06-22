@@ -13,6 +13,8 @@ local eslint_config_files = {
   ".eslintrc.js",
   ".eslintrc.json",
   ".eslintrc.cjs",
+  ".eslintrc.yaml",
+  ".eslintrc.yml",
 }
 
 local sources = {

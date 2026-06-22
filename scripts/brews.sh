@@ -190,7 +190,7 @@ install_python_dev_packages() {
 
 # JavaScript/Node.js developement.
 install_javascript_packages() {
-  prompt_and_install_shell "JavaScript packages" 'brew install fnm oven-sh/bun/bun pnpm fsouza/prettierd/prettierd && fnm install 22 && npm install -g eslint_d@15 typescript-language-server typescript'
+  prompt_and_install_shell "JavaScript packages" 'brew install fnm oven-sh/bun/bun pnpm && fnm install --lts && fnm default lts-latest && eval "$(fnm env)" && npm install -g @fsouza/prettierd eslint_d@15 typescript-language-server typescript'
 }
 
 # Gleam.

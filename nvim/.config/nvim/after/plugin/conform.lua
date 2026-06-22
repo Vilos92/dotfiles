@@ -56,8 +56,8 @@ local function js_ts_formatters(bufnr)
     return { "vp_fmt", lsp_format = "never", timeout_ms = 5000 }
   end
 
-  -- Prefer project prettier (MilkTea, etc.). stop_after_first + prettierd breaks when
-  -- the brew prettierd shebang points at a removed Homebrew node (fnm setups).
+  -- Prefer project prettier (MilkTea, etc.). Global prettierd comes from fnm/npm, not
+  -- brew — Homebrew prettierd shebangs break once node lives under fnm.
   local root = js_ts_root(bufnr)
   if root and has_local_prettier(root) then
     return { "prettier", lsp_format = "never" }

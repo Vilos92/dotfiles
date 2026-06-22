@@ -30,11 +30,13 @@ function M.is_project(bufnr)
     end
   end
 
-  local vite_config = root .. "/vite.config.ts"
-  if vim.fn.filereadable(vite_config) == 1 then
-    for _, line in ipairs(vim.fn.readfile(vite_config)) do
-      if line:find("vite%-plus") then
-        return true
+  for _, filename in ipairs({ "vite.config.ts", "vite.config.mts" }) do
+    local vite_config = root .. "/" .. filename
+    if vim.fn.filereadable(vite_config) == 1 then
+      for _, line in ipairs(vim.fn.readfile(vite_config)) do
+        if line:find("vite%-plus") then
+          return true
+        end
       end
     end
   end
