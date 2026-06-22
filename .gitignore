@@ -7,6 +7,7 @@ alacritty/.config/alacritty/theme.toml
 # Python
 __pycache__/
 
-# Claude Code runtime (not the stow package under claude/)
+# Claude Code runtime (not the stow packages)
 .claude/
-!claude/.claude/
+!claude-md/.claude/
+!claude-settings/.claude/
