@@ -1,0 +1,39 @@
+#!/bin/sh
+
+session=$1
+
+if [ -n "$session" ]; then
+  pane_id=$(tmux list-panes -t "$session" -F '#{pane_id} #{pane_current_command}' 2>/dev/null | awk '/nvim/{print $1; exit}')
+else
+  pane_id=$(tmux list-panes -s -F '#{pane_id} #{pane_current_command}' 2>/dev/null | awk '/nvim/{print $1; exit}')
+fi
+
+if [ -z "$pane_id" ]; then
+  printf 'nvim-ctx: no nvim pane found\n' >&2
+  exit 1
+fi
+
+pane_pid=$(tmux display-message -t "$pane_id" -p '#{pane_pid}')
+nvim_pid=$(pgrep -P "$pane_pid" -x nvim 2>/dev/null | head -1)
+[ -z "$nvim_pid" ] && nvim_pid=$pane_pid
+
+# Verify the found process is actually nvim (pane_current_command can lag after exit)
+cmd=$(ps -o comm= -p "$nvim_pid" 2>/dev/null)
+if [ "$cmd" != "nvim" ]; then
+  printf 'nvim-ctx: nvim is not running\n' >&2
+  exit 1
+fi
+
+# nvim forks a server child — search direct child and its children for the socket
+socket=
+for pid in "$nvim_pid" $(pgrep -P "$nvim_pid" 2>/dev/null); do
+  socket=$(find /var/folders -path "*/T/nvim.$(id -un)/*" -name "nvim.${pid}.*" 2>/dev/null | head -1)
+  [ -n "$socket" ] && break
+done
+
+if [ -z "$socket" ]; then
+  printf 'nvim-ctx: no socket found for nvim pid %s\n' "$nvim_pid" >&2
+  exit 1
+fi
+
+nvim --server "$socket" --remote-expr 'v:lua.NvimCtxJSON()'

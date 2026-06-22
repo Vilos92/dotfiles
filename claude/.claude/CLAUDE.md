@@ -17,6 +17,8 @@ Assume these are installed on my machine. **Use them first** when proposing or r
 
 **Indexed / fast repo search:** Where the environment exposes **fff** (e.g. MCP server, editor integration, or project tooling), prefer **fff** for search and file discovery over long chains of generic grep/find when it reduces noise and round-trips.
 
+**Neovim context (`nvim-ctx`):** When the user mentions code they're looking at in nvim, references their neovim screen, or asks about something open in their editor — run `nvim-ctx` proactively before responding. Don't ask them to paste; fetch it yourself. It outputs JSON with `file`, `start_line`, `end_line`, and `text` (selection if active, whole buffer otherwise). Takes an optional session name: `nvim-ctx [session]`. If it fails, say so briefly and ask the user to paste instead.
+
 If something is missing in a given environment, fall back to standard tools and note it briefly.
 
 **Scope:** These preferences target everyday repo work (search, navigation, diffs). One-off diagnostics (**`dex dir`**, **`ls`** on a known path, **`head`**/**`cat`** on a single file) do not need to be forced through **`fd`**/**`rg`**/**`eza`** when that only adds friction.

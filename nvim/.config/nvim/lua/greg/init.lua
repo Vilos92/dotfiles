@@ -1,4 +1,5 @@
 require("greg.remap")
+require("greg.ctx")
 
 if vim.g.vscode then
   return
