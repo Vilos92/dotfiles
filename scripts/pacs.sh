@@ -112,8 +112,10 @@ install_lua_packages() {
 install_javascript_packages() {
   prompt_and_install "JavaScript packages" 'pacman -S nodejs npm &&\
     npm install -g fnm &&\
-    fnm install 22 &&\
-    npm install -g eslint_d\
+    fnm install --lts &&\
+    fnm default lts-latest &&\
+    eval "$(fnm env)" &&\
+    npm install -g @fsouza/prettierd eslint_d@15\
       typescript-language-server\
       typescript'
 }
