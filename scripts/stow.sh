@@ -53,8 +53,11 @@ prompt_and_stow arch
 # dex task tracking for agents.
 prompt_and_stow dex
 
-# Claude Code user config (skills, CLAUDE.md). Work-laptop settings live in front.
-prompt_and_stow claude
+# Claude Code CLAUDE.md and skills (stow everywhere).
+prompt_and_stow claude-md
+
+# Claude Code base settings (stow on non-front machines; front has its own superset).
+prompt_and_stow claude-settings
 
 # Cursor user config.
 prompt_and_stow cursor
