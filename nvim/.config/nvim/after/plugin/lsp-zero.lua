@@ -3,37 +3,16 @@ if vim.g.vscode then
 end
 
 local lsp = require("lsp-zero")
-
-lsp.preset("recommended")
-
--- NOTE: `ts_ls` and `rust_analyzer` are auto-configured by `lsp-zero` with `mason-lspconfig`.
--- We only need to configure `lua_ls` with custom settings after `lsp.setup()`.
-
 local cmp = require("cmp")
-local cmp_select = { behavior = cmp.SelectBehavior.Select }
-local cmp_mappings = lsp.defaults.cmp_mappings({
-  ["<C-p>"] = cmp.mapping.select_prev_item(cmp_select),
-  ["<C-n>"] = cmp.mapping.select_next_item(cmp_select),
-  ["<C-y>"] = cmp.mapping.confirm({ select = true }),
-  ["<C-Space>"] = cmp.mapping.complete(),
+
+lsp.set_sign_icons({
+  error = "E",
+  warn = "W",
+  hint = "H",
+  info = "I",
 })
 
-cmp_mappings["<Tab>"] = nil
-cmp_mappings["<S-Tab>"] = nil
-
-lsp.default_keymaps(cmp_mappings)
-
-lsp.set_preferences({
-  suggest_lsp_servers = false,
-  sign_icons = {
-    error = "E",
-    warn = "W",
-    hint = "H",
-    info = "I",
-  },
-})
-
-lsp.on_attach(function(client, bufnr)
+lsp.on_attach(function(_client, bufnr)
   local opts = { buffer = bufnr, remap = false }
 
   vim.keymap.set("n", "gd", function()
@@ -70,7 +49,34 @@ lsp.on_attach(function(client, bufnr)
   end, vim.tbl_extend("force", opts, { desc = "Signature help" }))
 end)
 
-lsp.setup()
+lsp.extend_lspconfig({
+  capabilities = require("cmp_nvim_lsp").default_capabilities(),
+})
+
+require("mason").setup({})
+require("mason-lspconfig").setup({
+  ensure_installed = { "lua_ls", "rust_analyzer", "ts_ls" },
+  handlers = {
+    -- lua_ls is enabled via native vim.lsp below; mason only installs the binary.
+    lua_ls = function() end,
+    function(server_name)
+      require("lspconfig")[server_name].setup({})
+    end,
+  },
+})
+
+local cmp_select = { behavior = cmp.SelectBehavior.Select }
+cmp.setup({
+  sources = {
+    { name = "nvim_lsp" },
+  },
+  mapping = cmp.mapping.preset.insert({
+    ["<C-p>"] = cmp.mapping.select_prev_item(cmp_select),
+    ["<C-n>"] = cmp.mapping.select_next_item(cmp_select),
+    ["<C-y>"] = cmp.mapping.confirm({ select = true }),
+    ["<C-Space>"] = cmp.mapping.complete(),
+  }),
+})
 
 vim.lsp.config("lua_ls", {
   settings = {
