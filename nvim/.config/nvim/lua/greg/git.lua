@@ -68,6 +68,23 @@ function M.changed_files()
   return files, root
 end
 
+---@param tabnr integer
+---@return boolean
+local function is_starter_tab(tabnr)
+  local tabpage = vim.api.nvim_list_tabpages()[tabnr]
+  if not tabpage then
+    return false
+  end
+
+  for _, win in ipairs(vim.api.nvim_tabpage_list_wins(tabpage)) do
+    if vim.bo[vim.api.nvim_win_get_buf(win)].filetype == "ministarter" then
+      return true
+    end
+  end
+
+  return false
+end
+
 function M.open_changed_tabs()
   local files, root = M.changed_files()
   if not root then
@@ -80,6 +97,7 @@ function M.open_changed_tabs()
   end
 
   local home_tab = vim.fn.tabpagenr()
+  local first_changed_tab = home_tab + 1
   local opened = 0
   for _, rel in ipairs(files) do
     local path = vim.fs.joinpath(root, rel)
@@ -87,8 +105,12 @@ function M.open_changed_tabs()
     opened = opened + 1
   end
 
-  vim.cmd.tabclose(home_tab)
-  vim.cmd.tabfirst()
+  local closed_starter = false
+  if is_starter_tab(home_tab) then
+    closed_starter = pcall(vim.cmd.tabclose, home_tab)
+  end
+
+  vim.cmd.tabn(closed_starter and home_tab or first_changed_tab)
   vim.notify(("GitChangedTabs: opened %d file(s)"):format(opened), vim.log.levels.INFO)
 end
 
