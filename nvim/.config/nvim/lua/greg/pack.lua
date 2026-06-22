@@ -61,7 +61,6 @@ vim.pack.add({
   { src = gh("nvim-telescope/telescope.nvim"), version = "master" },
   { src = gh("ThePrimeagen/harpoon"), version = "master" },
 
-  { src = gh("zaldih/themery.nvim"), version = "main" },
   { src = gh("xiyaowong/nvim-transparent"), version = "main" },
 
   { src = gh("rose-pine/neovim"), name = "rose-pine", version = "main" },

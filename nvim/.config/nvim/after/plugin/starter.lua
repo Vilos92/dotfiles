@@ -38,7 +38,7 @@ require("mini.starter").setup({
       section = "Explorer",
     },
     -- Configuration
-    { name = "Theme", action = ":Themery", section = "Config" },
+    { name = "Theme", action = ":lua vim.g.theme_picker()", section = "Config" },
     { name = "Pack Update", action = ":lua vim.pack.update()", section = "Config" },
     { name = "Check Health", action = ":checkhealth", section = "Config" },
     -- Neovim
