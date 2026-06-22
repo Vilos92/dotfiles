@@ -311,6 +311,7 @@ install_ai_packages() {
   prompt_and_install "draw-things" brew install --cask draw-things
   prompt_and_install "claude" brew install --cask claude
   prompt_and_install "google gemini" brew install --cask google-gemini
+  prompt_and_install "gemini-cli" brew install gemini-cli
 }
 
 # Install Kiwix for offline Wikipedia access.
