@@ -14,7 +14,7 @@ if [ -z "$pane_id" ]; then
 fi
 
 pane_pid=$(tmux display-message -t "$pane_id" -p '#{pane_pid}')
-nvim_pid=$(pgrep -P "$pane_pid" 2>/dev/null | head -1)
+nvim_pid=$(pgrep -P "$pane_pid" -x nvim 2>/dev/null | head -1)
 [ -z "$nvim_pid" ] && nvim_pid=$pane_pid
 
 # Verify the found process is actually nvim (pane_current_command can lag after exit)
