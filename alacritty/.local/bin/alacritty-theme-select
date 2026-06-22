@@ -32,7 +32,8 @@ sync_nvim() {
     catppuccin-latte|catppuccin-frappe|catppuccin-macchiato|catppuccin-mocha|\
     nord|\
     tokyonight-night|tokyonight-storm|tokyonight-day|tokyonight-moon)
-      printf '{"colorscheme":"%s"}' "$_s" > "$NVIM_STATE"
+      _tmp=$(mktemp "${NVIM_STATE}.XXXXXX")
+      printf '{"colorscheme":"%s"}' "$_s" > "$_tmp" && mv "$_tmp" "$NVIM_STATE"
       ;;
   esac
 }
