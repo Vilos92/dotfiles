@@ -31,7 +31,7 @@ vim.pack.add({
 
   { src = gh("williamboman/mason.nvim"), version = "cb8445f8ce85d957416c106b780efd51c6298f89" },
   { src = gh("williamboman/mason-lspconfig.nvim"), version = "0c2823e0418f3d9230ff8b201c976e84de1cb401" },
-  { src = gh("neovim/nvim-lspconfig"), version = "31026a13eefb20681124706a79fc1df6bf11ab27" },
+  { src = gh("neovim/nvim-lspconfig"), version = "bfcc0171a43f22afa61d927ffe9fcb6cb85dc99e" },
   { src = gh("hrsh7th/nvim-cmp"), version = "a1d504892f2bc56c2e79b65c6faded2fd21f3eca" },
   { src = gh("hrsh7th/cmp-nvim-lsp"), version = "cbc7b02bb99fae35cb42f514762b89b5126651ef" },
   { src = gh("L3MON4D3/LuaSnip"), version = "a62e1083a3cfe8b6b206e7d3d33a51091df25357" },
