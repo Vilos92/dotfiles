@@ -1,5 +1,19 @@
 {
+  "permissions": {
+    "allow": [
+      "Bash(nvim-ctx *)",
+      "Bash(rg *)",
+      "Bash(grep -E \"\\\\.ts$\")",
+      "Bash(gh api *)",
+      "WebSearch",
+      "Bash(vp check *)",
+      "WebFetch(domain:github.com)",
+      "Bash(dex *)"
+    ],
+    "defaultMode": "auto"
+  },
   "enabledPlugins": {
-    "lua-lsp@claude-plugins-official": true
+    "lua-lsp@claude-plugins-official": true,
+    "typescript-lsp@claude-plugins-official": true
   }
 }
