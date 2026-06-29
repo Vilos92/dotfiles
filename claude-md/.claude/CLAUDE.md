@@ -25,6 +25,20 @@ If something is missing in a given environment, fall back to standard tools and 
 
 ---
 
+## Delegating to subagents
+
+Don't hesitate to spawn a subagent. Whenever you have well-founded confidence that a piece of work is **well-scoped** and matches a subagent's capabilities, hand it off — that's the default, not a last resort. The goal is to keep the main thread focused on the hard thinking while delegated workers grind through the clearly-defined parts.
+
+**Pick the model to match the work:**
+
+- **Opus** — broad or fuzzy work: larger planning, architecture, ambiguous problems, anything where judgment and tradeoffs matter. I'll usually be working with Opus directly for this kind of thing, so reserve subagent-Opus for when a delegated task genuinely carries that weight.
+- **Sonnet** — the **default worker**. A strong, capable generalist for ordinary implementation tasks that are scoped but still need real reasoning. When in doubt, this is the pick.
+- **Haiku** — tightly-defined mechanical work where the instructions fully specify the outcome: "replace all of these with that," "clean this up," bulk renames, formatting, file moves, rote find-and-replace. Fast and cheap for work that needs little judgment.
+
+**Don't silently mis-size.** If a task feels too small to be worth a Sonnet, drop to Haiku; if a "simple" task turns out to carry real ambiguity or architectural stakes, flag it rather than pushing an underpowered worker at it. Match the model to the actual shape of the work.
+
+---
+
 ## Progress tracking with dex
 
 [**dex**](https://dex.rip/) is a local-first task and milestone tracker.
