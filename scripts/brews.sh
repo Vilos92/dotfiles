@@ -119,6 +119,9 @@ install_host_packages() {
 
   # install plex media server to stream my content to my devices.
   prompt_and_install "plex-server" brew install --cask plex-media-server
+
+  # install flyctl to deploy and manage apps on Fly.io.
+  prompt_and_install "flyctl" brew install flyctl
 }
 
 # Rclone.
