@@ -126,6 +126,8 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **freshrss:** RSS reader (port 49153) - https://freshrss.greglinscheid.com
 - **kiwix:** Offline content server (port 8473) - https://kiwix.greglinscheid.com
 - **transmission:** Torrent client (port 9091)
+- **prowlarr:** Indexer search (Tailscale :9009)
+- **hermes:** Hermes Agent dashboard (Tailscale :9010) — data under GregZone Vault/hermes
 - **minecraft:** Minecraft Bedrock server (port 19132/udp)
 
 **Monitoring Stack:**
@@ -164,14 +166,15 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 ### Service Dependencies
 
 - External drive: `/Volumes/T7/Vaults` (required for copyparty, kiwix) - T7 is now the main data hub
-- Wokyis M.2 SSD: `/Volumes/Wokyis M.2 SSD - Storage/Vaults` (required for copyparty, freshrss, transmission, minecraft)
-  - GregZone Vault: Contains freshrss, transmission, minecraft data
+- Wokyis M.2 SSD: `/Volumes/Wokyis M.2 SSD - Storage/Vaults` (required for copyparty, freshrss, transmission, minecraft, hermes)
+  - GregZone Vault: Contains freshrss, transmission, minecraft, hermes data
   - Hobby Vault: Contains llm models and music production files
 - Environment variables (in `greg-zone/.env`):
   - `COPYPARTY_CLOUDFLARED_TOKEN` (required for copyparty)
   - `TAILSCALE_AUTH_KEY` (required for Tailscale)
   - `TRANSMISSION_PASSWORD` (required for Transmission)
   - `GRAFANA_PASSWORD` (required for Grafana)
+  - `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` / `PASSWORD` / `SECRET` (required for Hermes dashboard)
   - `DISCORD_*_WEBHOOK_URL` (various Discord webhooks)
   - `ALERT_MONITOR_SECRET` (required for alert monitors)
   - `INFRA_REDIS_PASSWORD` (required for Redis)
