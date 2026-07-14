@@ -162,7 +162,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **infra-redis-commander:** Redis management UI (port 8084)
 - **playit:** Minecraft server tunneling
 - **minecraft-backup:** Automated Minecraft backups
-- **Native macOS GitHub Actions runners:** host launchd agents for `Vilos92/scriptlancer` (`github-runners/`, label `greg-zone`) — not Docker
+- **github-runner-{1..6}:** Self-hosted GitHub Actions runners (Linux arm64 compose, label `greg-zone`; scriptlancer builds webtransport linux-arm64 napi in the test job)
 
 ### Service Dependencies
 
@@ -180,7 +180,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
   - `ALERT_MONITOR_SECRET` (required for alert monitors)
   - `INFRA_REDIS_PASSWORD` (required for Redis)
   - `PLAYIT_SECRET_KEY` (required for Playit)
-  - `GITHUB_RUNNER_ACCESS_TOKEN` (native macOS scriptlancer runners via `github-runners/setup.sh`; fine-grained PAT with Administration: Read and write)
+  - `GITHUB_RUNNER_ACCESS_TOKEN` (compose scriptlancer runners; fine-grained PAT with Administration: Read and write)
 
 ## CLI Tools Available
 
