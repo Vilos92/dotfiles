@@ -114,7 +114,10 @@ install_host_packages() {
   # install cloudflared to allow exposing the copyparty instance.
   prompt_and_install "cloudflared" brew install cloudflared
 
-  # install copy party so it's available to use directly via calling 'copyparty'.
+  # install ngrok to expose local services via secure tunnels.
+  prompt_and_install "ngrok" brew install --cask ngrok
+
+  # install copyparty so it's available to use directly via calling 'copyparty'.
   prompt_and_install_shell "copyparty" 'command -v python3 >/dev/null || { echo "python3 not found (install it first)"; exit 1; }; python3 -m pip install --user copyparty'
 
   # install plex media server to stream my content to my devices.
