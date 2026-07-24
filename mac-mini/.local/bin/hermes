@@ -1,0 +1,15 @@
+#!/bin/sh
+
+# Open the Hermes TUI inside a persistent tmux session named "hermes".
+# Idempotent: creates the session running the TUI, or attaches if it exists.
+# Detach (tmux prefix + d) to leave the TUI running across ssh disconnects.
+# The hermes service itself runs in the container either way - the TUI is
+# just a client, so closing it never stops the service.
+
+if ! docker ps --format '{{.Names}}' | grep -qx 'hermes'; then
+    echo "Error: hermes container is not running."
+    echo "Start it with: docker-services.sh up hermes (in greg-zone/)"
+    exit 1
+fi
+
+exec attach-tmux-session hermes "" "docker exec -it hermes hermes --tui"

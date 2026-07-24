@@ -34,7 +34,7 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 
 **Available Commands:**
 
-- **mac-mini:** `gbackup-lacie`, `gbackup-t7`, `gllama`
+- **mac-mini:** `gbackup-lacie`, `gbackup-t7`, `gllama`, `hermes` (opens the Hermes TUI in a persistent tmux session named `hermes`)
 - **alacritty:** `alacritty-theme`, `alacritty-theme-select`
 - **tmux:** `attach-tmux-session`, `gmux`
 - **zsh:** `compress-video-hevc`, `download-media`, `fuzzy-find`, `fuzzy-ripgrep`, `remux-video`
@@ -83,6 +83,7 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 
 - `ssh-sparkify` → SSH to Digital Ocean droplet
 - `ssh-mini` → SSH to Mac Mini (requires Tailscale)
+- `ssh-mini-hermes` → SSH to Mac Mini and attach the persistent Hermes TUI tmux session (detach with tmux prefix + d; survives disconnects)
 
 **Utilities:**
 
