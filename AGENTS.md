@@ -16,7 +16,7 @@ This repository uses GNU Stow for dotfile management. Run `scripts/stow.sh` to i
 - `nvim/` - Neovim editor config
 - `vim/` - Vim editor config
 - `git/` - Git configuration
-- `claude/` - Claude Code config (`~/.claude`: skills, settings, CLAUDE.md)
+- `claude-md/` - Claude Code config (`~/.claude`: skills, settings, CLAUDE.md)
 - `remote/` - Remote server connection configs
 - `mac-mini/` - Mac Mini specific configurations
 - `front/` - Work laptop specific configurations (symlinked submodule)
@@ -130,6 +130,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **prowlarr:** Indexer search (Tailscale :9009)
 - **hermes:** Hermes Agent dashboard (Tailscale :9010) — data under GregZone Vault/hermes
 - **minecraft:** Minecraft Bedrock server (port 19132/udp)
+- **sparkify:** Slack/Spotify bot (no ports — Socket Mode, outbound only). Submodule at `greg-zone/sparkify`; see its `AGENTS.md`, and the `spotify-refresh-token` skill there for rotating `SPOTIFY_REFRESH_TOKEN`. Only ever run one instance, or Slack replies double.
 
 **Monitoring Stack:**
 
