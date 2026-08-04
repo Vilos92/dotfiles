@@ -43,15 +43,20 @@ echo "Running Prettier on JavaScript/JSX files..."
 # Show which files will be checked
 echo "JavaScript/JSX files to check:"
 js_files=$(find . -type f \( -name '*.js' -o -name '*.jsx' -o -name '*.mjs' \) -not -path './.git/*' -not -path '*/node_modules/*' 2>/dev/null | sort)
-file_count=$(echo "$js_files" | grep -c . || echo "0")
-if [ "$file_count" -gt 0 ] && [ "$file_count" != "0" ]; then
+if [ -n "$js_files" ]; then
     echo "$js_files" | sed 's/^/  /'
     echo ""
-    echo "Found $file_count JavaScript/JSX file(s) to check"
+    echo "Found $(echo "$js_files" | grep -c .) JavaScript/JSX file(s) to check"
 else
     echo "  (no JavaScript/JSX files found)"
 fi
 echo ""
+
+# prettier exits 2 on an unmatched pattern, so bail before invoking it.
+if [ -z "$js_files" ]; then
+    echo "Nothing to check."
+    exit 0
+fi
 
 # Let prettier expand the glob itself. Passing the find output above would break
 # on the JSX paths containing spaces and non-ASCII.
