@@ -122,6 +122,42 @@ Don't ask for trivial one-offs, quick lookups, or single-file edits.
 
 ---
 
+## GitHub stacked PRs (use the native feature)
+
+**The rule:** whenever work forms a chain of dependent branches — branch A targeting `main`, branch B targeting A, C targeting B — **always use GitHub's native stacked pull requests**, never ad-hoc chained PRs or manual base-branch juggling. The trigger is simple: if you're about to open a PR whose base is another open PR's branch, make it a native stack instead. Independent changes are not a stack — keep those as separate PRs against `main`.
+
+**Tooling:** the official `gh-stack` extension (requires GitHub CLI v2.0+):
+
+```sh
+gh extension install github/gh-stack   # one-time setup
+gh skill install github/gh-stack      # agent skill: install when doing heavy stack work
+```
+
+**Core workflow:**
+
+```sh
+gh stack init            # start a stack; names the bottom branch
+gh stack add <branch>    # new branch on top of the current layer (-Am "msg" stages + commits too)
+gh stack submit          # push all branches and create/update PRs with correct bases + stack link
+gh stack view            # branches, PR links, statuses across the stack
+gh stack sync            # fetch, cascading rebase, push, sync PR state — one command
+gh stack merge           # merge one or multiple layers
+gh stack link            # adopt existing branches/PR chains into a native stack
+```
+
+**Semantics to respect (don't fight them manually):**
+
+- Stacks merge **bottom-to-top**. Merging a mid-stack PR also merges everything below it in one operation. The PRs above stay open, **auto-retarget** to the trunk, and GitHub **automatically rebases** the next unmerged PR server-side — never hand-edit the base branch of a stacked PR. Your **local** branches don't follow along, though: run `gh stack sync` after a merge to pull down the rewritten branches — with `--prune` to delete local branches for merged PRs, since the default prompts interactively.
+- **Other drift is NOT auto-rebased.** If the trunk moves ahead or you push changes to a lower layer, the stack goes non-linear and merging is blocked until you explicitly rebase: the **Rebase stack** button in the merge box (server-side), or locally `gh stack rebase --upstack` after amending a lower layer / `gh stack rebase` for trunk drift. Don't hand-`git rebase` each branch in the chain.
+- Branch protection and CI requirements come from the **bottom PR's base branch** and apply to every layer.
+- Public-preview limits: all branches must live in the **same repository** (no cross-fork stacks), and programmatic merges must go through `gh stack merge` / the new merge API — not the classic merge endpoint.
+
+**Adopting an existing chain:** if a traditional stack already exists (PRs manually chained by base branch), `gh stack link` creates or updates the stack on GitHub from branch names or PR numbers — remote linking only; it stores no local tracking state. To also manage the chain locally (`rebase`, `sync`), set up tracking with `gh stack init` / `gh stack checkout`.
+
+**Fallback:** if `gh-stack` truly isn't available (old `gh`, extensions blocked), note that briefly, then fall back to manually chained PRs with explicit bases and a "depends on #N" note in each PR description — but treat this as the exception, not a preference.
+
+---
+
 ## Checking Woodpecker CI failures (greg-zone)
 
 Greg's personal repos — those under the **`Vilos92`** GitHub user (e.g. `Vilos92/dotfiles`, `Vilos92/scriptlancer`) — run CI on a self-hosted **Woodpecker** instance at **`http://greg-zone:9011`** (Tailscale-only). GitHub shows a single status per pipeline (e.g. **`ci/woodpecker/pr/woodpecker`**) with **no logs behind it**—the per-step results and logs live in Woodpecker. When a PR's Woodpecker check fails, fetch the failure yourself instead of asking for a paste.
