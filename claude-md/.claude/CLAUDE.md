@@ -126,7 +126,7 @@ Don't ask for trivial one-offs, quick lookups, or single-file edits.
 
 **The rule:** whenever work forms a chain of dependent branches — branch A targeting `main`, branch B targeting A, C targeting B — **always use GitHub's native stacked pull requests**, never ad-hoc chained PRs or manual base-branch juggling. The trigger is simple: if you're about to open a PR whose base is another open PR's branch, make it a native stack instead. Independent changes are not a stack — keep those as separate PRs against `main`.
 
-**Tooling:** the official `gh-stack` extension (needs GitHub CLI ≥ 2.90.0, Git ≥ 2.20):
+**Tooling:** the official `gh-stack` extension (requires GitHub CLI v2.0+):
 
 ```sh
 gh extension install github/gh-stack   # one-time setup
@@ -147,12 +147,12 @@ gh stack link            # adopt existing branches/PR chains into a native stack
 
 **Semantics to respect (don't fight them manually):**
 
-- Stacks merge **bottom-to-top**. Merging a mid-stack PR also merges everything below it in one operation. The PRs above stay open, **auto-retarget** to the trunk, and GitHub **automatically rebases** the next unmerged PR server-side — never hand-edit the base branch of a stacked PR. Your **local** branches don't follow along, though: run `gh stack sync` after a merge to pull down the rewritten branches and prune merged ones.
+- Stacks merge **bottom-to-top**. Merging a mid-stack PR also merges everything below it in one operation. The PRs above stay open, **auto-retarget** to the trunk, and GitHub **automatically rebases** the next unmerged PR server-side — never hand-edit the base branch of a stacked PR. Your **local** branches don't follow along, though: run `gh stack sync` after a merge to pull down the rewritten branches — with `--prune` to delete local branches for merged PRs, since the default prompts interactively.
 - **Other drift is NOT auto-rebased.** If the trunk moves ahead or you push changes to a lower layer, the stack goes non-linear and merging is blocked until you explicitly rebase: the **Rebase stack** button in the merge box (server-side), or locally `gh stack rebase --upstack` after amending a lower layer / `gh stack rebase` for trunk drift. Don't hand-`git rebase` each branch in the chain.
 - Branch protection and CI requirements come from the **bottom PR's base branch** and apply to every layer.
 - Public-preview limits: all branches must live in the **same repository** (no cross-fork stacks), and programmatic merges must go through `gh stack merge` / the new merge API — not the classic merge endpoint.
 
-**Adopting an existing chain:** if a traditional stack already exists (PRs manually chained by base branch), convert it with `gh stack link` instead of continuing to manage it by hand.
+**Adopting an existing chain:** if a traditional stack already exists (PRs manually chained by base branch), `gh stack link` creates or updates the stack on GitHub from branch names or PR numbers — remote linking only; it stores no local tracking state. To also manage the chain locally (`rebase`, `sync`), set up tracking with `gh stack init` / `gh stack checkout`.
 
 **Fallback:** if `gh-stack` truly isn't available (old `gh`, extensions blocked), note that briefly, then fall back to manually chained PRs with explicit bases and a "depends on #N" note in each PR description — but treat this as the exception, not a preference.
 
