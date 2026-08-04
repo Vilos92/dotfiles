@@ -7,10 +7,7 @@ reviews:
   review_status: true
   review_details: false
   auto_review:
-    # Unlike scriptlancer, dotfiles keeps automatic reviews on — CodeRabbit
-    # already reviews every PR here and that behavior should survive adopting
-    # this config.
-    enabled: true
+    enabled: false
     drafts: false
 chat:
   auto_reply: true
