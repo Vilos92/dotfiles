@@ -124,7 +124,7 @@ Don't ask for trivial one-offs, quick lookups, or single-file edits.
 
 ## Checking Woodpecker CI failures (greg-zone)
 
-Greg's personal repos (e.g. `dotfiles`, `scriptlancer`) run CI on a self-hosted **Woodpecker** instance at **`http://greg-zone:9011`** (Tailscale-only). GitHub shows a single status per pipeline (e.g. **`ci/woodpecker/pr/woodpecker`**) with **no logs behind it**—the per-step results and logs live in Woodpecker. When a PR's Woodpecker check fails, fetch the failure yourself instead of asking for a paste.
+Greg's personal repos — those under the **`Vilos92`** GitHub user (e.g. `Vilos92/dotfiles`, `Vilos92/scriptlancer`) — run CI on a self-hosted **Woodpecker** instance at **`http://greg-zone:9011`** (Tailscale-only). GitHub shows a single status per pipeline (e.g. **`ci/woodpecker/pr/woodpecker`**) with **no logs behind it**—the per-step results and logs live in Woodpecker. When a PR's Woodpecker check fails, fetch the failure yourself instead of asking for a paste.
 
 **Reachability first:** the API only resolves from the tailnet. Projects are public-visibility there, so reads need **no token**. If the health check fails, note it briefly and fall back to asking the user—don't block.
 
