@@ -164,7 +164,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **infra-redis-commander:** Redis management UI (port 8084)
 - **playit:** Minecraft server tunneling
 - **minecraft-backup:** Automated Minecraft backups
-- **github-runner-{1..6}:** Self-hosted GitHub Actions runners (Linux arm64 compose, label `greg-zone`; scriptlancer builds webtransport linux-arm64 napi in the test job)
+- **woodpecker-server / woodpecker-agent:** Woodpecker CI (UI Tailscale-only at :9011; one instance serves any GitHub repo via per-repo opt-in in the UI). GitHub login uses a classic OAuth app (callback `http://greg-zone:9011/authorize`); webhooks arrive publicly at https://woodpecker.greglinscheid.com/api/hook through the Cloudflare tunnel (all other paths refused). Agent runs pipeline steps as containers via the Docker socket — keep repos "untrusted" in Woodpecker unless privileged features are needed. Metrics scraped by Prometheus on internal port 9001. Pipeline step images that need extra tools are built locally on the Mini under `greg-zone/ci/` (e.g. `greg-zone/bun-git`, oven/bun + git) — they exist only in the host Docker daemon, so rebuild them after a `docker system prune -a` (see each Dockerfile).
 
 ### Service Dependencies
 
@@ -182,7 +182,8 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
   - `ALERT_MONITOR_SECRET` (required for alert monitors)
   - `INFRA_REDIS_PASSWORD` (required for Redis)
   - `PLAYIT_SECRET_KEY` (required for Playit)
-  - `GITHUB_RUNNER_ACCESS_TOKEN` (compose scriptlancer runners; fine-grained PAT with Administration: Read and write)
+  - `WOODPECKER_GITHUB_CLIENT` / `WOODPECKER_GITHUB_SECRET` (classic GitHub OAuth app for Woodpecker CI login)
+  - `WOODPECKER_AGENT_SECRET` (shared secret for Woodpecker agent<->server gRPC)
 
 ## CLI Tools Available
 
