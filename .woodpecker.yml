@@ -1,0 +1,48 @@
+# Lint checks on the greg-zone Woodpecker instance: shellcheck, ruff and
+# prettier via the scripts in scripts/, matching how they run locally.
+#
+# `greg-zone/dotfiles-lint` is oven/bun plus git, shellcheck and ruff, built
+# locally on the CI host from greg-zone/ci/dotfiles-lint/Dockerfile. If every
+# step fails pulling the image, rebuild it there — instructions live in that
+# Dockerfile.
+when:
+  - event: pull_request
+  - event: push
+    branch: main
+
+clone:
+  - name: clone
+    image: woodpeckerci/plugin-git
+    settings:
+      # Submodule URLs are ssh, which CI cannot resolve; the submodule step
+      # inits the one submodule the lint scripts scan, over https.
+      recursive: false
+
+steps:
+  - name: submodule
+    image: greg-zone/dotfiles-lint:1
+    commands:
+      # --global, because the submodule clone is a fresh `git clone` process
+      # that never reads the superproject's local config.
+      - git config --global url."https://github.com/".insteadOf "git@github.com:"
+      - git submodule update --init greg-zone
+
+  - name: shellcheck
+    image: greg-zone/dotfiles-lint:1
+    depends_on: [submodule]
+    commands:
+      - sh scripts/shellcheck.sh
+
+  - name: ruff
+    image: greg-zone/dotfiles-lint:1
+    depends_on: [submodule]
+    commands:
+      - sh scripts/ruff.sh --check
+
+  # Scans no submodule content, so it skips the submodule step and starts
+  # immediately.
+  - name: prettier
+    image: greg-zone/dotfiles-lint:1
+    depends_on: []
+    commands:
+      - sh scripts/prettier.sh --check
