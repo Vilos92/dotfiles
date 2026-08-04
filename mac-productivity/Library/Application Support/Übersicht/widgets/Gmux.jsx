@@ -22,13 +22,15 @@ const sessionRowStyle = isClickable => css`
   border-radius: 4px;
   cursor: ${isClickable ? 'pointer' : 'default'};
   transition: background-color 0.2s;
-  ${isClickable
-    ? `
+  ${
+    isClickable
+      ? `
     &:hover {
       background-color: rgba(255,255,255,0.1);
     }
   `
-    : ''}
+      : ''
+  }
 `;
 
 const statusDot = color => css`

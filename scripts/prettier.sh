@@ -53,15 +53,19 @@ else
 fi
 echo ""
 
+# Let prettier expand the glob itself. Passing the find output above would break
+# on the JSX paths containing spaces and non-ASCII.
+js_glob='**/*.{js,jsx,mjs}'
+
 if [ "$CHECK_MODE" = true ]; then
     echo "Checking formatting (no changes)..."
-    bunx prettier --check .
+    bunx prettier --check "$js_glob"
 elif [ "$FIX_MODE" = true ]; then
     echo "Formatting files..."
-    bunx prettier --write .
+    bunx prettier --write "$js_glob"
 else
     echo "Checking formatting (read-only)..."
-    bunx prettier --check .
+    bunx prettier --check "$js_glob"
 fi
 
 echo "Prettier formatting complete!"
