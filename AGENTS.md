@@ -81,7 +81,6 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 
 **Remote Access:**
 
-- `ssh-sparkify` → SSH to Digital Ocean droplet
 - `ssh-mini` → SSH to Mac Mini (requires Tailscale)
 - `ssh-mini-hermes` → SSH to Mac Mini and attach the persistent Hermes TUI tmux session (detach with tmux prefix + d; survives disconnects)
 - `mosh-mini` / `mosh-mini-hermes` → mosh variants of the two `ssh-mini` aliases, for when the link is laggy. Requires mosh on both ends
