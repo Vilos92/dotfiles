@@ -109,6 +109,12 @@ install_tailscale() {
   prompt_and_install "tailscale-app" brew install --cask tailscale-app
 }
 
+# Remote shells.
+install_remote_packages() {
+  # The remote host needs mosh installed too.
+  prompt_and_install "mosh" brew install mosh
+}
+
 # Hosting.
 install_host_packages() {
   # install cloudflared to allow exposing the copyparty instance.
@@ -337,6 +343,7 @@ TASKS=(
   "terminal-pkgs|terminal emulator and shell tools|install_terminal_packages"
   "1password|1Password password manager|install_1password"
   "tailscale|Tailscale VPN|install_tailscale"
+  "remote-pkgs|remote shell tools (mosh)|install_remote_packages"
   "host|hosting and server tools|install_host_packages"
   "rclone|rclone|install_rclone"
   "cloud-storage|cloud storage apps|install_cloud_storage"

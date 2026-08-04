@@ -119,3 +119,44 @@ Don't ask for trivial one-offs, quick lookups, or single-file edits.
 4. **Always pause before staging or committing.** Show the user what files will be added (`git status`, `git diff`) and get explicit confirmation before running `git add` or `git commit`. The user should be able to review changes locally before the work is locked in.
 5. **Check in at milestone boundaries.** When a milestone is complete and quality checks pass, surface a short summary of what changed and what's next, then wait for the user to confirm before moving to the next milestone.
 6. **Don't rush ahead.** Prefer smaller, reviewable commits over large batches. If unsure whether to bundle or split changes, ask.
+
+---
+
+## Checking Woodpecker CI failures (greg-zone)
+
+Greg's personal repos (e.g. `dotfiles`, `scriptlancer`) run CI on a self-hosted **Woodpecker** instance at **`http://greg-zone:9011`** (Tailscale-only). GitHub shows a single status per pipeline (e.g. **`ci/woodpecker/pr/woodpecker`**) with **no logs behind it**—the per-step results and logs live in Woodpecker. When a PR's Woodpecker check fails, fetch the failure yourself instead of asking for a paste.
+
+**Reachability first:** the API only resolves from the tailnet. Projects are public-visibility there, so reads need **no token**. If the health check fails, note it briefly and fall back to asking the user—don't block.
+
+```sh
+curl -sf -m 5 http://greg-zone:9011/healthz
+```
+
+**1. Resolve the repo id** (don't hardcode ids; the owner/name lookup is stable):
+
+```sh
+curl -s "http://greg-zone:9011/api/repos/lookup/Vilos92%2Fdotfiles" | jq .id
+```
+
+**2. Find the pipeline for a PR.** PR #N pipelines have `ref == "refs/pull/N/merge"`; take the newest `number`:
+
+```sh
+curl -s "http://greg-zone:9011/api/repos/<id>/pipelines?perPage=20" \
+  | jq '.[] | select(.ref == "refs/pull/<N>/merge") | {number, status, commit}'
+```
+
+**3. List step states for that pipeline** and pick out the failures:
+
+```sh
+curl -s "http://greg-zone:9011/api/repos/<id>/pipelines/<number>" \
+  | jq '[.workflows[].children[] | {id, name, state}]'
+```
+
+**4. Fetch a step's log.** Entries arrive as JSON with base64 `data`—decode before reading:
+
+```sh
+curl -s "http://greg-zone:9011/api/repos/<id>/logs/<number>/<stepId>" \
+  | jq -r '.[].data | @base64d'
+```
+
+The GitHub check's details link points at the same pipeline in the UI (`http://greg-zone:9011/repos/<id>/pipeline/<number>`) if a human wants to look instead.
