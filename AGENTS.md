@@ -124,7 +124,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 **Application Services:**
 
 - **copyparty:** File sharing (port 3923/8080) - https://copyparty.greglinscheid.com
-- **freshrss:** RSS reader (port 49153) - https://freshrss.greglinscheid.com
+- **freshrss:** RSS reader (port 49153) - Tailscale-only at greg-zone:9002 (removed from Cloudflare Aug 2026 due to scraper traffic)
 - **kiwix:** Offline content server (port 8473) - https://kiwix.greglinscheid.com
 - **transmission:** Torrent client (port 9091)
 - **prowlarr:** Indexer search (Tailscale :9009)
