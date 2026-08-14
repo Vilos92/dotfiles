@@ -11,6 +11,10 @@ export GREG_PROJECTS_PATH="$HOME/greg_projects"
 export GREG_DOTFILES_PATH="$GREG_PROJECTS_PATH/dotfiles"
 export ALACRITTY_PATH="$HOME/.config/alacritty"
 
+# gmux is a public submodule rather than a stow package, so its bin joins $PATH
+# directly. Roots are injected by the gmux() wrapper in tmux/.zshenv/post/tmux.sh.
+export PATH="$GREG_DOTFILES_PATH/gmux/bin:$PATH"
+
 _pybin_cache="${XDG_CACHE_HOME:-$HOME/.cache}/python-user-bin.path"
 _pybin_added=
 if [[ -f "$_pybin_cache" ]]; then

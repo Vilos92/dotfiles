@@ -1,8 +1,5 @@
 #!/bin/sh
 
-# tmux
-alias g=gmux
-
 # nvim
 alias v=nvim
 # last file

@@ -25,8 +25,30 @@ This repository uses GNU Stow for dotfile management. Run `scripts/stow.sh` to i
 
 - `scripts/` - Standalone executable scripts
 - `greg-zone/` - Docker infrastructure and services (separate repository, but this AGENTS.md is responsible for documenting it)
+- `gmux/` - Public tmux session switcher (separate repository: https://github.com/Vilos92/gmux)
 - `arch/` - Arch Linux specific configurations (currently empty)
 - `mac-productivity/` - Mac productivity configurations (currently empty)
+
+### Submodules
+
+| Submodule | Visibility | Pulled |
+| --- | --- | --- |
+| `gmux/` | public | **automatically** on any clone |
+| `front/` | private | opt-in |
+| `greg-zone/` | private | opt-in |
+
+`front` and `greg-zone` carry `update = none` in `.gitmodules`, so `git clone
+--recurse-submodules` and `git submodule update --init` skip them while still
+populating `gmux`. Bringing an opt-in submodule in needs an explicit `--checkout`:
+
+```sh
+git submodule update --init --checkout front
+```
+
+`gmux` is intentionally agnostic of this repo: it takes project roots from
+`$GMUX_ROOTS` or a config file and contains nothing machine-specific. The roots
+are injected by the `gmux()` wrapper in `tmux/.zshenv/post/tmux.sh`. Never add
+machine-specific paths to the `gmux/` submodule — put them in that wrapper.
 
 ### Binary Commands
 
@@ -36,8 +58,11 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 
 - **mac-mini:** `gbackup-lacie`, `gbackup-t7`, `gllama`, `hermes` (opens the Hermes TUI in a persistent tmux session named `hermes`)
 - **alacritty:** `alacritty-theme`, `alacritty-theme-select`
-- **tmux:** `attach-tmux-session`, `gmux`
 - **zsh:** `compress-video-hevc`, `download-media`, `fuzzy-find`, `fuzzy-ripgrep`, `remux-video`
+
+`gmux` and `attach-tmux-session` are the exception: they live in the public
+`gmux/` submodule rather than a stow package, so `zsh/.zshrc` puts
+`$GREG_DOTFILES_PATH/gmux/bin` on `$PATH` directly instead of symlinking them.
 
 ## Available Commands & Shortcuts
 
