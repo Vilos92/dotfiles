@@ -6,8 +6,12 @@
 # both invisible there. A config file is read at invocation time, so it works
 # from tmux bindings, the Übersicht widget, cron, and interactive shells alike.
 #
-# Machine-specific roots belong in ~/.config/gmux/config.d/ instead, where each
-# stow package can drop its own file without conflicting over this one. The
-# front package supplies the work-laptop root that way.
+# Roots that do not exist are skipped silently, so every machine's roots can be
+# listed here and each machine quietly uses the subset it actually has. A root
+# needing a path that cannot be published belongs in ~/.config/gmux/config.d/
+# instead, which gmux merges with this file.
 
 ~/greg_projects
+
+# Work laptop only; absent on every other machine.
+~/frontapp
