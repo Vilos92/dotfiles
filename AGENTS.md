@@ -45,10 +45,25 @@ populating `gmux`. Bringing an opt-in submodule in needs an explicit `--checkout
 git submodule update --init --checkout front
 ```
 
-`gmux` is intentionally agnostic of this repo: it takes project roots from
-`$GMUX_ROOTS` or a config file and contains nothing machine-specific. The roots
-are injected by the `gmux()` wrapper in `tmux/.zshenv/post/tmux.sh`. Never add
-machine-specific paths to the `gmux/` submodule — put them in that wrapper.
+`gmux` is intentionally agnostic of this repo and contains nothing
+machine-specific. Never add machine-specific paths to the `gmux/` submodule.
+
+**Project roots come from config files, not the environment.** `tmux/.config/gmux/config`
+is stowed to `~/.config/gmux/config` and lists `~/greg_projects`. Machine-specific
+roots go in `~/.config/gmux/config.d/`, which gmux merges with the main file — that
+is how the `front` package supplies the work-laptop root without two stow packages
+fighting over one file.
+
+This must not be an exported variable or a shell function. Two callers invoke
+gmux from a bare `sh -c` that sources no shell rc, where neither is visible:
+
+- `bind g run-shell ...` in `tmux/.tmux.conf` (inherits only the tmux server's PATH,
+  which is why the binding uses an absolute path, single-quoted so `sh` rather than
+  tmux expands it — tmux parses `${VAR}` itself and rejects the `:-` default form)
+- the Übersicht `Gmux.jsx` widget
+
+Regressing this to an export "works" in an interactive shell and silently breaks
+both of them.
 
 ### Binary Commands
 

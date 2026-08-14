@@ -1,0 +1,13 @@
+# gmux project roots — one directory per line, scanned one level deep.
+#
+# This is a file rather than an exported $GMUX_ROOTS on purpose. The `bind g`
+# binding in .tmux.conf runs gmux through `tmux run-shell`, which is a bare
+# `sh -c` that sources no shell rc — exported variables and shell functions are
+# both invisible there. A config file is read at invocation time, so it works
+# from tmux bindings, the Übersicht widget, cron, and interactive shells alike.
+#
+# Machine-specific roots belong in ~/.config/gmux/config.d/ instead, where each
+# stow package can drop its own file without conflicting over this one. The
+# front package supplies the work-laptop root that way.
+
+~/greg_projects
