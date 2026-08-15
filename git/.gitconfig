@@ -42,3 +42,9 @@
         fi; \
     }; f"
     bat-diff = "!f() { git diff --name-only --relative --diff-filter=d | xargs bat --diff; }; f"
+[credential "https://github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
+[credential "https://gist.github.com"]
+	helper = 
+	helper = !/opt/homebrew/bin/gh auth git-credential
