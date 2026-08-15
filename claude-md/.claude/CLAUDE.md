@@ -11,7 +11,7 @@ Assume these are installed on my machine. **Use them first** when proposing or r
 | Jump to directories by habit / recency     | `zoxide` (`z`, …)                                             |
 | Quick command usage summaries              | `tealdeer` (`tldr`)                                           |
 
-**Shell overrides:** In my interactive zsh, `cd` is hooked to **zoxide** (`z`) and `ls` is aliased to **eza**. For behavior that must match normal **`cd` / `ls`** (scripts, subshells, docs, CI, or when flags don't line up), use **`command cd`**, **`builtin cd`**, or **`command ls`** / **`/bin/ls`** as needed instead of the preferred tools above.
+**Shell overrides:** In my interactive zsh, `ls` is aliased to **eza**. For behavior that must match normal **`ls`** (scripts, subshells, docs, CI, or when flags don't line up), use **`command ls`** / **`/bin/ls`** instead. **zoxide** is available as `z` for frecency-based directory jumps.
 
 **Git aliases:** Use **`git merge-main`** to update the current branch from **`origin/main`** or **`origin/master`** (whichever exists)—it **requires a clean working tree** (no staged/uncommitted changes) and **prompts for confirmation** before fetching and merging; skip it for non-interactive or scripted flows unless you replicate the same steps explicitly.
 

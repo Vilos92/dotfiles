@@ -93,7 +93,7 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 
 **Navigation & Search:**
 
-- `cd` → `z` (zoxide smart directory jumping)
+- `z` → zoxide smart directory jumping
 - `ff` → `fuzzy-find` (custom fuzzy finder)
 - `frg` → `fuzzy-ripgrep` (fuzzy search file contents)
 - `fh` → `fuzzy-history` (fuzzy command history)
