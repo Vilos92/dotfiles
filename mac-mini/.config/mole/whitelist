@@ -23,6 +23,21 @@
 /Volumes/Wokyis M.2 SSD - Storage
 /Volumes/Wokyis M.2 SSD - Time Machine
 
+# --- Live services ---
+# Plex is a running server here. Its cache is mostly regenerable artwork
+# (PhotoTranscoder), but it also holds cert-v2.p12 and the CloudAccess/
+# CloudUsers state, and re-transcoding artwork costs CPU on a box that is
+# also serving copyparty and kiwix.
+$HOME/Library/Caches/PlexMediaServer
+
+# --- Google Drive (Apple's File Provider mount) ---
+# $HOME/Library/CloudStorage is one of mole's default project-scan roots
+# (lib/clean/purge_shared.sh), so a JS/Python project synced here would have
+# its __pycache__/.next/.dart_tool removed with no prompt -- and a deletion
+# inside a synced folder propagates to the cloud and to other devices.
+# Ableton's installed Factory Packs live under here.
+$HOME/Library/CloudStorage
+
 # --- This repo ---
 # mo clean's project-artifact scan walks $HOME/*/ and removes __pycache__,
 # .next/cache and .dart_tool. Some .pyc files under the Alfred workflows in
