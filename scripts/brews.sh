@@ -229,6 +229,12 @@ install_mac_productivity() {
   prompt_and_install "rectangle" brew install --cask rectangle
 }
 
+# Mac maintenance (cleanup, uninstalls, disk usage).
+install_mac_maintenance() {
+  # mole: `mo clean`, `mo uninstall`, `mo analyze`, `mo purge` (binary is `mo`).
+  prompt_and_install "mole" brew install mole
+}
+
 # Notes.
 install_notion() {
   prompt_and_install "notion" brew install --cask notion
@@ -357,6 +363,7 @@ TASKS=(
   "rust-pkgs|Rust toolchain (rustup, cargo) for Tauri and native builds|install_rust_packages"
   "browsers|Zen + Firefox browsers|install_browsers"
   "mac-productivity|Alfred launcher and Rectangle window manager|install_mac_productivity"
+  "mac-maintenance|Mac cleanup and disk analysis tools (mole)|install_mac_maintenance"
   "notion|Notion note-taking app|install_notion"
   "audio-pkgs|audio and video utilities|install_audio_packages"
   "audio-engineering-pkgs|audio engineering tools|install_audio_engineering_packages"
