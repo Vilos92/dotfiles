@@ -168,7 +168,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **transmission:** Torrent client (port 9091)
 - **prowlarr:** Indexer search (Tailscale :9009)
 - **hermes:** Hermes Agent dashboard (Tailscale :9010) — data under GregZone Vault/hermes
-- **minecraft:** Minecraft Bedrock server (port 19132/udp)
+- **minecraft:** Minecraft Bedrock server (port 19132/udp) — **profile-gated; do not start unless Greg explicitly asks** (see Minecraft Profile below)
 - **sparkify:** Slack/Spotify bot (no ports — Socket Mode, outbound only). Submodule at `greg-zone/sparkify`; see its `AGENTS.md`, and the `spotify-refresh-token` skill there for rotating `SPOTIFY_REFRESH_TOKEN`. Only ever run one instance, or Slack replies double.
 
 **Monitoring Stack:**
@@ -181,7 +181,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **node-exporter:** System metrics (port 9100)
 - **cadvisor:** Container metrics (port 8080)
 - **docker-stats-exporter:** Docker stats exporter (port 8081)
-- **mc-monitor:** Minecraft server metrics (port 8082)
+- **mc-monitor:** Minecraft server metrics (port 8082) — **profile-gated; do not start unless Greg explicitly asks.** Its Prometheus scrape job is commented out to match; leave it commented unless the profile is coming back up.
 
 **Networking & Infrastructure:**
 
@@ -195,15 +195,47 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **discord-webhook:** Discord webhook multiplexer (port 8083)
 - **services-alert-monitor:** Monitors nginx, copyparty, freshrss, kiwix
 - **infrastructure-alert-monitor:** Monitors loki, prometheus, grafana, etc.
-- **minecraft-alert-monitor:** Monitors minecraft server
+- **minecraft-alert-monitor:** Monitors minecraft server — **profile-gated; do not start unless Greg explicitly asks**
 
 **Supporting Services:**
 
 - **infra-redis:** Redis database for alert monitor state (port 6379)
 - **infra-redis-commander:** Redis management UI (port 8084)
-- **playit:** Minecraft server tunneling
-- **minecraft-backup:** Automated Minecraft backups
+- **playit:** Minecraft server tunneling — **profile-gated; do not start unless Greg explicitly asks.** Keep `PLAYIT_SECRET_KEY` in `.env` so the tunnel reclaims the same address whenever it does come back. The top-level `playit` *network* is still defined and in use — promtail and nginx-tailscale attach to it — so do not remove it.
+- **minecraft-backup:** Automated Minecraft backups — **profile-gated; do not start unless Greg explicitly asks**
 - **woodpecker-server / woodpecker-agent:** Woodpecker CI (UI Tailscale-only at :9011; one instance serves any GitHub repo via per-repo opt-in in the UI). GitHub login uses a classic OAuth app (callback `http://greg-zone:9011/authorize`); webhooks arrive publicly at https://woodpecker.greglinscheid.com/api/hook through the Cloudflare tunnel (all other paths refused). Agent runs pipeline steps as containers via the Docker socket — keep repos "untrusted" in Woodpecker unless privileged features are needed. Metrics scraped by Prometheus on internal port 9001. Pipeline step images that need extra tools are built locally on the Mini under `greg-zone/ci/` (e.g. `greg-zone/bun-git`, oven/bun + git) — they exist only in the host Docker daemon, so rebuild them after a `docker system prune -a` (see each Dockerfile).
+
+### Minecraft Profile
+
+The five Minecraft services — `minecraft`, `minecraft-backup`, `playit`,
+`mc-monitor`, `minecraft-alert-monitor` — carry `profiles: ['minecraft']` in
+`greg-zone/docker-compose.yml`, so a plain `docker-compose up -d` skips them.
+
+**Do not bring these up unless Greg explicitly asks for Minecraft.** The gate is
+deliberate, not an outage or a bug to fix. In particular:
+
+- Never add `COMPOSE_PROFILES=minecraft` to a command on your own initiative.
+- Never un-gate a service by deleting its `profiles:` key to "fix" something.
+- An absent minecraft container, an empty `minecraft-monitoring` Grafana
+  dashboard, and the commented-out `minecraft-monitor` scrape job are all the
+  intended state. Leave them.
+
+Every service definition and all world data stays intact, so returning is one
+command whenever Greg does ask:
+
+```sh
+cd greg-zone && COMPOSE_PROFILES=minecraft ./docker-services.sh up
+```
+
+No change to `docker-services.sh` is needed — Compose reads `COMPOSE_PROFILES`
+natively, so the existing `docker-compose -f docker-compose.yml up -d` honors it.
+When re-enabling, also uncomment the `minecraft-monitor` scrape job in
+`greg-zone/prometheus/prometheus.yml` and restart prometheus, or the Grafana
+dashboard stays empty.
+
+World data lives at `/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/Minecraft/Jordania`
+and `Jordania_backups`. Never touch either path — the profile change does not,
+and neither should any cleanup.
 
 ### Service Dependencies
 
@@ -345,7 +377,8 @@ When making changes or testing services, **always target specific services** rat
 - Use `docker-compose restart <service>` instead of `docker-compose restart` (all services)
 - Use `docker-compose stop <service>` instead of `docker-compose down` (all services)
 - Use `docker-compose up -d <service>` to start only specific services
-- Example: Testing Minecraft changes should only affect `minecraft`, `minecraft-backup`, `minecraft-alert-monitor`, `playit`, and `mc-monitor` - copyparty, freshrss, and monitoring should continue running
+- Example: Testing Minecraft changes should only affect `minecraft`, `minecraft-backup`, `minecraft-alert-monitor`, `playit`, and `mc-monitor` - copyparty, freshrss, and monitoring should continue running (these five are currently profile-gated — see Minecraft Profile above)
+- Never run `COMPOSE_PROFILES=minecraft docker-compose down` — `down` ignores service arguments and would take the entire stack down
 
 **Important: Rebuilding Images for Code Changes**
 When making changes to Python files or other source code that Docker services depend on:
