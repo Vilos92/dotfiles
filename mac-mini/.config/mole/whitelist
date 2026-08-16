@@ -1,0 +1,54 @@
+# Mole clean whitelist (mo clean / mo optimize).
+#
+# IMPORTANT: this file REPLACES mole's built-in defaults rather than adding to
+# them (bin/clean.sh: the DEFAULT_WHITELIST_PATTERNS branch only runs when this
+# file is absent). The upstream defaults are reproduced below verbatim -- when
+# bumping mole, re-check lib/core/base.sh:DEFAULT_WHITELIST_PATTERNS for new
+# entries. Only $FINDER_METADATA_SENTINEL is re-merged automatically.
+#
+# Matching: entries without a glob also protect everything beneath them, so a
+# bare volume root covers the whole drive.
+#
+# Only `mo clean` and `mo optimize` consult this file. `mo purge` and the
+# delete key in `mo analyze` do NOT -- they can still touch these paths.
+
+# --- External data drives (greg-zone vaults, backups) ---
+# mo clean only reaches a volume via `mo clean --external <path>`, where it
+# would remove <volume>/.Trashes and <volume>/.TemporaryItems. These entries
+# make that a no-op on the drives holding real data.
+/Volumes/T7
+/Volumes/T7-B
+/Volumes/Lacie
+/Volumes/LaCie
+/Volumes/Wokyis M.2 SSD - Storage
+/Volumes/Wokyis M.2 SSD - Time Machine
+
+# --- This repo ---
+# mo clean's project-artifact scan walks $HOME/*/ and removes __pycache__,
+# .next/cache and .dart_tool. Some .pyc files under the Alfred workflows in
+# mac-productivity/ are tracked, so an unprotected clean dirties the repo and
+# breaks the stowed workflow until `git checkout`.
+$HOME/greg_projects/dotfiles
+
+# --- Upstream defaults (mole 1.50.0, lib/core/base.sh) ---
+$HOME/Library/Caches/ms-playwright*
+$HOME/.cache/huggingface*
+$HOME/.m2/repository/*
+$HOME/.gradle/caches/*
+$HOME/.gradle/daemon/*
+$HOME/.ollama/models/*
+$HOME/Library/Caches/com.nssurge.surge-mac/*
+$HOME/Library/Application Support/com.nssurge.surge-mac/*
+$HOME/Library/Caches/org.R-project.R/R/renv/*
+$HOME/Library/Caches/pypoetry/virtualenvs*
+$HOME/Library/Caches/JetBrains*
+$HOME/Library/Caches/com.jetbrains.toolbox*
+$HOME/Library/Caches/tealdeer/tldr-pages
+$HOME/Library/Application Support/JetBrains*
+$HOME/Library/Caches/com.apple.finder
+$HOME/Library/Mobile Documents*
+# System-critical caches that affect macOS functionality and stability.
+$HOME/Library/Caches/com.apple.FontRegistry*
+$HOME/Library/Caches/com.apple.spotlight*
+$HOME/Library/Caches/com.apple.Spotlight*
+$HOME/Library/Caches/CloudKit*
