@@ -4,7 +4,7 @@
 # binding in .tmux.conf runs gmux through `tmux run-shell`, which is a bare
 # `sh -c` that sources no shell rc — exported variables and shell functions are
 # both invisible there. A config file is read at invocation time, so it works
-# from tmux bindings, the Übersicht widget, cron, and interactive shells alike.
+# from tmux bindings, cron, and interactive shells alike.
 #
 # Roots that do not exist are skipped silently, so every machine's roots can be
 # listed here and each machine quietly uses the subset it actually has. A root

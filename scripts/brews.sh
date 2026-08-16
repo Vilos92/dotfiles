@@ -307,11 +307,6 @@ install_yt_dlp() {
   prompt_and_install "yt-dlp" brew install yt-dlp
 }
 
-# Desktop widgets.
-install_desktop_widgets() {
-  prompt_and_install "ubersicht" brew install --cask ubersicht
-}
-
 # Chat
 install_chats() {
   prompt_and_install "whatsapp" brew install --cask whatsapp
@@ -377,7 +372,6 @@ TASKS=(
   "there|There timezone app|install_there"
   "transmission|Transmission torrent client|install_transmission"
   "yt-dlp|yt-dlp video downloader|install_yt_dlp"
-  "desktop-widgets|Übersicht desktop widgets|install_desktop_widgets"
   "chats|chat applications|install_chats"
   "ai-pkgs|AI and machine learning tools|install_ai_packages"
   "python-dev-pkgs|Python development tools (black, ruff, mypy)|install_python_dev_packages"

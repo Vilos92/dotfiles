@@ -27,7 +27,7 @@ This repository uses GNU Stow for dotfile management. Run `scripts/stow.sh` to i
 - `greg-zone/` - Docker infrastructure and services (separate repository, but this AGENTS.md is responsible for documenting it)
 - `gmux/` - Public tmux session switcher (separate repository: https://github.com/Vilos92/gmux)
 - `arch/` - Arch Linux specific configurations (currently empty)
-- `mac-productivity/` - Mac productivity configurations (currently empty)
+- `mac-productivity/` - Mac productivity configurations (Alfred)
 
 ### Submodules
 
@@ -54,16 +54,15 @@ roots go in `~/.config/gmux/config.d/`, which gmux merges with the main file —
 is how the `front` package supplies the work-laptop root without two stow packages
 fighting over one file.
 
-This must not be an exported variable or a shell function. Two callers invoke
-gmux from a bare `sh -c` that sources no shell rc, where neither is visible:
-
-- `bind g run-shell ...` in `tmux/.tmux.conf` (inherits only the tmux server's PATH,
-  which is why the binding uses an absolute path, single-quoted so `sh` rather than
-  tmux expands it — tmux parses `${VAR}` itself and rejects the `:-` default form)
-- the Übersicht `Gmux.jsx` widget
+This must not be an exported variable or a shell function. The `bind g
+run-shell ...` binding in `tmux/.tmux.conf` invokes gmux from a bare `sh -c`
+that sources no shell rc, where neither is visible (it inherits only the tmux
+server's PATH, which is why the binding uses an absolute path, single-quoted so
+`sh` rather than tmux expands it — tmux parses `${VAR}` itself and rejects the
+`:-` default form).
 
 Regressing this to an export "works" in an interactive shell and silently breaks
-both of them.
+that binding.
 
 ### Binary Commands
 
