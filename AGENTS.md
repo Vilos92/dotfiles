@@ -326,6 +326,38 @@ Most configurations (nvim, tmux, zsh, git) work across all devices.
 - Tailscale network for secure remote access
 - Cloudflare tunnel for public copyparty access
 
+### Mac Mini Power Management
+
+The Mac Mini runs greg-zone 24/7, so it must never sleep. macOS defaults assume a
+personal workstation and will sleep it on slight provocation. Current settings:
+
+| Setting | Value | Why |
+| --- | --- | --- |
+| `pmset -c sleep` | `0` | Never idle-sleep on AC |
+| `pmset -u sleep` | `0` | **Non-default.** Don't sleep just because the UPS took over |
+| `pmset -u womp` | `1` | **Non-default.** Stay network-wakeable on UPS power |
+| `pmset -u haltremain` | `5` | Clean shutdown when the UPS has 5 min runtime left |
+
+`-c` is the AC profile, `-u` the UPS profile; macOS switches the instant the UPS
+reports battery. The two non-defaults were set 2026-08-17, after a 67-second
+outage slept the Mini (UPS at 100%) and it stayed down four hours — it never woke
+when AC returned, and `womp 0` left it unreachable until physically touched.
+Sleep does not auto-recover; `haltremain` + `autorestart 1` do. Keep low-battery
+handling as a shutdown and never reintroduce sleep here.
+
+**If greg-zone misbehaves across unrelated containers** — Sparkify
+restart-storming, Grafana gaps, containers "up" but silent — check whether the
+host slept before debugging any single service:
+
+```sh
+pmset -g log | grep -E "Entering Sleep state|DarkWake"
+pmset -g ps   # power source + UPS charge
+```
+
+Prometheus, Alertmanager, and the alert monitors all run **on** the Mini, so a
+sleeping host silences its own alerting — nothing pages you. The UPS reported
+only ~6 min runtime at "100%" (aged battery), so ride-through is minimal.
+
 ### Self-Maintenance
 
 This AGENTS.md should be kept up-to-date as the environment evolves. Feel free to update this file when:
