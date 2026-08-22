@@ -1,0 +1,209 @@
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Quiz</title>
+
+<!--
+  explain-pr quiz template.
+
+  Replace ONLY the JSON inside #quiz-data. Leave the CSS and JS alone — the
+  runtime shuffle below is what guarantees the correct answer isn't biased
+  toward any position, so hand-ordering options here would defeat it.
+
+  Shape:
+    { "questions": [
+        { "q": "...", "options": [ { "text": "...", "correct": true, "why": "..." } ] }
+    ] }
+
+  Exactly one option per question carries "correct": true. Every option needs a
+  "why" — for wrong ones, name the misconception; for the right one, point at
+  the behavior or line that settles it.
+-->
+
+<script type="application/json" id="quiz-data">
+{
+  "questions": [
+    {
+      "q": "Replace this with the first question.",
+      "options": [
+        { "text": "A distractor.", "correct": false, "why": "Name the misreading that leads here." },
+        { "text": "The answer.", "correct": true, "why": "Point at the code path or behavior that proves it." },
+        { "text": "Another distractor.", "correct": false, "why": "Name the misreading that leads here." },
+        { "text": "A fourth option.", "correct": false, "why": "Name the misreading that leads here." }
+      ]
+    }
+  ]
+}
+</script>
+
+<style>
+  :root {
+    --bg: transparent;
+    --fg: #37352f;
+    --muted: #787066;
+    --line: #e3e2e0;
+    --card: #fbfbfa;
+    --hover: #f1f1ef;
+    --ok-fg: #1c6b3c; --ok-bg: #eef7f1; --ok-line: #9ecdb3;
+    --no-fg: #9b2c2c; --no-bg: #fdf2f2; --no-line: #e5aeae;
+    --accent: #2383e2;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --fg: #d4d4d4; --muted: #9b9b9b; --line: #373737;
+      --card: #2f2f2f; --hover: #383838;
+      --ok-fg: #7fd1a1; --ok-bg: #1c2b22; --ok-line: #35614a;
+      --no-fg: #f0a3a3; --no-bg: #2e1f1f; --no-line: #6b3a3a;
+      --accent: #529cca;
+    }
+  }
+
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; padding: 4px 2px 8px; background: var(--bg); color: var(--fg);
+    font: 15px/1.55 -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .head { display: flex; align-items: baseline; gap: 10px; margin-bottom: 14px; }
+  .head h1 { font-size: 15px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+  .score { margin-left: auto; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; }
+
+  .q { border-top: 1px solid var(--line); padding: 14px 0 4px; }
+  .q:first-of-type { border-top: none; padding-top: 0; }
+  .q-text { display: flex; gap: 9px; font-weight: 500; margin-bottom: 10px; }
+  .q-num { color: var(--muted); font-variant-numeric: tabular-nums; flex: none; }
+
+  .opt {
+    display: block; width: 100%; text-align: left; font: inherit; color: inherit;
+    background: var(--card); border: 1px solid var(--line); border-radius: 5px;
+    padding: 9px 11px; margin-bottom: 6px; cursor: pointer;
+    transition: background .12s, border-color .12s;
+  }
+  .opt:hover:not(:disabled) { background: var(--hover); }
+  .opt:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .opt:disabled { cursor: default; }
+
+  .opt .mark { font-weight: 600; margin-right: 7px; display: none; }
+  .opt.correct { background: var(--ok-bg); border-color: var(--ok-line); color: var(--ok-fg); }
+  .opt.wrong   { background: var(--no-bg); border-color: var(--no-line); color: var(--no-fg); }
+  .opt.correct .mark, .opt.wrong .mark { display: inline; }
+  .opt.muted { opacity: .5; }
+
+  .why {
+    font-size: 13.5px; line-height: 1.5; color: var(--muted);
+    padding: 2px 11px 10px 11px; margin: -2px 0 8px;
+  }
+  .why b { color: var(--fg); font-weight: 500; }
+
+  .done {
+    margin-top: 16px; padding: 12px 14px; border-radius: 6px;
+    background: var(--card); border: 1px solid var(--line); font-size: 14px;
+  }
+  .done button {
+    font: inherit; font-size: 13px; color: var(--accent); background: none;
+    border: none; padding: 0; margin-left: 6px; cursor: pointer; text-decoration: underline;
+  }
+  [hidden] { display: none !important; }
+</style>
+
+<div class="head">
+  <h1>Check your understanding</h1>
+  <div class="score" id="score" role="status" aria-live="polite"></div>
+</div>
+<div id="quiz"></div>
+<div class="done" id="done" hidden></div>
+
+<script>
+(() => {
+  const data = JSON.parse(document.getElementById('quiz-data').textContent);
+  const root = document.getElementById('quiz');
+  const scoreEl = document.getElementById('score');
+  const doneEl = document.getElementById('done');
+  const total = data.questions.length;
+  let answered = 0, right = 0;
+
+  // Fisher-Yates. The whole reason the template exists: option order is decided
+  // here at load, so the answer can't drift toward a fixed position.
+  const shuffle = (a) => {
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  };
+
+  const updateScore = () => {
+    scoreEl.textContent = answered ? `${right}/${answered} correct` : `${total} questions`;
+  };
+
+  data.questions.forEach((q, qi) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'q';
+
+    const head = document.createElement('div');
+    head.className = 'q-text';
+    head.innerHTML = '<span class="q-num"></span><span></span>';
+    head.firstChild.textContent = qi + 1 + '.';
+    head.lastChild.textContent = q.q;
+    wrap.appendChild(head);
+
+    const opts = shuffle(q.options.slice());
+    const buttons = [];
+
+    opts.forEach((o) => {
+      const b = document.createElement('button');
+      b.className = 'opt';
+      b.type = 'button';
+      // Label carries the option text only — never its correctness.
+      b.innerHTML = '<span class="mark"></span><span></span>';
+      b.lastChild.textContent = o.text;
+      buttons.push(b);
+      wrap.appendChild(b);
+
+      b.addEventListener('click', () => {
+        answered++;
+        if (o.correct) right++;
+
+        buttons.forEach((other, oi) => {
+          other.disabled = true;
+          if (opts[oi].correct) {
+            other.classList.add('correct');
+            other.querySelector('.mark').textContent = '✅';
+          } else if (other === b) {
+            other.classList.add('wrong');
+            other.querySelector('.mark').textContent = '❌';
+          } else {
+            other.classList.add('muted');
+          }
+        });
+
+        // Explain the choice, and the answer too when they differ.
+        const notes = o.correct ? [o] : [o, opts.find((x) => x.correct)];
+        notes.forEach((n) => {
+          const p = document.createElement('div');
+          p.className = 'why';
+          p.innerHTML = '<b></b> ';
+          p.firstChild.textContent = n.correct ? 'Correct —' : 'Not quite —';
+          p.appendChild(document.createTextNode(n.why));
+          wrap.appendChild(p);
+        });
+
+        updateScore();
+        if (answered === total) {
+          doneEl.hidden = false;
+          doneEl.innerHTML = '<span></span><button type="button">Try again</button>';
+          doneEl.firstChild.textContent =
+            right === total ? `${right}/${total} — you've got this one.`
+            : right >= Math.ceil(total * 0.6) ? `${right}/${total} — solid, reread the ones you missed.`
+            : `${right}/${total} — worth another pass through Intuition and Code.`;
+          doneEl.querySelector('button').addEventListener('click', () => location.reload());
+        }
+      });
+    });
+
+    root.appendChild(wrap);
+  });
+
+  updateScore();
+})();
+</script>

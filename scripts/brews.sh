@@ -169,6 +169,9 @@ install_agent_dev_tools() {
 
   # @zeeg/dex - global CLI for agent workflows.
   prompt_and_install "Dex CLI (@zeeg/dex)" bun add -g @zeeg/dex
+
+  # modem-dev/hunk — TUI diff viewer for agent changesets, also usable as a git difftool.
+  prompt_and_install "hunk" brew install hunk
 }
 
 # GitHub CLI.
