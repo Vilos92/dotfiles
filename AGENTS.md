@@ -167,7 +167,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **kiwix:** Offline content server (port 8473) - https://kiwix.greglinscheid.com
 - **transmission:** Torrent client (port 9091)
 - **prowlarr:** Indexer search (Tailscale :9009)
-- **hermes:** Hermes Agent dashboard (Tailscale :9010) — data under GregZone Vault/hermes
+- **hermes:** Hermes Agent dashboard (Tailscale :9010) — data under GregZone Vault/hermes. Runs two independent profiles (TUI + Slack bot); see Hermes Agent below before changing anything about it.
 - **minecraft:** Minecraft Bedrock server (port 19132/udp) — **profile-gated; do not start unless Greg explicitly asks** (see Minecraft Profile below)
 - **sparkify:** Slack/Spotify bot (no ports — Socket Mode, outbound only). Submodule at `greg-zone/sparkify`; see its `AGENTS.md`, and the `spotify-refresh-token` skill there for rotating `SPOTIFY_REFRESH_TOKEN`. Only ever run one instance, or Slack replies double.
 
@@ -269,6 +269,124 @@ otherwise page Discord. It also skips new-IP alerts for both edge-reject
 statuses (403 from the bot block, 444 from woodpecker's catch-all). Scanners
 hitting *other* paths for 4xx/5xx are still caught by the suspicious-activity
 rule.
+
+### Hermes Agent
+
+Hermes runs from the upstream `nousresearch/hermes-agent:latest` image, so
+**almost nothing about it lives in this repo.** Its entire state — config,
+skills, memories, plugins, credentials — is on the volume:
+
+```
+/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/hermes   (host)
+/opt/data                                                        (in container)
+```
+
+None of it is version controlled. Read it directly; the Mini is the host, so
+no SSH hop is needed. Back up anything before editing it.
+
+#### Two profiles, two homes
+
+| | default | hermes-slack |
+| --- | --- | --- |
+| `HERMES_HOME` | `/opt/data` | `/opt/data/profiles/hermes-slack` |
+| Used by | the `hermes` TUI + cron jobs | the Sad Boyz Slack bot |
+| s6 service | `gateway-default` | `gateway-hermes-slack` |
+
+Each profile has its **own** `config.yaml`, `memories/`, `skills/`, `plugins/`,
+`auth.json` and logs. They share nothing. A fix applied to one is not applied
+to the other, and "Hermes says X in the terminal but Y in Slack" is almost
+always this. Always confirm which profile a report is about.
+
+Restart one gateway without touching the other (`s6-svc` is not on `PATH`):
+
+```sh
+docker exec hermes /command/s6-svc -r /run/service/gateway-hermes-slack
+```
+
+Config changes are inert until the relevant gateway restarts. Restarting the
+whole container is rarely necessary and takes both profiles down.
+
+#### Models — three, deliberately
+
+Chat and tools run on `deepseek/deepseek-v4-flash` via OpenRouter (cheap, good
+at agentic tool use). It is **text-only**, so anything involving images routes
+elsewhere via narrow overrides in `config.yaml`:
+
+| Job | Model | Cost |
+| --- | --- | --- |
+| Chat, tools, reasoning | `deepseek/deepseek-v4-flash` | ~$0.05/$0.10 per 1M |
+| Read an image | `google/gemini-2.5-flash-lite` | ~$0.0002 per image |
+| Make an image | `google/gemini-3.1-flash-lite-image` | ~$0.034 per image |
+
+**Keep `image_gen.model` pinned.** Unpinned, the OpenRouter provider defaults to
+`openai/gpt-5.4-image-2` at $8/$15 per 1M — roughly 100x the pinned model.
+
+`plugins/image-quota` caps `image_generate` at 10/day (Pacific) in the Slack
+profile, because the whole workspace can spend real money there. The default
+profile is uncapped; it's only Greg. Vision is uncapped everywhere — at 171x
+cheaper than generation, a cap would be guarding pennies.
+
+#### Nous auth is dead on purpose — do not re-authenticate
+
+`auth.json` in both profiles shows `invalid_grant` / `relogin_required` from
+2026-08-12. **This is fine and must stay that way.** Nous auth only ever
+provided Nous-hosted inference (unused — everything is OpenRouter) and a
+managed tool gateway. When that token died it silently took web search, web
+extract, vision and image generation with it, while chat kept working — which
+is why the outage went unnoticed for weeks.
+
+All four now route around Nous entirely. Running `hermes auth` would add a
+dependency on a token that already died once, and fix nothing.
+
+#### Web tools are local, not hosted
+
+- **Search** — `ddgs` (free DuckDuckGo, no key). The package is an optional dep
+  the image doesn't ship, and it must live in the image venv rather than
+  `/opt/data/lazy-packages`, because the provider runs each search in a child
+  process that doesn't inherit the lazy-path activation.
+  `container-init/04-install-ddgs` reinstates it on every boot, since a
+  `docker pull` wipes it.
+- **Extract** — `direct-fetch`, a local plugin (`plugins/web-fetch/`). Plain
+  HTTP GET with browser-like headers. It has an **SSRF guard that must stay**:
+  unlike the hosted backends, it runs inside the container, which is on the
+  `infrastructure` and `tailscale` networks — `grafana` resolves from there.
+  Without it, anyone in Slack could read greg-zone internals by asking Hermes
+  to summarise a link.
+
+It cannot read JavaScript-rendered pages or anything behind a login wall. That
+is a known limit, not a bug to chase.
+
+#### Local plugins (all under `<HERMES_HOME>/plugins/`, durable)
+
+Only plugins listed in `plugins.enabled` in that profile's `config.yaml` load.
+
+| Plugin | Profile | Does |
+| --- | --- | --- |
+| `slack-identity` | slack | Injects the verified Slack sender ID; exposes `sparkify_stats` |
+| `web-fetch` | both | The `direct-fetch` extract backend |
+| `output-tidy` | slack | Strips dangling `![alt]()` embeds — Slack uploads images as real attachments |
+| `image-quota` | slack | The 10/day `image_generate` cap |
+
+#### Skills
+
+Bundled skills the user has edited are pinned by md5 in
+`skills/.bundled_manifest` and are **never** overwritten by a `docker pull` —
+durable, but they also stop receiving upstream fixes. `google-workspace` is
+pinned this way.
+
+Google OAuth re-auth goes through that skill's `setup.py` (`--auth-url`, then
+`--auth-code` with the **full** redirect URL) and nothing else. **Never use the
+OOB flow** (`urn:ietf:wg:oauth:2.0:oob`) — Google removed it in January 2023,
+and it cannot be revived by disabling PKCE or by hand-rolling the exchange with
+curl. Several multi-hour debugging loops came from agents concluding `setup.py`
+was broken and writing a replacement. It isn't. Read that skill's Re-Auth
+Runbook first.
+
+The Slack bot's personality, rules and capability list live in
+`profiles/hermes-slack/SOUL.md`. If Hermes claims she can't do something she
+demonstrably can, check there before touching config — she once insisted she
+couldn't read links because SOUL.md named `browser_*` tools that profile has
+never had.
 
 ### Service Dependencies
 
