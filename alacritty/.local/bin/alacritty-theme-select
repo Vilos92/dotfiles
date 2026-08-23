@@ -18,6 +18,7 @@ new_theme=$(
               rose-pine-moon|rose-pine-dawn|\
               catppuccin-latte|catppuccin-frappe|catppuccin-macchiato|catppuccin-mocha|\
               nord|\
+              everforest-dark|everforest-light|\
               tokyonight-night|tokyonight-storm|tokyonight-day|tokyonight-moon)
                 printf '{\"colorscheme\":\"%s\"}' \"\$_s\" > \"$NVIM_STATE\";;
             esac
@@ -31,6 +32,7 @@ sync_nvim() {
     rose-pine-moon|rose-pine-dawn|\
     catppuccin-latte|catppuccin-frappe|catppuccin-macchiato|catppuccin-mocha|\
     nord|\
+    everforest-dark|everforest-light|\
     tokyonight-night|tokyonight-storm|tokyonight-day|tokyonight-moon)
       _tmp=$(mktemp "${NVIM_STATE}.XXXXXX")
       printf '{"colorscheme":"%s"}' "$_s" > "$_tmp" && mv "$_tmp" "$NVIM_STATE"

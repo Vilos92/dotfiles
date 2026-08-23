@@ -6,6 +6,8 @@ require("rose-pine")
 require("catppuccin")
 require("tokyonight")
 require("nord").setup({})
+-- everforest exposes one `everforest` colorscheme; dark/light is picked via vim.o.background.
+require("everforest").setup({ background = "medium" })
 
 local themes = {
   "rose-pine-moon",
@@ -19,7 +21,26 @@ local themes = {
   "tokyonight-storm",
   "tokyonight-day",
   "tokyonight-moon",
+  "everforest-dark",
+  "everforest-light",
 }
+
+-- Both everforest entries load the single `everforest` colorscheme, differing only by background.
+local everforest_bg = {
+  ["everforest-dark"] = "dark",
+  ["everforest-light"] = "light",
+}
+
+-- Apply a logical theme name; everforest needs its background set before the colorscheme.
+local function set_colorscheme(name)
+  local bg = everforest_bg[name]
+  if bg then
+    vim.o.background = bg
+    pcall(vim.cmd, "colorscheme everforest")
+  else
+    pcall(vim.cmd, "colorscheme " .. name)
+  end
+end
 
 -- Alacritty uses underscores for tokyonight; everything else matches nvim's name.
 local alacritty_map = {
@@ -32,7 +53,13 @@ local alacritty_map = {
 local state_file = vim.fn.stdpath("data") .. "/theme.json"
 
 local function apply_alacritty(scheme)
-  local name = alacritty_map[scheme] or scheme
+  local name
+  if scheme == "everforest" then
+    -- The colorscheme name alone is ambiguous; background tells dark from light.
+    name = (vim.o.background == "light") and "everforest-light" or "everforest-dark"
+  else
+    name = alacritty_map[scheme] or scheme
+  end
   vim.fn.jobstart({ "alacritty-theme", name }, { detach = true })
 end
 
@@ -57,15 +84,18 @@ local function load_theme()
   f:close()
   local ok, data = pcall(vim.fn.json_decode, content)
   if ok and data and data.colorscheme then
-    pcall(vim.cmd, "colorscheme " .. data.colorscheme)
+    set_colorscheme(data.colorscheme)
   end
 end
 
 local function open_picker()
   local original = vim.g.colors_name
+  -- Restoring everforest needs the background too, since it disambiguates the variant.
+  local original_bg = vim.o.background
 
   local function restore()
     if original then
+      vim.o.background = original_bg
       pcall(vim.cmd, "colorscheme " .. original)
     end
   end
@@ -79,7 +109,7 @@ local function open_picker()
   local function apply_selected()
     local sel = action_state.get_selected_entry()
     if sel then
-      pcall(vim.cmd, "colorscheme " .. sel.value)
+      set_colorscheme(sel.value)
     end
   end
 
@@ -103,7 +133,7 @@ local function open_picker()
           local sel = action_state.get_selected_entry()
           actions.close(prompt_bufnr)
           if sel then
-            pcall(vim.cmd, "colorscheme " .. sel.value)
+            set_colorscheme(sel.value)
             save_theme(sel.value)
           else
             restore()

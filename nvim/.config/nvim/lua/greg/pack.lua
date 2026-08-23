@@ -67,4 +67,5 @@ vim.pack.add({
   { src = gh("catppuccin/nvim"), name = "catppuccin", version = "main" },
   { src = gh("folke/tokyonight.nvim"), name = "tokyonight", version = "main" },
   { src = gh("gbprod/nord.nvim"), version = "main" },
+  { src = gh("neanias/everforest-nvim"), name = "everforest", version = "main" },
 }, { load = true })

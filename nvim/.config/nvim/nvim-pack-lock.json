@@ -25,6 +25,11 @@
       "src": "https://github.com/stevearc/conform.nvim",
       "version": "'master'"
     },
+    "everforest": {
+      "rev": "a0e9edc57379e8feafc6ba207c26dbb12fc1b6d8",
+      "src": "https://github.com/neanias/everforest-nvim",
+      "version": "'main'"
+    },
     "gitsigns.nvim": {
       "rev": "2038c666bd9d8a0b7349a0b6ee00dc83104b9ecf",
       "src": "https://github.com/lewis6991/gitsigns.nvim",
