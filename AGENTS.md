@@ -173,9 +173,9 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 
 **Monitoring Stack:**
 
-- **prometheus:** Metrics collection (port 9090)
+- **prometheus:** Metrics collection (port 9090) — 200h retention, enforced by Prometheus itself
 - **grafana:** Dashboards and visualization (port 3000)
-- **loki:** Log aggregation (port 3100)
+- **loki:** Log aggregation (port 3100) — 7-day retention, enforced by the compactor and **not** by `retention_period` alone (see Log and Metric Retention below)
 - **promtail:** Log shipping
 - **alertmanager:** Alert routing (port 9093)
 - **node-exporter:** System metrics (port 9100)
@@ -387,6 +387,75 @@ The Slack bot's personality, rules and capability list live in
 demonstrably can, check there before touching config — she once insisted she
 couldn't read links because SOUL.md named `browser_*` tools that profile has
 never had.
+
+### Log and Metric Retention
+
+Both stores are bounded, but only one of them is bounded by the setting that
+looks like it does the bounding.
+
+**Prometheus** is straightforward: `--storage.tsdb.retention.time=200h` in its
+`command:` block is enforced by Prometheus itself. Verified holding at ~201h of
+data in ~977MB.
+
+**Loki is the trap.** `retention_period` in `loki/loki.yml` is a policy
+declaration and nothing more. Deletion is performed by the compactor, so
+without a `compactor:` block carrying `retention_enabled: true`, Loki accepts
+the setting, logs a retention error every 15 minutes, and deletes nothing —
+forever. That is not hypothetical: it ran that way from Oct 2025 to Aug 2026
+and grew `loki-data` to 17.37GB, of which 15.78GB was past a 7-day policy. The
+oldest "expired" log was ten months old and still queryable.
+
+It went unnoticed for ten months because **Prometheus was not scraping Loki at
+all**. There was no `loki` job. A service erroring every 15 minutes was invisible
+because nobody reads a healthy service's logs.
+
+Consequences to preserve when editing any of this:
+
+- Never remove the `compactor:` block from `loki.yml`. `retention_period` alone
+  is inert, and its presence makes the config *look* correct.
+- `delete_request_store: filesystem` is required alongside `retention_enabled`
+  on Loki 3.x. Retention will not start without it.
+- Keep the `loki` scrape job in `prometheus/prometheus.yml`. It exists almost
+  entirely to feed the alert below.
+- Keep `LokiRetentionStalled` in `prometheus/container_alerts.yml`, **including
+  its `absent()` branch**. The bare `time() - metric > 3600` form has no series
+  to evaluate if the metric disappears, so removing the compactor block would
+  silently disable the very alert that watches for the compactor block being
+  removed. Verified: naive expr goes silent, guarded expr fires.
+- `retention_delete_delay: 2h` means reclaimed disk lags marking by two hours.
+  A successful retention run is not the same as bytes returned.
+
+A single bad index entry aborts the entire retention run, for every table, not
+just the one holding it. In Aug 2026 one unremovable chunk in `index_20681`
+blocked all 334 tables; the error to grep for is `failed to apply retention`.
+Recovery was a manual prune of `/loki/chunks` (chunk filenames are base64 of
+`fake/<fp>:<from_hex>:<through_hex>:<checksum>`, so expiry is decodable from the
+name — far safer than trusting file mtime) plus deletion of the index tables at
+`/loki/chunks/index/`. Retention succeeded on the next cycle.
+
+### Container Log Rotation
+
+Every service in `docker-compose.yml` must carry a `logging:` block:
+
+```yaml
+    logging:
+      options:
+        max-size: '10m'
+        max-file: '3'
+```
+
+There is no daemon-level default in `~/.docker/daemon.json`, so a service
+without this writes an unrotated json log that grows until the disk does.
+Loki's own container log reached **9.4GB** this way — larger than most of the
+data it was storing. Eleven services were missing the block as of Aug 2026
+(the tailscale/cloudflared/nginx set, copyparty, kiwix, transmission, prowlarr
+and both redis containers); all now have it.
+
+The block only takes effect on container **recreate**, not `restart`. Mind the
+`network_mode: service:*` chains when recreating: `nginx-tailscale` and
+`prowlarr` share the `tailscale` netns, and `transmission` shares
+`tailscale-exit-node`'s. Recreate the provider first, then its dependents, or
+the dependents come back without a network.
 
 ### Service Dependencies
 
