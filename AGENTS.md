@@ -203,7 +203,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **infra-redis-commander:** Redis management UI (port 8084)
 - **playit:** Minecraft server tunneling — **profile-gated; do not start unless Greg explicitly asks.** Keep `PLAYIT_SECRET_KEY` in `.env` so the tunnel reclaims the same address whenever it does come back. The top-level `playit` *network* is still defined and in use — promtail and nginx-tailscale attach to it — so do not remove it.
 - **minecraft-backup:** Automated Minecraft backups — **profile-gated; do not start unless Greg explicitly asks**
-- **woodpecker-server / woodpecker-agent:** Woodpecker CI (UI Tailscale-only at :9011; one instance serves any GitHub repo via per-repo opt-in in the UI). GitHub login uses a classic OAuth app (callback `http://greg-zone:9011/authorize`); webhooks arrive publicly at https://woodpecker.greglinscheid.com/api/hook through the Cloudflare tunnel (all other paths refused). Agent runs pipeline steps as containers via the Docker socket — keep repos "untrusted" in Woodpecker unless privileged features are needed. Metrics scraped by Prometheus on internal port 9001. Pipeline step images that need extra tools are built locally on the Mini under `greg-zone/ci/` (e.g. `greg-zone/bun-git`, oven/bun + git) — they exist only in the host Docker daemon, so rebuild them after a `docker system prune -a` (see each Dockerfile).
+- **woodpecker-server / woodpecker-agent:** Woodpecker CI (UI Tailscale-only at :9011; one instance serves any GitHub repo via per-repo opt-in in the UI). GitHub login uses a classic OAuth app (callback `http://greg-zone:9011/authorize`); webhooks arrive publicly at https://woodpecker.greglinscheid.com/api/hook through the Cloudflare tunnel (all other paths refused, except a `Disallow: /` robots.txt and a 404 on sitemap.xml — see Crawlers below). Agent runs pipeline steps as containers via the Docker socket — keep repos "untrusted" in Woodpecker unless privileged features are needed. Metrics scraped by Prometheus on internal port 9001. Pipeline step images that need extra tools are built locally on the Mini under `greg-zone/ci/` (e.g. `greg-zone/bun-git`, oven/bun + git) — they exist only in the host Docker daemon, so rebuild them after a `docker system prune -a` (see each Dockerfile).
 
 ### Minecraft Profile
 
@@ -236,6 +236,39 @@ dashboard stays empty.
 World data lives at `/Volumes/Wokyis M.2 SSD - Storage/Vaults/GregZone Vault/Minecraft/Jordania`
 and `Jordania_backups`. Never touch either path — the profile change does not,
 and neither should any cleanup.
+
+### Crawlers and robots.txt
+
+Every public vhost in `greg-zone/nginx/nginx-cloudflare.conf` serves a real
+`User-agent: *` / `Disallow: /` robots.txt, and woodpecker answers
+`/sitemap.xml` with 404. This is not decoration — it is the only thing that
+actually makes a well-behaved crawler stop.
+
+Refusing robots.txt does the opposite of what it looks like. Per RFC 9309, a
+4xx means "no rules exist, crawl freely", and an unreachable robots.txt (our
+`return 444`, which the client sees as a dropped connection) means "assume
+disallowed *for now*, retry later" — forever. Claude-SearchBot spent a week
+polling woodpecker's robots.txt and sitemap.xml every ~90 minutes for exactly
+this reason, never crawling anything, just re-asking. One served `Disallow`
+ends it.
+
+Consequences to preserve when editing these vhosts:
+
+- `location = /robots.txt` must sit **outside** `location /`, because the
+  `if ($is_bot)` bot block runs in the rewrite phase, before a location is
+  chosen. That is why copyparty's and kiwix's bot checks were moved inside
+  their `location /` blocks — a server-level `if` would 403 robots.txt too.
+- Kiwix's robots.txt location carries `auth_basic off;`. A 401 is a 4xx, so
+  gating it behind basic auth reads as "crawl freely".
+- Never answer robots.txt with 403, 444, or 401.
+
+`services_alert_monitor.py` treats `/robots.txt` and `/sitemap.xml` as
+crawler-protocol requests and never fires a new-IP or suspicious-activity
+alert for them, at any status — crawlers rotate IPs, so each visit would
+otherwise page Discord. It also skips new-IP alerts for both edge-reject
+statuses (403 from the bot block, 444 from woodpecker's catch-all). Scanners
+hitting *other* paths for 4xx/5xx are still caught by the suspicious-activity
+rule.
 
 ### Service Dependencies
 
