@@ -278,6 +278,8 @@ install_gimp() {
 install_coding_packages() {
   prompt_and_install "visual studio code" brew install --cask visual-studio-code
   prompt_and_install "claude-code" brew install --cask claude-code
+  prompt_and_install "codex" brew install --cask codex
+  prompt_and_install "omp" brew install can1357/tap/omp
 }
 
 # Text editor.
