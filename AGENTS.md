@@ -367,6 +367,35 @@ Only plugins listed in `plugins.enabled` in that profile's `config.yaml` load.
 | `output-tidy` | slack | Strips dangling `![alt]()` embeds — Slack uploads images as real attachments |
 | `image-quota` | slack | The 10/day `image_generate` cap |
 | `drop-app` | slack | "Drop an app": one-file micro-apps deployed to ephemeral public URLs (see below) |
+| `prowlarr` | default | Release search + Transmission handoff (see below) |
+
+#### Prowlarr search and Transmission handoff (default profile)
+
+`plugins/prowlarr/` gives the TUI two tools. `prowlarr_search` queries Prowlarr
+(`PROWLARR_API_KEY` in the container env), reads saved custom filter ID 2
+(">= H.265 + 1080p") and applies it client-side — Prowlarr's search API ignores
+`customFilterId` — then ranks availability-tier first, quality second, seeds
+last. Availability is deliberately a *threshold*: past ~25 seeds, extra seeds
+count for nothing and source quality (BluRay > WEB-DL > WEBRip > HDTV; theater
+captures pinned to the bottom regardless of seeds) plus 10-bit/HDR/audio tags
+and size fit decide. Season packs skip the movie size curve (per-episode size
+is what matters) and are labeled so the model judges them accordingly. Hermes
+surfaces the top options with trade-offs and recommends; Greg makes the call.
+
+`prowlarr_send_to_transmission` then sends the chosen candidate **by infohash
+only** — the plugin looks the magnet up in its own in-process cache from the
+last search, so the model never relays magnet text. It authenticates to
+Transmission RPC at `tailscale:9004/transmission/rpc` (same nginx route
+Prowlarr's own download client uses at `127.0.0.1:9004`) with user `greg` and
+`TRANSMISSION_PASSWORD` from the container env.
+
+Hard-won rule: **only ever hand Transmission a resolved `magnet:` URI or
+base64 metainfo, never Prowlarr's HTTP `/download?apikey=...` URL.** Prowlarr's
+`magnetUrl` field *is* that HTTP URL; it must be resolved (one redirect-only
+GET) first. Given an HTTP URL as `filename`, Transmission fetches it
+synchronously from the exit-node netns where `tailscale` doesn't resolve, so
+the RPC call stalls to ReadTimeout/504 while small synthetic magnets work —
+that asymmetry burned a whole debugging session before the cause was found.
 
 #### Drop apps — one-file micro-apps (slack profile)
 
