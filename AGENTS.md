@@ -241,25 +241,24 @@ and neither should any cleanup.
 
 Every public vhost in `greg-zone/nginx/nginx-cloudflare.conf` serves a real
 `User-agent: *` / `Disallow: /` robots.txt, and woodpecker answers
-`/sitemap.xml` with 404. This is not decoration — it is the only thing that
-actually makes a well-behaved crawler stop.
+`/sitemap.xml` with 404. A served `Disallow: /` is the only signal that makes
+a well-behaved crawler stop and stay stopped, so we always serve one — even on
+vhosts that reject everything else.
 
-Refusing robots.txt does the opposite of what it looks like. Per RFC 9309, a
-4xx means "no rules exist, crawl freely", and an unreachable robots.txt (our
-`return 444`, which the client sees as a dropped connection) means "assume
-disallowed *for now*, retry later" — forever. Claude-SearchBot spent a week
-polling woodpecker's robots.txt and sitemap.xml every ~90 minutes for exactly
-this reason, never crawling anything, just re-asking. One served `Disallow`
-ends it.
+Why serving beats blocking (RFC 9309): a 4xx robots.txt means "no rules exist,
+crawl freely", and an unreachable robots.txt (a dropped connection, as
+`return 444` produces) means "assume disallowed *for now*, retry later" — so a
+blocked crawler never concludes anything; it just re-polls every hour or two,
+indefinitely. Serving the `Disallow` is what ends the traffic.
 
-Consequences to preserve when editing these vhosts:
+Rules for editing these vhosts:
 
-- `location = /robots.txt` must sit **outside** `location /`, because the
-  `if ($is_bot)` bot block runs in the rewrite phase, before a location is
-  chosen. That is why copyparty's and kiwix's bot checks were moved inside
-  their `location /` blocks — a server-level `if` would 403 robots.txt too.
-- Kiwix's robots.txt location carries `auth_basic off;`. A 401 is a 4xx, so
-  gating it behind basic auth reads as "crawl freely".
+- Keep `location = /robots.txt` **outside** `location /`. The `if ($is_bot)`
+  bot block runs in the rewrite phase, before a location is chosen, so a
+  server-level `if` would 403 robots.txt too — which is why copyparty's and
+  kiwix's bot checks live inside their `location /` blocks.
+- Keep `auth_basic off;` on kiwix's robots.txt location. A 401 is a 4xx, so
+  gating robots.txt behind basic auth reads as "crawl freely".
 - Never answer robots.txt with 403, 444, or 401.
 
 `services_alert_monitor.py` treats `/robots.txt` and `/sitemap.xml` as
@@ -331,12 +330,13 @@ cheaper than generation, a cap would be guarding pennies.
 `auth.json` in both profiles shows `invalid_grant` / `relogin_required` from
 2026-08-12. **This is fine and must stay that way.** Nous auth only ever
 provided Nous-hosted inference (unused — everything is OpenRouter) and a
-managed tool gateway. When that token died it silently took web search, web
-extract, vision and image generation with it, while chat kept working — which
-is why the outage went unnoticed for weeks.
+managed tool gateway whose failure mode is nasty: when the token dies it
+silently takes web search, web extract, vision and image generation with it
+while chat keeps working, so nothing looks broken.
 
-All four now route around Nous entirely. Running `hermes auth` would add a
-dependency on a token that already died once, and fix nothing.
+That is why all four now route around Nous entirely (see below). Running
+`hermes auth` would reintroduce a dependency on a token that can die silently,
+and fix nothing.
 
 #### Web tools are local, not hosted
 
@@ -366,6 +366,40 @@ Only plugins listed in `plugins.enabled` in that profile's `config.yaml` load.
 | `web-fetch` | both | The `direct-fetch` extract backend |
 | `output-tidy` | slack | Strips dangling `![alt]()` embeds — Slack uploads images as real attachments |
 | `image-quota` | slack | The 10/day `image_generate` cap |
+| `drop-app` | slack | "Drop an app": one-file micro-apps deployed to ephemeral public URLs (see below) |
+
+#### Drop apps — one-file micro-apps (slack profile)
+
+Anyone in Slack can ask Hermes to "drop an app" — she builds a single-file
+HTML page (Tailwind via CDN) and publishes it with **anonymous** Cloudflare
+Drop (`wrangler deploy --temporary`). Each deploy uses a throwaway Cloudflare
+account that Cloudflare auto-deletes if unclaimed for ~60 minutes, so links
+are ephemeral by design and **nothing ever touches Greg's Cloudflare account**
+— do not "fix" expiring links by adding a `CLOUDFLARE_API_TOKEN`.
+
+The moving parts, all under `profiles/hermes-slack/` on the hermes volume:
+
+- `plugins/drop-app/` — the plugin: six typed tools (`drop_app_new/list/read/
+  write/copy/deploy`) plus `template.html`. The Slack profile has no terminal,
+  so this follows the sparkify pattern: the model supplies only slugs, app
+  names, and HTML — never a shell command or wrangler flag.
+- `drop-apps/<YYYY-MM-DD>-<slug>/index.html` — the apps. The local file is the
+  durable artifact; the URL is a disposable view of it. Each dir also gets
+  `claim-url.txt` after deploy — the claim URL grants ownership of the temp
+  account, is for Greg only, and is deliberately scrubbed from everything the
+  model sees. Never post it to Slack.
+- `tools/wrangler/` — pinned wrangler (see `container-init/05-install-wrangler`
+  for the version and upgrade procedure). `tools/wrangler-config/` is the
+  wrangler `XDG_CONFIG_HOME`; its cached temp-account credentials are why
+  redeploys within the hour keep the same URL.
+
+Anonymous deployments sit behind Cloudflare's bot challenge for non-browser
+clients — `curl` gets 403 + `cf-mitigated: challenge`, which means the app IS
+live (browsers pass the challenge automatically). Don't debug that 403.
+
+The workflow rules (context gathering, confirm-before-redeploy, no shared
+state between viewers, proactive-offer limits) live in that profile's SOUL.md
+under "Drop apps".
 
 #### Skills
 
@@ -390,48 +424,54 @@ never had.
 
 ### Log and Metric Retention
 
-Both stores are bounded, but only one of them is bounded by the setting that
-looks like it does the bounding.
+**Prometheus** keeps 200h of metrics (~1GB), enforced by Prometheus itself via
+`--storage.tsdb.retention.time=200h` in its `command:` block.
 
-**Prometheus** is straightforward: `--storage.tsdb.retention.time=200h` in its
-`command:` block is enforced by Prometheus itself. Verified holding at ~201h of
-data in ~977MB.
+**Loki** keeps 7 days of logs, enforced by the **compactor**, not by the
+setting that looks like it does the enforcing. In `loki/loki.yml`,
+`retention_period` only declares the policy; the `compactor:` block — with
+`retention_enabled: true` plus `delete_request_store: filesystem`, both
+required on Loki 3.x — is what actually deletes. Without it, Loki accepts the
+config, logs a retention error every 15 minutes, and deletes nothing, while
+the config looks correct and the volume grows unbounded.
 
-**Loki is the trap.** `retention_period` in `loki/loki.yml` is a policy
-declaration and nothing more. Deletion is performed by the compactor, so
-without a `compactor:` block carrying `retention_enabled: true`, Loki accepts
-the setting, logs a retention error every 15 minutes, and deletes nothing —
-forever. That is not hypothetical: it ran that way from Oct 2025 to Aug 2026
-and grew `loki-data` to 17.37GB, of which 15.78GB was past a 7-day policy. The
-oldest "expired" log was ten months old and still queryable.
+Because a silently-stalled compactor is the failure mode, the config keeps
+retention *observable*, not just enabled:
 
-It went unnoticed for ten months because **Prometheus was not scraping Loki at
-all**. There was no `loki` job. A service erroring every 15 minutes was invisible
-because nobody reads a healthy service's logs.
-
-Consequences to preserve when editing any of this:
-
-- Never remove the `compactor:` block from `loki.yml`. `retention_period` alone
-  is inert, and its presence makes the config *look* correct.
-- `delete_request_store: filesystem` is required alongside `retention_enabled`
-  on Loki 3.x. Retention will not start without it.
-- Keep the `loki` scrape job in `prometheus/prometheus.yml`. It exists almost
-  entirely to feed the alert below.
-- Keep `LokiRetentionStalled` in `prometheus/container_alerts.yml`, **including
-  its `absent()` branch**. The bare `time() - metric > 3600` form has no series
-  to evaluate if the metric disappears, so removing the compactor block would
-  silently disable the very alert that watches for the compactor block being
-  removed. Verified: naive expr goes silent, guarded expr fires.
+- Keep the `compactor:` block in `loki.yml` (`retention_period` alone is
+  inert) and keep `delete_request_store: filesystem` in it.
+- Keep the `loki` scrape job in `prometheus/prometheus.yml`. It exists to feed
+  the alert below — Loki's own logs are not somewhere anyone looks.
+- Keep `LokiRetentionStalled` in `prometheus/container_alerts.yml`,
+  **including its `absent()` branch**. The bare `time() - metric > 3600` form
+  has no series to evaluate if the metric disappears, so it would go silent in
+  exactly the scenario it guards against — the compactor config being removed.
+  (Verified both ways: naive expr goes silent, guarded expr fires.)
 - `retention_delete_delay: 2h` means reclaimed disk lags marking by two hours.
   A successful retention run is not the same as bytes returned.
 
-A single bad index entry aborts the entire retention run, for every table, not
-just the one holding it. In Aug 2026 one unremovable chunk in `index_20681`
-blocked all 334 tables; the error to grep for is `failed to apply retention`.
-Recovery was a manual prune of `/loki/chunks` (chunk filenames are base64 of
-`fake/<fp>:<from_hex>:<through_hex>:<checksum>`, so expiry is decodable from the
-name — far safer than trusting file mtime) plus deletion of the index tables at
-`/loki/chunks/index/`. Retention succeeded on the next cycle.
+**When `LokiRetentionStalled` fires:** a single bad index entry aborts the
+retention run for *every* table, so one corrupt entry stops all deletion.
+Runbook (exercised successfully twice):
+
+1. `docker logs loki | grep "failed to apply retention"` — the error names the
+   table (`index_NNNNN`) and chunk
+   (`fake/<fp>:<from_hex>:<through_hex>:<checksum>`).
+2. Confirm the data at stake is already expired: `from`/`through` are ms
+   epochs, and table `index_NNNNN` covers the UTC day starting at
+   `NNNNN × 86400`. Retention trips on chunks as they cross the boundary, so
+   the affected table is normally the oldest one, at or past expiry.
+3. The loki image has no shell; work on the volume through a helper:
+   `docker run --rm -v greg-zone_loki-data:/loki busybox sh -c '...'`
+4. Delete the bad table from **both** `/loki/chunks/index/index_NNNNN` and
+   `/loki/boltdb-shipper-cache/index_NNNNN`, and delete the offending chunk
+   file under `/loki/chunks/` — its filename is the base64 of the full
+   `fake/...` string from the error.
+5. `docker restart loki`. The compactor waits ~10 minutes after boot, then
+   runs every 15 minutes; confirm a pass with no `failed to apply retention`.
+
+Deleting an index table forfeits queries against that one day of logs — data
+the policy was about to delete anyway.
 
 ### Container Log Rotation
 
@@ -445,11 +485,10 @@ Every service in `docker-compose.yml` must carry a `logging:` block:
 ```
 
 There is no daemon-level default in `~/.docker/daemon.json`, so a service
-without this writes an unrotated json log that grows until the disk does.
-Loki's own container log reached **9.4GB** this way — larger than most of the
-data it was storing. Eleven services were missing the block as of Aug 2026
-(the tailscale/cloudflared/nginx set, copyparty, kiwix, transmission, prowlarr
-and both redis containers); all now have it.
+without this writes an unrotated json log that grows until the disk does —
+multi-gigabyte container logs are the observed result, not a hypothetical.
+Every current service carries the block; when adding a new service, add it
+before first `up`.
 
 The block only takes effect on container **recreate**, not `restart`. Mind the
 `network_mode: service:*` chains when recreating: `nginx-tailscale` and
@@ -559,11 +598,13 @@ personal workstation and will sleep it on slight provocation. Current settings:
 | `pmset -u haltremain` | `5` | Clean shutdown when the UPS has 5 min runtime left |
 
 `-c` is the AC profile, `-u` the UPS profile; macOS switches the instant the UPS
-reports battery. The two non-defaults were set 2026-08-17, after a 67-second
-outage slept the Mini (UPS at 100%) and it stayed down four hours — it never woke
-when AC returned, and `womp 0` left it unreachable until physically touched.
-Sleep does not auto-recover; `haltremain` + `autorestart 1` do. Keep low-battery
-handling as a shutdown and never reintroduce sleep here.
+reports battery. The principle behind the two non-defaults: on UPS power the
+Mini must either stay fully up or shut down cleanly — never sleep. A slept Mini
+does not wake when AC returns, and without womp it can't even be woken over the
+network, so sleep turns a momentary blip into an outage that lasts until
+someone physically touches the machine. Shutdown, by contrast, self-recovers:
+`haltremain` plus `autorestart 1` bring it back when power does. Keep
+low-battery handling as a shutdown and never reintroduce sleep here.
 
 **If greg-zone misbehaves across unrelated containers** — Sparkify
 restart-storming, Grafana gaps, containers "up" but silent — check whether the
