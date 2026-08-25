@@ -481,7 +481,7 @@ retention *observable*, not just enabled:
 
 **When `LokiRetentionStalled` fires:** a single bad index entry aborts the
 retention run for *every* table, so one corrupt entry stops all deletion.
-Runbook (exercised successfully twice):
+Runbook (exercised successfully three times, most recently 2026-08-24):
 
 1. `docker logs loki | grep "failed to apply retention"` — the error names the
    table (`index_NNNNN`) and chunk
@@ -493,14 +493,35 @@ Runbook (exercised successfully twice):
 3. The loki image has no shell; work on the volume through a helper:
    `docker run --rm -v greg-zone_loki-data:/loki busybox sh -c '...'`
 4. Delete the bad table from **both** `/loki/chunks/index/index_NNNNN` and
-   `/loki/boltdb-shipper-cache/index_NNNNN`, and delete the offending chunk
-   file under `/loki/chunks/` — its filename is the base64 of the full
-   `fake/...` string from the error.
+   `/loki/boltdb-shipper-cache/index_NNNNN` (the cache may no longer hold the
+   old table — only the missing pieces need deleting), and delete the
+   offending chunk file under `/loki/chunks/` — its filename is the base64 of
+   the full `fake/...` string from the error.
 5. `docker restart loki`. The compactor waits ~10 minutes after boot, then
    runs every 15 minutes; confirm a pass with no `failed to apply retention`.
 
 Deleting an index table forfeits queries against that one day of logs — data
 the policy was about to delete anyway.
+
+**Root cause (identified 2026-08-24): this is not corruption.** It is a known
+upstream regression in Loki 3.6.0+ —
+[grafana/loki#23358](https://github.com/grafana/loki/issues/23358), introduced
+by PR #19093, fix pending in PR #23402. `RemoveChunk` recomputes a chunk's
+index keys across *every* day-bucket the chunk overlaps, so a chunk spanning
+UTC midnight yields a key for the previous day's table too; that key is
+legitimately absent from the current table, and 3.6.0+ treats the absence as
+fatal ("could not find entry of chunk ... to remove it"), aborting the whole
+run. The compose file used `grafana/loki:latest`, so the stack silently
+crossed onto the broken 3.6+ line on some past pull; every midnight-spanning
+chunk reaching the retention edge then re-triggered it (days-to-weekly
+cadence), and the runbook above clears each occurrence but cures nothing.
+
+**Current state: image is TEMPORARILY pinned to `grafana/loki:3.5.12`** —
+the last line that predates the regression, still patched upstream. As of
+2026-08-24 no released version contains the fix (newest release 3.7.6 is
+affected; fix PR #23402 unmerged). When a release newer than 3.7.6 ships with
+#23402 merged, upgrade to it and clean up both this paragraph and the pin
+comment in `greg-zone/docker-compose.yml`.
 
 ### Container Log Rotation
 
