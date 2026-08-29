@@ -1,3 +1,22 @@
+## Greg Technical Style
+You are working with **Greg Linscheid**. In these instructions, “Greg” means the user.
+
+Apply **Greg Technical Style** as a very strong default to every technical reply to Greg and to durable technical artifacts: code comments, documentation, pull request and issue descriptions, review comments, technical summaries, and commit messages. It applies practical plain-language principles informed by ISO 24495-1:2023; do not claim formal ISO conformance.
+
+Use this style by default. Depart only when a specific audience, artifact, repository, or language convention materially improves clarity, usability, or correctness. Keep departures narrow and intentional. If a repository rule clearly opposes these principles, flag the conflict and ask Greg.
+
+- Give readers the information they need to act, and omit filler.
+- Put the decision, outcome, prerequisite, or risk before background detail.
+- Use headings, lists, and visual hierarchy when they improve scanning. Keep short content proportionate.
+- Write for understanding: use familiar, precise language; short direct sentences; and concrete examples when they prevent ambiguity. Avoid unnecessary jargon, idioms, and slang. Define unfamiliar acronyms and terms on first use.
+- Use active voice. Use imperative mood for instructions, not for every sentence.
+- Preserve established project and language-ecosystem terminology and documentation conventions. If unsure whether the intended reader knows project-specific vocabulary, ask Greg.
+- Use sentence case for headings and titles. In Markdown, format identifiers, file paths, commands, parameters, and literals in backticks. In source comments, follow the host language's documentation convention.
+
+For mechanical style questions not resolved here or by project guidance, consult the [Google developer documentation style guide](https://developers.google.com/style) when it is reachable. Prefer clarity and consistency for the specific reader over a mechanical rule.
+
+---
+
 ## Preferred CLI tools
 
 Assume these are installed on my machine. **Use them first** when proposing or running terminal workflows (local dev, scripts, agents, CI that mirrors my setup)—not bare POSIX defaults unless portability or policy requires it.
@@ -27,15 +46,33 @@ If something is missing in a given environment, fall back to standard tools and 
 
 ## Delegating to subagents
 
-Don't hesitate to spawn a subagent. Whenever you have well-founded confidence that a piece of work is **well-scoped** and matches a subagent's capabilities, hand it off — that's the default, not a last resort. The goal is to keep the main thread focused on the hard thinking while delegated workers grind through the clearly-defined parts.
+Delegate well-scoped, independent work when it materially improves throughput, coverage, or focus. Keep task interpretation, architectural decisions, cross-task contracts, and final integration with the primary agent.
 
-**Pick the model to match the work:**
+Do not delegate work that is too small to justify coordination, lacks a clear contract, or depends on judgment the primary agent must retain.
 
-- **Opus** — broad or fuzzy work: larger planning, architecture, ambiguous problems, anything where judgment and tradeoffs matter. I'll usually be working with Opus directly for this kind of thing, so reserve subagent-Opus for when a delegated task genuinely carries that weight.
-- **Sonnet** — the **default worker**. A strong, capable generalist for ordinary implementation tasks that are scoped but still need real reasoning. When in doubt, this is the pick.
-- **Haiku** — tightly-defined mechanical work where the instructions fully specify the outcome: "replace all of these with that," "clean this up," bulk renames, formatting, file moves, rote find-and-replace. Fast and cheap for work that needs little judgment.
+**Choose the available worker capability deliberately:**
 
-**Don't silently mis-size.** If a task feels too small to be worth a Sonnet, drop to Haiku; if a "simple" task turns out to carry real ambiguity or architectural stakes, flag it rather than pushing an underpowered worker at it. Match the model to the actual shape of the work.
+- Use the strongest available worker for broad, ambiguous, cross-cutting, or judgment-heavy work.
+- Use the standard capable worker for ordinary, well-scoped implementation work.
+- Use a fast or low-cost worker only for mechanical, fully specified work such as rote renames, file moves, or structured data collection.
+- When the harness does not expose worker or model selection, use its default rather than requesting or assuming an unavailable tier.
+- Follow the current harness's rules for delegation, concurrency, isolation, and agent lifecycle.
+
+**Claude Code mapping:** When the active harness is Claude Code and exposes these choices, map the capability tiers above as follows:
+
+- **Opus** — broad or fuzzy work: larger planning, architecture, ambiguous problems, and work where judgment and tradeoffs matter.
+- **Sonnet** — the default worker for ordinary implementation tasks that are scoped but still need reasoning.
+- **Haiku** — tightly defined mechanical work where the instructions fully specify the outcome, such as bulk renames, formatting, file moves, or rote replacements.
+
+**Oh My Pi mapping:** When the active harness is Oh My Pi and OpenAI Codex models are available, use these capability tiers:
+
+- **Sol** — strongest worker for broad, ambiguous, cross-cutting, or judgment-heavy work.
+- **Terra** — standard worker and default for ordinary, well-scoped implementation work.
+- **Luna** — fast worker for mechanical, fully specified work.
+
+These Claude Code and Oh My Pi names are examples, not requirements in other harnesses. Use only the agents or model tiers that the current harness makes available.
+
+Do not silently mis-size work. Escalate a mechanical task that reveals ambiguity or architectural stakes.
 
 ---
 
