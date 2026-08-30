@@ -1,5 +1,5 @@
-# Lint checks on the greg-zone Woodpecker instance: shellcheck, ruff and
-# prettier via the scripts in scripts/, matching how they run locally.
+# Validation on the greg-zone Woodpecker instance: repository shell/Python/
+# JavaScript checks plus the Brew TUI's format, lint, typecheck, and tests.
 #
 # `greg-zone/dotfiles-lint` is oven/bun plus git, shellcheck and ruff, built
 # locally on the CI host from greg-zone/ci/dotfiles-lint/Dockerfile. If every
@@ -46,3 +46,36 @@ steps:
     depends_on: []
     commands:
       - sh scripts/prettier.sh --check
+
+  # The Brew TUI pins its own Bun release and locked dependencies. Install
+  # once, then fan out independent checks without waiting for the unrelated
+  # submodule clone.
+  - name: brews-install
+    image: oven/bun:1.4.0
+    depends_on: []
+    commands:
+      - cd brews && bun install --frozen-lockfile
+
+  - name: brews-format
+    image: oven/bun:1.4.0
+    depends_on: [brews-install]
+    commands:
+      - cd brews && bun run format:check
+
+  - name: brews-lint
+    image: oven/bun:1.4.0
+    depends_on: [brews-install]
+    commands:
+      - cd brews && bun run lint
+
+  - name: brews-typecheck
+    image: oven/bun:1.4.0
+    depends_on: [brews-install]
+    commands:
+      - cd brews && bun run typecheck
+
+  - name: brews-test
+    image: oven/bun:1.4.0
+    depends_on: [brews-install]
+    commands:
+      - cd brews && bun run test

@@ -1,0 +1,23 @@
+{
+  "name": "@v92/brews",
+  "private": true,
+  "type": "module",
+  "packageManager": "bun@1.4.0",
+  "scripts": {
+    "format": "prettier --write --config ../prettier.config.mjs \"src/**/*.ts\" \"test/**/*.ts\"",
+    "format:check": "prettier --check --config ../prettier.config.mjs \"src/**/*.ts\" \"test/**/*.ts\"",
+    "lint": "oxlint src test",
+    "start": "bun run src/main.ts",
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@opentui/core": "latest"
+  },
+  "devDependencies": {
+    "@types/bun": "^1.4.0",
+    "oxlint": "^1.80.0",
+    "prettier": "^3.9.6",
+    "typescript": "^7.0.2"
+  }
+}
