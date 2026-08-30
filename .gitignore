@@ -11,3 +11,6 @@ __pycache__/
 .claude/
 !claude-md/.claude/
 !claude-settings/.claude/
+
+# Brew TUI dependencies
+brews/node_modules/
