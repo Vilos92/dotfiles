@@ -61,6 +61,17 @@ describe('planner', () => {
     );
   });
 
+  test('cancels a prerequisite removal selected before its dependent install', () => {
+    const packages = packageById();
+    const plan: Plan = new Map();
+    const states = inventory({'oh-my-zsh': 'missing', zsh: 'installed'});
+
+    setAction(plan, packages.get('zsh')!, 'remove', states);
+    setAction(plan, packages.get('oh-my-zsh')!, 'install', states);
+
+    expect(plan).toEqual(new Map([['oh-my-zsh', 'install']]));
+  });
+
   test('keeps a prerequisite selected while a planned package requires it', () => {
     const packages = packageById();
     const plan: Plan = new Map();

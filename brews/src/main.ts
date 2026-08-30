@@ -18,14 +18,29 @@ const usage = (): string => `Usage:
 
 The interactive app starts with no actions selected.`;
 
+const fail = (message: string): never => {
+  console.error(message);
+  process.exit(1);
+};
+
+const validateRequestedIds = (ids: string[]): void => {
+  const packages = new Set(allPackages().map(pkg => pkg.id));
+  const groups = new Set(catalog.groups.map(group => group.id));
+  for (const id of ids) {
+    if (!packages.has(id) && !groups.has(id)) fail(`Unknown package or group: ${id}`);
+  }
+};
+
 const planDefaults = (ids: string[], inventory: Inventory): Plan => {
   const plan: Plan = new Map();
   const packages = new Map(allPackages().map(pkg => [pkg.id, pkg]));
   const groups = new Map(catalog.groups.map(group => [group.id, group]));
 
   for (const id of ids) {
-    const selected = packages.get(id) ? [packages.get(id)!] : groups.get(id)?.packages;
-    if (!selected) throw new Error(`Unknown package or group: ${id}`);
+    const selectedPackage = packages.get(id);
+    const selected = selectedPackage
+      ? [selectedPackage]
+      : (groups.get(id)?.packages ?? fail(`Unknown package or group: ${id}`));
     for (const pkg of selected) {
       const action = defaultAction(pkg, inventory.get(pkg.id) ?? 'unknown');
       if (action) setAction(plan, pkg, action, inventory);
@@ -42,9 +57,14 @@ if (args[0] === '--help' || args[0] === '-h') {
   process.exit(0);
 }
 
+if (args[0] === '--dry-run' && args.length === 1) {
+  fail('--dry-run requires at least one package or group ID');
+}
+if (args[0] !== '--dry-run' && args.length > 0) fail(usage());
+if (args[0] === '--dry-run') validateRequestedIds(args.slice(1));
+
 const inventory = await scanInventory(bunRunner);
 if (args[0] === '--dry-run') {
-  if (args.length === 1) throw new Error('--dry-run requires at least one package or group ID');
   const plan = planDefaults(args.slice(1), inventory);
   const lines = describePlan(plan);
   console.log(
@@ -52,8 +72,6 @@ if (args[0] === '--dry-run') {
   );
   process.exit(0);
 }
-
-if (args.length > 0) throw new Error(usage());
 
 const plan = await runApp(inventory);
 if (!plan || plan.size === 0) process.exit(0);

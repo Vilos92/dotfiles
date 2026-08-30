@@ -58,6 +58,7 @@ const addRequirements = (plan: Plan, pkg: PackageDefinition, inventory: Inventor
     const requirement = packageById().get(requirementId);
     if (!requirement) throw new Error(`${pkg.id} requires unknown package ${requirementId}`);
     const action = defaultAction(requirement, inventory.get(requirementId) ?? 'unknown');
+    if (plan.get(requirementId) === 'remove') plan.delete(requirementId);
     if (action && !plan.has(requirementId)) {
       plan.set(requirementId, action);
       addRequirements(plan, requirement, inventory);
