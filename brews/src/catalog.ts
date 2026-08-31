@@ -251,7 +251,8 @@ const groups: GroupDefinition[] = [
         'PATH="$(brew --prefix rustup)/bin:$PATH" rustup-init -y --default-toolchain stable --no-modify-path',
         {kind: 'command', command: 'rustc'},
         ['rustup']
-      )
+      ),
+      brew('just', 'just', 'Rust package runner', 'just')
     ]
   },
   {
