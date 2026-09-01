@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+  <key>Label</key>
+  <string>com.greg.woodpecker-release-agent</string>
+  <key>ProgramArguments</key>
+  <array>
+    <string>/Users/greg.linscheid/.local/bin/woodpecker-release-agent</string>
+  </array>
+  <key>RunAtLoad</key>
+  <true/>
+  <key>KeepAlive</key>
+  <true/>
+  <key>ProcessType</key>
+  <string>Background</string>
+  <key>ThrottleInterval</key>
+  <integer>10</integer>
+  <key>StandardOutPath</key>
+  <string>/Users/greg.linscheid/Library/Logs/woodpecker-release-agent.log</string>
+  <key>StandardErrorPath</key>
+  <string>/Users/greg.linscheid/Library/Logs/woodpecker-release-agent.log</string>
+</dict>
+</plist>

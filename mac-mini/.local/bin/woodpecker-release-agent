@@ -1,0 +1,23 @@
+#!/bin/bash
+set -euo pipefail
+
+readonly INFRASTRUCTURE_ENV="$HOME/greg_projects/dotfiles/greg-zone/.env"
+agent_secret="$(sed -n 's/^WOODPECKER_AGENT_SECRET=//p' "$INFRASTRUCTURE_ENV")"
+if [[ -z "$agent_secret" ]]; then
+  printf 'Missing WOODPECKER_AGENT_SECRET in %s\n' "$INFRASTRUCTURE_ENV" >&2
+  exit 1
+fi
+
+export PATH="/Applications/Docker.app/Contents/Resources/bin:/opt/homebrew/bin:$HOME/.cargo/bin:$HOME/.local/bin:/usr/bin:/bin:/usr/sbin:/sbin"
+export TMPDIR="$HOME/.cache/woodpecker/tmp"
+export WOODPECKER_AGENT_CONFIG_FILE="$HOME/.config/woodpecker/agent.conf"
+export WOODPECKER_AGENT_LABELS='!release=milktea,repo=Vilos92/MilkTea'
+export WOODPECKER_AGENT_SECRET="$agent_secret"
+export WOODPECKER_BACKEND='local'
+export WOODPECKER_HEALTHCHECK='false'
+export WOODPECKER_MAX_WORKFLOWS='1'
+export WOODPECKER_RETRY_TIMEOUT='0'
+export WOODPECKER_SERVER='localhost:9000'
+
+mkdir -p "$TMPDIR"
+exec "$HOME/.local/bin/woodpecker-agent" agent
