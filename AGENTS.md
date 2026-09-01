@@ -41,6 +41,13 @@ sits outside every package and is never version controlled.
 `claude-md/` is unaffected by that split. It supplies only `CLAUDE.md` and `skills/`, so
 it stows alongside either package.
 
+**`agent/` is a fourth `~/.claude` package, and the dangerous one.** It supplies
+`sessions/`, `session-env/`, `backups/`, and `projects/` — live Claude Code state,
+including agent memory files. `stow.sh` never offers it (it was stowed by hand), and
+`.gitignore` hides `.claude/`, so nothing under it is version controlled and none of it
+shows in `git status`. It is roughly 270 MB. **Never delete or "clean up" anything under
+`agent/` — unlike every other package here, git cannot give it back.**
+
 **Non-Stowable Directories:**
 
 - `scripts/` - Standalone scripts, run with `sh scripts/<name>.sh`
