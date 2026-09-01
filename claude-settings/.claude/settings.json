@@ -7,8 +7,7 @@
       "Bash(gh api *)",
       "WebSearch",
       "Bash(vp check *)",
-      "WebFetch(domain:github.com)",
-      "Bash(dex *)"
+      "WebFetch(domain:github.com)"
     ],
     "defaultMode": "auto"
   },
@@ -17,6 +16,7 @@
     "typescript-lsp@claude-plugins-official": true
   },
   "effortLevel": "high",
+  "includeCoAuthoredBy": false,
   "skipWorkflowUsageWarning": true,
   "inputNeededNotifEnabled": true
 }

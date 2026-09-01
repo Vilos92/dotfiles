@@ -1,11 +1,11 @@
 ---
 name: gitmoji-commit
-description: Compose a gitmoji commit command for the user to copy/paste and run — subject is `:emoji: Crisp descriptive text` in Greg's style. Picks an emoji shortcode that matches the change, writes a tight subject (plus body when the change warrants it), then PRINTS the ready-to-run `git commit` command and copies it to the clipboard rather than executing it. Trigger when the user types `/gitmoji-commit`, or asks to "commit", "commit with an emoji", "gitmoji commit", or "make a commit message" in any repo.
+description: Compose a commit in Greg's gitmoji style — subject is `:emoji: Crisp descriptive text`. Picks the emoji shortcode that best matches the change, writes a tight subject (plus a body when the change warrants one), then by default prints the ready-to-run `git commit` command and copies it to the clipboard. When Greg asks for the commit to be made, make it instead. Trigger when the user types `/gitmoji-commit`, or asks to "commit", "commit with an emoji", "gitmoji commit", or "make a commit message" in any repo.
 ---
 
 # gitmoji-commit
 
-Produce a commit in Greg's house style: a single emoji shortcode, a space, then a crisp imperative subject.
+Produce a commit in Greg's house style: a single emoji shortcode, a space, then a crisp subject.
 
 ```
 :wrench: Tree sitter fixes
@@ -13,50 +13,66 @@ Produce a commit in Greg's house style: a single emoji shortcode, a space, then 
 :bulb: Container monitoring
 ```
 
-This style is **always** used regardless of repo — even repos whose existing history has no emoji. Greg wants the gitmoji prefix on every command this skill produces. The skill **composes the command, prints it, and copies it to the clipboard**; Greg pastes and runs it (see Workflow).
+Use this style in **every** repo, including ones whose existing history carries no emoji.
+
+Write the subject and body in **Greg Technical Style** (defined in `~/.claude/CLAUDE.md`): outcome first, no filler, plain language, backticks around identifiers and paths.
+
+## Two modes
+
+**Default — compose.** Print the ready-to-run command and copy it to the clipboard. Greg runs it himself.
+
+**On request — commit.** When Greg asks you to make the commit (`--commit`, "just commit it", "go ahead and commit", "commit the damn thing"), run it yourself and **skip the clipboard entirely** — he asked for a commit, not for text to paste. Report the short SHA once it lands.
+
+Permission is sticky. Once Greg grants it in a session, keep committing without asking again until he says otherwise.
+
+Either mode: never push, open a PR, or amend.
 
 ## Workflow
 
-**You do not run the commit.** This skill *composes* the command and prints it; Greg copies it and runs it himself. Read-only git inspection is fine (`git status`, `git diff`); never run `git commit`, `git add`, or anything that mutates the repo.
+1. **Read the change.** Run `git status` and `git diff` (and `git diff --cached` if anything is staged). Understand what actually changed before writing anything — the subject describes the change, not the files.
 
-1. **Read the change.** Run `git status` and `git diff` (and `git diff --cached` if anything is already staged). Understand what actually changed before writing anything — the subject describes the change, not the files.
+2. **Decide what to stage.** If the right changes are already staged, `git commit` alone is enough. Otherwise stage the specific files for this logical change. Never use `git add -A` over a working tree that mixes unrelated work; if scope is ambiguous, show `git status` and ask Greg what belongs in the commit before going further.
 
-2. **Decide what to stage.** If changes are already staged, the printed command can be just `git commit …`. If nothing relevant is staged, include a `git add <paths>` line in the printed block — list the specific files for this logical change. Do **not** print `git add -A` if the working tree mixes unrelated work; instead stage explicitly, and if scope is ambiguous, show `git status` and ask Greg what belongs in the commit before composing.
+3. **Pick the *most specific* emoji.** Reach for the shortcode that most precisely describes the change. **Do not default to `:wrench:`** — it means "config files," not "I couldn't be bothered." If the change is a bug fix, a perf win, a refactor, a dep bump, a removal, or a test, use the emoji for *that*. Look first in **Greg's vocabulary**, then the **extended palette**, then anything else in `emoji-reference.md` (the full valid set). One emoji only, at the very start, in `:shortcode:` form — not the unicode glyph. Fall back to `:wrench:` only when the change genuinely is config with no better match.
 
-3. **Pick the *most specific* emoji.** Reach for the shortcode that most precisely describes the change. **Do not default to `:wrench:`** — it means "config files," not "I couldn't be bothered." If the change is a bug fix, a perf win, a refactor, a dep bump, a removal, a test, etc., use the emoji for *that*. Look first in **Greg's vocabulary**, then the **extended palette**, then anything else in `emoji-reference.md` (the full valid set). One emoji only, at the very start, in `:shortcode:` form (not the unicode glyph). Only fall back to `:wrench:` when the change genuinely is config/settings with no more specific match.
+4. **Write the subject.** Terse. Imperative or noun phrase, no trailing period, first word capitalized. Keep the text after the shortcode to roughly 50 characters — Greg's subjects run short (`Tree sitter fixes`, `which-key`, `nginx alerts`). Don't restate the emoji's meaning in words.
 
-4. **Write the subject.** Crisp, imperative or noun-phrase, no trailing period. Keep it short — Greg's subjects are terse (`Tree sitter fixes`, `which-key`, `nginx alerts`). Capitalize the first word of the text. Do not restate the emoji's meaning in words.
+5. **Add a body only when it earns one.** Most of Greg's commits are subject-only. Add a body when the *why* isn't obvious from the subject — a non-obvious tradeoff, a fix's root cause, a breaking change. Explain why, not how; the diff already shows how.
 
-5. **Body, only when it earns it.** Most of Greg's commits are subject-only. Add a body (a second `-m`) only when the *why* isn't obvious from the subject — e.g. non-obvious tradeoffs, a fix's root cause, or breaking changes.
+6. **Deliver.**
 
-6. **Print the command — do not run it.** Output the ready-to-paste command in a single ```sh fenced block. TUIs make text in a code block easy to select. Use one `-m` per paragraph so the body isn't crammed onto the subject line:
+   **Composing (default).** Print the command in one ```sh block so it is easy to select in a TUI. Use one `-m` per paragraph so the body doesn't collapse onto the subject line:
 
    ```sh
    git commit -m ":emoji: Subject" -m "Optional body paragraph."
    ```
 
-   If staging is needed, put it on its own line in the same block so the whole thing pastes as one unit:
+   Put any staging on its own line in the same block so the whole thing pastes as a unit:
 
    ```sh
    git add path/to/file another/file
    git commit -m ":emoji: Subject"
    ```
 
-   Surface anything surprising you noticed while reading the diff (unrelated files in the tree, a dirty submodule, secrets about to be committed) as a short note *outside* the code block, so the command stays clean to copy. Then stop — Greg runs it.
-
-7. **Copy it to the clipboard.** After printing, also copy the exact command text (including any `git add` line) to the system clipboard so Greg can paste it straight into his shell. Pipe the literal command through the available clipboard tool — do **not** run the commit itself:
+   Then copy the exact command text to the clipboard:
 
    ```sh
    printf '%s' 'git commit -m ":emoji: Subject"' | pbcopy
    ```
 
-   Clipboard tool by platform: `pbcopy` on macOS (Greg's primary env); fall back to `wl-copy`, then `xclip -selection clipboard`, on Linux. If none is available, just say so — the printed block is still there to copy manually. Confirm in one line that it's on the clipboard (e.g. "Copied to clipboard — paste and run.").
+   Clipboard tool by platform: `pbcopy` on macOS (Greg's primary environment); fall back to `wl-copy`, then `xclip -selection clipboard`, on Linux. If none is available, say so — the printed block is still there to copy by hand. Confirm in one line, e.g. "Copied to clipboard — paste and run."
 
-   > Note: this does not depend on any separate `/copy` skill. The agent shells out to the clipboard tool directly, which is more robust than chaining skills.
+   **Committing (on request).** Run the staging and commit directly. No printed block to copy, no clipboard write. Confirm with the short SHA and subject:
+
+   ```
+   Committed 4e10a49 :wrench: Tree sitter fixes
+   ```
+
+   Either way, surface anything surprising you noticed while reading the diff — unrelated files in the tree, a dirty submodule, secrets about to be committed — as a short note *outside* the code block, so the command stays clean to copy.
 
 ## Greg's emoji vocabulary
 
-Greg's active set — the high-signal ones to reach for first. "Use for" reflects how *Greg* uses them, which sometimes differs from upstream gitmoji (see Divergences). **Pick the most specific match.** `:wrench:` is no longer a catch-all: it means config files and nothing more.
+Greg's active set — the high-signal ones to reach for first. "Use for" reflects how *Greg* uses them, which sometimes differs from upstream gitmoji (see Divergences). **Pick the most specific match.** `:wrench:` is not a catch-all: it means config files and nothing more.
 
 **Change-type:**
 
@@ -138,21 +154,18 @@ Greg overloads a few shortcodes differently from upstream — keep Greg's meanin
 
 If you reach for something outside both tables, confirm the shortcode exists in `emoji-reference.md` first, and prefer it only when nothing above fits.
 
-## Claude attribution
+## Attribution
 
-**Default: no footer.** Greg's commits do not carry a `Co-Authored-By: Claude` trailer, so by default omit it — even though the harness normally appends one.
+**Never add a `Co-Authored-By: Claude` trailer.** Greg is the sole author of his commits. This holds in both modes, and it holds even when the harness would append one by default — when you run the commit yourself, pass only the `-m` arguments you composed.
 
-**Opt-in:** If the user passes `--attribute` (or says to credit/include Claude, "add the co-author", etc.), add the trailer as a final `-m` so it lands as its own paragraph in the printed command:
-
-```sh
-git commit -m ":emoji: Subject" -m "Body." -m "Co-Authored-By: Claude Opus 4.8 (1M context) <noreply@anthropic.com>"
-```
+There is no opt-in. If Greg asks for co-authorship explicitly, confirm before adding anything.
 
 ## Don'ts
 
-- **Don't run the commit.** Print the command for Greg to paste and run. No `git commit` / `git add` execution from this skill.
 - Don't push, open PRs, or amend.
-- Don't use the unicode emoji glyph — use the `:shortcode:` form, which is what renders in GitHub and matches Greg's history.
-- Don't write a verbose subject. Terse beats complete; the body is where detail goes, and most commits don't need a body.
-- Don't print `git add -A` over a mixed working tree — stage only what belongs to this commit.
-- Don't add the Claude co-author footer unless explicitly asked (see above).
+- Don't commit unless Greg asked you to — compose and copy by default.
+- Don't write to the clipboard when Greg asked you to commit. He wants the commit, not the text.
+- Don't use the unicode emoji glyph — use the `:shortcode:` form, which renders on GitHub and matches Greg's history.
+- Don't write a verbose subject. Terse beats complete, and most commits need no body at all.
+- Don't `git add -A` over a mixed working tree — stage only what belongs to this commit.
+- Don't add a co-author trailer.
