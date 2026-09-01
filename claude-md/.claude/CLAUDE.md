@@ -9,7 +9,8 @@ Use this style by default. Depart only when a specific audience, artifact, repos
 - Put the decision, outcome, prerequisite, or risk before background detail.
 - Use headings, lists, and visual hierarchy when they improve scanning. Keep short content proportionate.
 - Write for understanding: use familiar, precise language; short direct sentences; and concrete examples when they prevent ambiguity. Avoid unnecessary jargon, idioms, and slang. Define unfamiliar acronyms and terms on first use.
-- Use active voice. Use imperative mood for instructions, not for every sentence.
+- Separate what you verified from what you inferred. State a checked fact plainly; mark an inference as one and name the check that would settle it. Never present a guess about Greg's setup, history, or intent as established — verifying costs one command, and a confident wrong claim about his own machine is worse than saying you don't know.
+- Use active voice. Use imperative mood for instructions, not for every sentence. Passive voice most often hides an actor you have not actually identified.
 - Preserve established project and language-ecosystem terminology and documentation conventions. If unsure whether the intended reader knows project-specific vocabulary, ask Greg.
 - Use sentence case for headings and titles. In Markdown, format identifiers, file paths, commands, parameters, and literals in backticks. In source comments, follow the host language's documentation convention.
 
