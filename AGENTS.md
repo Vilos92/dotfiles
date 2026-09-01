@@ -10,24 +10,42 @@ This repository uses GNU Stow for dotfile management. Run `scripts/stow.sh` to i
 
 **Stowable Directories:**
 
+The list below is the set `scripts/stow.sh` offers, in the order it prompts:
+
 - `alacritty/` - Terminal emulator config
 - `tmux/` - Terminal multiplexer config
 - `zsh/` - Shell configuration and aliases
 - `nvim/` - Neovim editor config
 - `vim/` - Vim editor config
 - `git/` - Git configuration
-- `claude-md/` - Claude Code config (`~/.claude`: skills, settings, CLAUDE.md)
 - `remote/` - Remote server connection configs
+- `mac-productivity/` - Mac productivity configurations (Alfred)
 - `mac-mini/` - Mac Mini specific configurations
+- `arch/` - Arch Linux specific configurations (sway init)
+- `dex/` - dex task tracker profile and task store
+- `claude-md/` - Claude Code `CLAUDE.md` and `skills/` under `~/.claude` — **not** settings
+- `claude-settings/` - Claude Code `~/.claude/settings.json` for non-work devices
+- `cursor/` - Cursor permissions
 - `front/` - Work laptop specific configurations (symlinked submodule)
+
+**`~/.claude/settings.json` comes from exactly one package.** `claude-settings/` and
+`front/` both provide `.claude/settings.json`, so they are mutually exclusive: stow
+refuses the second one with `existing target is stowed to a different package`. The work
+MacBook takes it from `front/`; every other device takes it from `claude-settings/`.
+
+There is no shared layer beneath the two, so **a preference that should hold everywhere
+has to be written into both** — that is why, for example, `includeCoAuthoredBy` appears
+twice. Settings specific to one machine belong in `~/.claude/settings.local.json`, which
+sits outside every package and is never version controlled.
+
+`claude-md/` is unaffected by that split. It supplies only `CLAUDE.md` and `skills/`, so
+it stows alongside either package.
 
 **Non-Stowable Directories:**
 
-- `scripts/` - Standalone executable scripts
+- `scripts/` - Standalone scripts, run with `sh scripts/<name>.sh`
 - `greg-zone/` - Docker infrastructure and services (separate repository, but this AGENTS.md is responsible for documenting it)
 - `gmux/` - Public tmux session switcher (separate repository: https://github.com/Vilos92/gmux)
-- `arch/` - Arch Linux specific configurations (currently empty)
-- `mac-productivity/` - Mac productivity configurations (Alfred)
 
 ### Submodules
 
@@ -704,7 +722,9 @@ This AGENTS.md should be kept up-to-date as the environment evolves. Feel free t
 
 ### Available Scripts
 
-All scripts in `scripts/` directory are executable and well-documented with error handling.
+All scripts in `scripts/` are well-documented with error handling. Not all carry the
+executable bit — `stow.sh`, `stylua.sh`, and `zsh-startup-profile.sh` do not — so invoke
+them as `sh scripts/<name>.sh` rather than `./scripts/<name>.sh`.
 
 ### Available Binaries
 
