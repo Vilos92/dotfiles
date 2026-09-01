@@ -1,7 +1,7 @@
 import {exists} from 'node:fs/promises';
 
-import {allPackages} from './catalog.ts';
-import type {BrewKind, Inventory, PackageDefinition, PackageStatus} from './types.ts';
+import {allPackages, catalog} from './catalog.ts';
+import type {BrewKind, Catalog, Inventory, PackageDefinition, PackageStatus} from './types.ts';
 
 export type CommandResult = {
   exitCode: number;
@@ -12,6 +12,12 @@ export type CommandResult = {
 export interface CommandRunner {
   run(argv: string[]): Promise<CommandResult>;
 }
+
+type InventoryOptions = {
+  catalog?: Catalog;
+  pathExists?: (path: string) => Promise<boolean>;
+  platform?: string;
+};
 
 export const bunRunner: CommandRunner = {
   async run(argv) {
@@ -48,12 +54,89 @@ const readBrewTokens = async (
 
 const expandHome = (path: string): string => path.replace(/^\$HOME/, process.env.HOME ?? '');
 
-const probePackage = async (pkg: PackageDefinition): Promise<PackageStatus> => {
+const parseVersion = (raw: string): [number, number, number] | null => {
+  const match = /^v?(\d+)\.(\d+)\.(\d+)$/.exec(raw.trim());
+  if (!match) return null;
+  return [Number(match[1]), Number(match[2]), Number(match[3])];
+};
+
+const compareVersions = (installed: [number, number, number], latest: [number, number, number]): number => {
+  for (let index = 0; index < installed.length; index++) {
+    const difference = installed[index] - latest[index];
+    if (difference !== 0) return difference;
+  }
+  return 0;
+};
+
+const readLatestReleaseVersion = async (
+  repository: string,
+  runner: CommandRunner
+): Promise<[number, number, number] | null> => {
+  const result = await runner.run([
+    'curl',
+    '--proto',
+    '=https',
+    '--tlsv1.2',
+    '--fail',
+    '--silent',
+    '--show-error',
+    '--location',
+    '--output',
+    '/dev/null',
+    '--write-out',
+    '%{url_effective}',
+    `https://github.com/${repository}/releases/latest`
+  ]);
+  if (result.exitCode !== 0) return null;
+
+  try {
+    const tag = new URL(result.stdout.trim()).pathname.split('/').filter(Boolean).at(-1);
+    return tag ? parseVersion(decodeURIComponent(tag)) : null;
+  } catch {
+    return null;
+  }
+};
+
+const probeGithubReleaseMacosApp = async (
+  pkg: PackageDefinition,
+  runner: CommandRunner,
+  options: Required<Pick<InventoryOptions, 'pathExists' | 'platform'>>
+): Promise<PackageStatus> => {
+  if (pkg.probe.kind !== 'github-release-macos-app') {
+    throw new Error(`${pkg.id} does not use a GitHub release macOS app probe`);
+  }
+  if (options.platform !== 'darwin') return 'unknown';
+
+  const appPath = expandHome(pkg.probe.path);
+  if (!(await options.pathExists(appPath))) return 'missing';
+
+  const installedResult = await runner.run([
+    '/usr/libexec/PlistBuddy',
+    '-c',
+    'Print :CFBundleShortVersionString',
+    `${appPath}/Contents/Info.plist`
+  ]);
+  if (installedResult.exitCode !== 0) return 'unknown';
+
+  const installed = parseVersion(installedResult.stdout);
+  const latest = await readLatestReleaseVersion(pkg.probe.repository, runner);
+  if (!installed || !latest) return 'unknown';
+
+  return compareVersions(installed, latest) < 0 ? 'outdated' : 'installed';
+};
+
+const probePackage = async (
+  pkg: PackageDefinition,
+  runner: CommandRunner,
+  options: Required<Pick<InventoryOptions, 'pathExists' | 'platform'>>
+): Promise<PackageStatus> => {
   switch (pkg.probe.kind) {
     case 'command':
       return Bun.which(pkg.probe.command) ? 'installed' : 'missing';
     case 'path':
-      return (await exists(expandHome(pkg.probe.path))) ? 'installed' : 'missing';
+      return (await options.pathExists(expandHome(pkg.probe.path))) ? 'installed' : 'missing';
+    case 'github-release-macos-app':
+      return probeGithubReleaseMacosApp(pkg, runner, options);
     case 'unknown':
       return 'unknown';
     case 'brew':
@@ -61,16 +144,24 @@ const probePackage = async (pkg: PackageDefinition): Promise<PackageStatus> => {
   }
 };
 
-export const scanInventory = async (runner: CommandRunner = bunRunner): Promise<Inventory> => {
+export const scanInventory = async (
+  runner: CommandRunner = bunRunner,
+  options: InventoryOptions = {}
+): Promise<Inventory> => {
   const inventory: Inventory = new Map();
+  const source = options.catalog ?? catalog;
+  const probeOptions = {
+    pathExists: options.pathExists ?? exists,
+    platform: options.platform ?? process.platform
+  };
   const formulae = await readBrewTokens(runner, 'formula', 'list');
   const casks = await readBrewTokens(runner, 'cask', 'list');
   const outdatedFormulae = formulae ? await readBrewTokens(runner, 'formula', 'outdated') : null;
   const outdatedCasks = casks ? await readBrewTokens(runner, 'cask', 'outdated') : null;
 
-  for (const pkg of allPackages()) {
+  for (const pkg of allPackages(source)) {
     if (pkg.probe.kind !== 'brew') {
-      inventory.set(pkg.id, await probePackage(pkg));
+      inventory.set(pkg.id, await probePackage(pkg, runner, probeOptions));
       continue;
     }
 

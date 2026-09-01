@@ -46,6 +46,15 @@ describe('planner', () => {
     expect(availableActions(dex, 'installed')).toEqual(['install']);
   });
 
+  test('installs or updates MilkTea only when needed', () => {
+    const milkTea = packageById().get('milktea')!;
+
+    expect(defaultAction(milkTea, 'missing')).toBe('install');
+    expect(defaultAction(milkTea, 'outdated')).toBe('update');
+    expect(defaultAction(milkTea, 'installed')).toBeUndefined();
+    expect(availableActions(milkTea, 'installed')).toEqual([]);
+  });
+
   test('selecting an action includes missing prerequisites', () => {
     const packages = packageById();
     const plan: Plan = new Map();

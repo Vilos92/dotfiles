@@ -32,6 +32,26 @@ const shell = (
   requires
 });
 
+const managedShell = (
+  id: string,
+  label: string,
+  description: string,
+  installCommand: string,
+  updateCommand: string,
+  probe: PackageDefinition['probe'],
+  requires?: string[]
+): PackageDefinition => ({
+  id,
+  label,
+  description,
+  action: {kind: 'managed-shell', installCommand, updateCommand},
+  probe,
+  requires
+});
+
+const milkTeaInstaller =
+  "curl --proto '=https' --tlsv1.2 -fsSL https://github.com/Vilos92/MilkTea/releases/latest/download/install.sh";
+
 const groups: GroupDefinition[] = [
   {
     id: 'dotfile-pkgs',
@@ -281,6 +301,18 @@ const groups: GroupDefinition[] = [
       brew('pillow', 'Pillow', 'Image tools', 'pillow'),
       brew('vlc', 'VLC', 'Media player', 'vlc', 'cask'),
       brew('spotify', 'Spotify', 'Music streaming app', 'spotify', 'cask'),
+      managedShell(
+        'milktea',
+        'MilkTea',
+        'MilkDrop music visualizer',
+        `${milkTeaInstaller} | sh`,
+        `${milkTeaInstaller} | sh -s -- update`,
+        {
+          kind: 'github-release-macos-app',
+          repository: 'Vilos92/MilkTea',
+          path: '$HOME/Applications/MilkTea.app'
+        }
+      ),
       brew('audacity', 'Audacity', 'Audio editor', 'audacity', 'cask'),
       brew('ableton-live-suite', 'Ableton Live Suite', 'Audio workstation', 'ableton-live-suite', 'cask'),
       brew('xld', 'XLD', 'Lossless audio decoder', 'xld', 'cask'),

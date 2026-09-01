@@ -1,12 +1,15 @@
 export type BrewKind = 'formula' | 'cask';
 
 export type InstallAction =
-  {kind: 'brew'; brewKind: BrewKind; token: string} | {kind: 'shell'; command: string};
+  | {kind: 'brew'; brewKind: BrewKind; token: string}
+  | {kind: 'shell'; command: string}
+  | {kind: 'managed-shell'; installCommand: string; updateCommand: string};
 
 export type Probe =
   | {kind: 'brew'; brewKind: BrewKind; token: string}
   | {kind: 'command'; command: string}
   | {kind: 'path'; path: string}
+  | {kind: 'github-release-macos-app'; repository: string; path: string}
   | {kind: 'unknown'};
 
 export type PackageDefinition = {

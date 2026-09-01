@@ -10,7 +10,7 @@ import type {
 } from './types.ts';
 
 export const defaultAction = (pkg: PackageDefinition, status: PackageStatus): PlannedAction | undefined => {
-  if (pkg.action.kind === 'brew') {
+  if (pkg.action.kind === 'brew' || pkg.action.kind === 'managed-shell') {
     if (status === 'missing') return 'install';
     if (status === 'outdated') return 'update';
     return undefined;
@@ -20,9 +20,10 @@ export const defaultAction = (pkg: PackageDefinition, status: PackageStatus): Pl
 };
 
 export const availableActions = (pkg: PackageDefinition, status: PackageStatus): PlannedAction[] => {
-  if (pkg.action.kind !== 'brew') return ['install'];
+  if (pkg.action.kind === 'shell') return ['install'];
   if (status === 'missing') return ['install'];
   if (status === 'unknown') return [];
+  if (pkg.action.kind === 'managed-shell') return status === 'outdated' ? ['update'] : [];
   return status === 'outdated' ? ['update', 'remove'] : ['remove'];
 };
 

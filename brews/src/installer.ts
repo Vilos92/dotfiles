@@ -16,6 +16,12 @@ const commandFor = (action: PlannedAction, pkg: PackageDefinition): string[] => 
     return ['/usr/bin/env', 'bash', '-lc', pkg.action.command];
   }
 
+  if (pkg.action.kind === 'managed-shell') {
+    if (action === 'remove') throw new Error(`${action} is not supported for ${pkg.id}`);
+    const command = action === 'install' ? pkg.action.installCommand : pkg.action.updateCommand;
+    return ['/usr/bin/env', 'bash', '-lc', command];
+  }
+
   const type = `--${pkg.action.brewKind}`;
   switch (action) {
     case 'install':
