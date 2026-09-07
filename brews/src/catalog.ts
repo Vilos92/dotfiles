@@ -321,6 +321,7 @@ const groups: GroupDefinition[] = [
       brew('handbrake', 'HandBrake', 'Video transcoder', 'handbrake'),
       brew('keka', 'Keka', 'Archive manager', 'keka', 'cask'),
       brew('gimp', 'GIMP', 'Image editor', 'gimp', 'cask'),
+      brew('blender', 'Blender', '3D creation suite', 'blender', 'cask'),
       brew('gifox', 'Gifox', 'GIF recorder', 'gifox', 'cask')
     ]
   },
