@@ -291,7 +291,8 @@ const groups: GroupDefinition[] = [
       brew('alfred', 'Alfred', 'Launcher', 'alfred', 'cask'),
       brew('rectangle', 'Rectangle', 'Window manager', 'rectangle', 'cask'),
       brew('mole', 'mole', 'macOS cleanup and disk analysis', 'mole'),
-      brew('notion', 'Notion', 'Note-taking app', 'notion', 'cask')
+      brew('notion', 'Notion', 'Note-taking app', 'notion', 'cask'),
+      brew('macparakeet', 'MacParakeet', 'Dictation and speech-to-text', 'macparakeet', 'cask')
     ]
   },
   {
