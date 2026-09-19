@@ -133,6 +133,7 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 - `vconfig` → edit nvim config
 - `vdotfiles` → edit this dotfiles repo
 - `vzshrc` → edit zsh configs
+- `gwt <branch>` → `cd` to the worktree checked out for that branch
 
 **Tmux:**
 
