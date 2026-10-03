@@ -11,6 +11,9 @@ __pycache__/
 .claude/
 !claude-md/.claude/
 !claude-settings/.claude/
+# claude.ai skills that Claude Code syncs into ~/.claude/skills, which stow links
+# to this repo on machines where the folder is folded.
+claude-md/.claude/skills/synced/
 
 # Brew TUI dependencies
 brews/node_modules/

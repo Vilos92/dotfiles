@@ -36,8 +36,11 @@ MacBook takes it from `front/`; every other device takes it from `claude-setting
 
 There is no shared layer beneath the two, so **a preference that should hold everywhere
 has to be written into both** — that is why, for example, `includeCoAuthoredBy` appears
-twice. Settings specific to one machine belong in `~/.claude/settings.local.json`, which
-sits outside every package and is never version controlled.
+twice. Claude Code has no user-level `settings.local.json`: that file exists only per
+project, at `<project>/.claude/settings.local.json`. A setting needed on one machine either
+goes in the package that machine stows or in that project's local file. Every non-work
+device, the Mac Mini included, stows `claude-settings/`. Never keep a hand-edited
+`~/.claude/settings.json` there.
 
 `claude-md/` is unaffected by that split. It supplies no settings, so it stows alongside
 either package. The one exception is the comment-punctuation hook: its script lives in
@@ -93,8 +96,18 @@ needs enforcement there, comment punctuation, has a matching `PostToolUse` hook 
 directory, stow folds all of `~/.omp` into a symlink to this repo, and omp would write
 its sessions and credentials into the checkout.
 
-**omp reads `~/.claude/` only when its `claude` provider is enabled** (the
-`enabledProviders` setting). Without it, omp loses the shared commands and skills.
+**omp reads `~/.claude/` only when three settings are on.** They live in each machine's
+`~/.omp/agent/config.yml`, which is not version controlled, so set them once per machine:
+
+```sh
+omp config set enabledProviders claude        # ~/.claude/CLAUDE.md, hooks, MCP, settings
+omp config set skills.enableClaudeUser true   # ~/.claude/skills/
+omp config set commands.enableClaudeUser true # ~/.claude/commands/
+```
+
+All three default to off. Without them omp silently ignores Greg's global `CLAUDE.md`,
+skills and commands. It still reads a repo's own `CLAUDE.md` and `AGENTS.md`, which
+makes the gap easy to miss inside this repo.
 
 ### Submodules
 
