@@ -1,0 +1,1 @@
+../../../../claude-md/.claude/rules/comment-punctuation-hash.md

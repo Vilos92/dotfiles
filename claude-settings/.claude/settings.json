@@ -18,5 +18,18 @@
   "effortLevel": "high",
   "includeCoAuthoredBy": false,
   "skipWorkflowUsageWarning": true,
-  "inputNeededNotifEnabled": true
+  "inputNeededNotifEnabled": true,
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$HOME/.claude/hooks/comment-punctuation.py\""
+          }
+        ]
+      }
+    ]
+  }
 }

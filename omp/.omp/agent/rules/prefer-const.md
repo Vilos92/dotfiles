@@ -1,0 +1,1 @@
+../../../../claude-md/.claude/rules/prefer-const.md

@@ -1,0 +1,1 @@
+../../../../claude-md/.claude/rules/no-nested-ternary.md
