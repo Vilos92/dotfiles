@@ -1,10 +1,10 @@
 ---
-description: Cull tests and curate comments, then review all tracked and untracked changes against HEAD. Usage: /review-changes [paths or extra focus]
+description: Cull tests and curate comments, then review all tracked and untracked changes against HEAD, or against a base ref with --base. Usage: /review-changes [--base <ref>] [paths or extra focus]
 ---
 
-Review my uncommitted work: every tracked change (staged and unstaged) and every untracked file, compared with HEAD. First cull low-value tests and clean up comments, then review. Your only output is a report to me.
+Review my work: every tracked change (staged and unstaged) and every untracked file. By default, compare with HEAD, which covers uncommitted work only. With `--base <ref>`, compare with the merge base of `<ref>` and HEAD, which also covers the commits on this branch. First cull low-value tests and clean up comments, then review. Your only output is a report to me.
 
-Extra scope or focus from me, if any: $ARGUMENTS
+Arguments from me, if any: $ARGUMENTS
 
 <rules>
 - Don't edit files yourself. Only `test-culler` tasks (tests only) and `comment-curator` tasks (comments only) edit.
@@ -13,20 +13,24 @@ Extra scope or focus from me, if any: $ARGUMENTS
 </rules>
 
 <setup>
-1. Run `git status --porcelain` and `git diff HEAD --stat`.
-2. Tracked changes: `git diff HEAD` shows staged and unstaged together.
-3. Untracked files: `git ls-files --others --exclude-standard`. These have no diff; they are new in full.
-4. If I gave paths above, limit everything to them.
-5. Drop generated files, lockfiles, vendored code, and binaries from both lists.
-6. If nothing is left, tell me and stop.
-7. Snapshot the pre-curation state without touching my index:
+1. Resolve <from>, the commit every diff starts from:
+   - If the arguments start with `--base <ref>`, take `<ref>` out of them. If `<ref>` is a remote-tracking branch such as `origin/main`, refresh it first with `git fetch <remote> +refs/heads/<branch>:refs/remotes/<remote>/<branch>`. If the fetch fails, tell me and stop. Then run `git merge-base <ref> HEAD` and use the printed sha as <from>. If the merge base fails, tell me and stop.
+   - Otherwise <from> is `HEAD`.
+   The rest of the arguments are paths or extra focus. Treat anything that is not an existing path as extra focus text.
+2. Run `git status --porcelain` and `git diff <from> --stat`.
+3. Tracked changes: `git diff <from>` shows commits since <from>, staged, and unstaged changes together.
+4. Untracked files: `git ls-files --others --exclude-standard`. These have no diff; they are new in full.
+5. If I gave paths, limit everything to them.
+6. Drop generated files, lockfiles, vendored code, and binaries from both lists.
+7. If nothing is left, tell me and stop.
+8. Snapshot the pre-curation state without touching my index:
    `GIT_INDEX_FILE="$(mktemp -u)" sh -c 'git add -A && git write-tree'`
    Keep the printed tree id as <before-tree>.
-8. Note repo conventions files (CONTRIBUTING.md, AGENTS.md, CLAUDE.md).
+9. Note repo conventions files (CONTRIBUTING.md, AGENTS.md, CLAUDE.md).
 </setup>
 
 <curate>
-Split the changed and untracked code files into test files (e.g. `*.test.*`, `*.spec.*`, `__tests__/`, `test/`) and source files. Skip `.md` and other non-code files. Every assignment below must include its file list, with untracked files marked as untracked, and "Your diff command is `git diff HEAD`."
+Split the changed and untracked code files into test files (e.g. `*.test.*`, `*.spec.*`, `__tests__/`, `test/`) and source files. Skip `.md` and other non-code files. Every assignment below must include its file list, with untracked files marked as untracked, and "Your diff command is `git diff <from>`."
 
 Two editors must never work on the same file at once, so run this in two phases:
 
@@ -50,7 +54,7 @@ Dispatch reviewer subagents in parallel on the post-curation state: the bundled 
 
 Shared context must include:
 
-- "Tracked changes: get the patch with `git diff HEAD` (limit with `-- <paths>`). Do not use plain `git diff`; it misses staged changes."
+- "Tracked changes: get the patch with `git diff <from>` (limit with `-- <paths>`). Do not use plain `git diff`; it misses staged changes."
 - "Untracked files, new in full, read them directly: <list>."
 - "Comments have already been curated. Don't report comment wording or density."
 - "Low-value tests have already been culled: <culled table>. Don't ask for those back unless you can name the production failure they'd catch."
@@ -72,7 +76,7 @@ Focus areas:
 </merge>
 
 <report>
-- Scope: counts of tracked and untracked files reviewed.
+- Scope: what <from> is (HEAD, or the base ref and merge-base sha), and counts of tracked and untracked files reviewed.
 - Test pass: a table of every deleted or trimmed test (file, test, verdict, reason), the kept count, and any gap or red-test notes.
 - Comment pass: totals of dropped / trimmed / rewritten / kept, and any `unsure` notes.
 - "See `git diff <before-tree> <after-tree>` for exactly what the test and comment passes changed."
