@@ -100,7 +100,7 @@ its sessions and credentials into the checkout.
 `~/.omp/agent/config.yml`, which is not version controlled, so set them once per machine:
 
 ```sh
-omp config set enabledProviders claude        # ~/.claude/CLAUDE.md, hooks, MCP, settings
+omp config set enabledProviders '["claude"]'  # ~/.claude/CLAUDE.md, hooks, MCP, settings
 omp config set skills.enableClaudeUser true   # ~/.claude/skills/
 omp config set commands.enableClaudeUser true # ~/.claude/commands/
 ```
