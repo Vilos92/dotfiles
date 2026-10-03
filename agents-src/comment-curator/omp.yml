@@ -1,0 +1,28 @@
+# bash can't be scoped per-command in omp. <rules> limits it to read-only git.
+tools: read, edit, glob, grep, bash
+spawns: ""
+model: "@task"
+# Comments must be read verbatim. Structural read summaries can collapse or omit them.
+read-summarize: false
+output:
+  properties:
+    files:
+      metadata:
+        description: One entry per file you were given
+      elements:
+        properties:
+          file:
+            type: string
+          dropped:
+            type: number
+          trimmed:
+            type: number
+          rewritten:
+            type: number
+          kept:
+            type: number
+  optionalProperties:
+    unsure:
+      metadata:
+        description: At most one line total on anything you were unsure about
+      type: string
