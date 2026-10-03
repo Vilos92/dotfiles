@@ -16,7 +16,7 @@ Arguments from me, if any: $ARGUMENTS
 1. Resolve <from>, the commit every diff starts from:
    - If the arguments start with `--base <ref>`, take `<ref>` out of them. If `<ref>` is a remote-tracking branch such as `origin/main`, run `git fetch <remote> <branch>` first. Then run `git merge-base <ref> HEAD` and use the printed sha as <from>. If the merge base fails, tell me and stop.
    - Otherwise <from> is `HEAD`.
-   The rest of the arguments are paths or extra focus.
+   The rest of the arguments are paths or extra focus. Treat anything that is not an existing path as extra focus text.
 2. Run `git status --porcelain` and `git diff <from> --stat`.
 3. Tracked changes: `git diff <from>` shows commits since <from>, staged, and unstaged changes together.
 4. Untracked files: `git ls-files --others --exclude-standard`. These have no diff; they are new in full.
