@@ -6,10 +6,11 @@
 # with media servers and players. Use --media-server flag for best server compatibility.
 #
 # Media server optimizations include:
-# - MP4 container with H.264 video and AAC audio for broad compatibility
+# - MP4 container with AAC audio. Video is the best available stream and is not
+#   re-encoded, so it may be AV1 or VP9; clients that cannot decode it get a
+#   server transcode.
 # - Metadata embedding for better media recognition
 # - Proper naming conventions (Title (Year).mp4)
-# - Quality limits to prevent playback issues
 #
 
 if [ "$#" -lt 1 ]; then
@@ -20,7 +21,7 @@ if [ "$#" -lt 1 ]; then
     echo "  --audio                    Download audio only (MP3 format)" >&2
     echo "  --index                    Add playlist index to filename" >&2
     echo "  --output <filename>        Specify custom output filename" >&2
-    echo "  --media-server             Optimize for media server compatibility (MP4, H.264, AAC)" >&2
+    echo "  --media-server             Optimize for media server compatibility (MP4, AAC audio)" >&2
     echo "  --subtitles                Download subtitles as separate files" >&2
     exit 1
 fi
@@ -101,8 +102,10 @@ if [ "$DOWNLOAD_AUDIO" = true ]; then
 else
     # Video download options
     if [ "$MEDIA_SERVER_MODE" = true ]; then
-        # Media server optimized settings: let yt-dlp merge best formats, then remux to MP4
-        YT_DLP_CMD="$YT_DLP_CMD -f \"bv*+ba/b\" --remux-video mp4"
+        # Prefer AAC (mp4a) audio. Remuxing never re-encodes, so best-audio Opus
+        # would land in the MP4, and Plex direct-plays it to clients such as
+        # Roku that cannot decode Opus, giving video with no sound.
+        YT_DLP_CMD="$YT_DLP_CMD -f \"bv*+ba[acodec^=mp4a]/bv*+ba/b\" --remux-video mp4"
         
         # Add metadata embedding for better media recognition
         YT_DLP_CMD="$YT_DLP_CMD --add-metadata --embed-metadata"
