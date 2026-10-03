@@ -23,8 +23,9 @@ The list below is the set `scripts/stow.sh` offers, in the order it prompts:
 - `mac-mini/` - Mac Mini specific configurations
 - `arch/` - Arch Linux specific configurations (sway init)
 - `dex/` - dex task tracker profile and task store
-- `claude-md/` - Claude Code `CLAUDE.md` and `skills/` under `~/.claude` — **not** settings
+- `claude-md/` - Claude Code `CLAUDE.md`, `skills/`, `commands/`, `agents/`, `rules/` and `hooks/` under `~/.claude` — **not** settings
 - `claude-settings/` - Claude Code `~/.claude/settings.json` for non-work devices
+- `omp/` - Oh My Pi (`omp`) subagents and rules under `~/.omp/agent` (see Agent definitions below)
 - `cursor/` - Cursor permissions
 - `front/` - Work laptop specific configurations (symlinked submodule)
 
@@ -38,8 +39,10 @@ has to be written into both** — that is why, for example, `includeCoAuthoredBy
 twice. Settings specific to one machine belong in `~/.claude/settings.local.json`, which
 sits outside every package and is never version controlled.
 
-`claude-md/` is unaffected by that split. It supplies only `CLAUDE.md` and `skills/`, so
-it stows alongside either package.
+`claude-md/` is unaffected by that split. It supplies no settings, so it stows alongside
+either package. The one exception is the comment-punctuation hook: its script lives in
+`claude-md/.claude/hooks/`, but its registration lives in `settings.json`, so it is
+registered in **both** `claude-settings/` and `front/`.
 
 **`agent/` is a fourth `~/.claude` package, and the dangerous one.** It supplies
 `sessions/`, `session-env/`, `backups/`, and `projects/` — live Claude Code state,
@@ -52,8 +55,46 @@ created these links ran outside that script; they date from June 2026. `.gitigno
 **Non-Stowable Directories:**
 
 - `scripts/` - Standalone scripts, run with `sh scripts/<name>.sh`
+- `agents-src/` - Source for the subagents that `scripts/gen-agents.sh` builds (see Agent definitions below)
 - `greg-zone/` - Docker infrastructure and services (separate repository, but this AGENTS.md is responsible for documenting it)
 - `gmux/` - Public tmux session switcher (separate repository: https://github.com/Vilos92/gmux)
+
+### Agent definitions (Claude Code and omp)
+
+Greg uses two coding-agent harnesses: Claude Code and Oh My Pi (`omp`). Commands,
+rules and subagents are shared between them wherever the formats allow.
+
+| Kind | Source of truth | Claude Code reads | omp reads |
+| --- | --- | --- | --- |
+| Commands | `claude-md/.claude/commands/` | `~/.claude/commands/` | same folder, via its `claude` provider |
+| Rules | `claude-md/.claude/rules/` | `~/.claude/rules/` (`paths:` only) | `~/.omp/agent/rules/`, symlinks back to `claude-md/` |
+| Subagents | `agents-src/<name>/` | generated `~/.claude/agents/` | generated `~/.omp/agent/agents/` |
+
+**Subagents are generated. Edit `agents-src/`, never the output.** Each agent has a
+shared `body.md` and `shared.yml`, plus `claude.yml` and `omp.yml` for the frontmatter
+only one harness reads. The two disagree on `tools:` (`Read` vs `read`) and `model:`
+(`sonnet` vs `@task`), and omp ignores `.claude/agents` by design, so one file cannot
+serve both. Run `sh scripts/gen-agents.sh` after editing. The `gen-agents` CI step fails
+when the committed output is stale.
+
+**Rules are one file for both harnesses.** omp reads `name`, `description`,
+`condition` (regex triggers, checked while the model writes) and `scope`. Claude Code
+reads only `paths` and silently ignores the rest. Both behaviors were tested
+(2026-10-02). A new rule goes in `claude-md/.claude/rules/` with a relative symlink
+beside it in `omp/.omp/agent/rules/`. Test omp's half with
+`omp ttsr test --rule <file> --source tool --path a.ts '<snippet>'`.
+
+Claude Code rules are guidance only. They never fire on a regex. The one rule that
+needs enforcement there, comment punctuation, has a matching `PostToolUse` hook in
+`claude-md/.claude/hooks/comment-punctuation.py`. Its patterns mirror the rules'
+`condition` lists, so change them together.
+
+**Stow `omp` only through `stow.sh`.** It creates `~/.omp/agent` first. Without that
+directory, stow folds all of `~/.omp` into a symlink to this repo, and omp would write
+its sessions and credentials into the checkout.
+
+**omp reads `~/.claude/` only when its `claude` provider is enabled** (the
+`enabledProviders` setting). Without it, omp loses the shared commands and skills.
 
 ### Submodules
 
@@ -162,6 +203,7 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 - `brews.sh` - Install all homebrew packages and applications (macOS)
 - `pacs.sh` - Install packages for Arch Linux systems
 - `stow.sh` - Interactively stow dotfile configurations
+- `gen-agents.sh` - Build subagents for Claude Code and omp from `agents-src/` (`--check` for CI)
 
 **Code Quality:**
 
