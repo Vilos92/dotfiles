@@ -39,6 +39,13 @@ steps:
     commands:
       - sh scripts/ruff.sh --check
 
+  # Generated agent files must match agents-src/. Needs no submodule content.
+  - name: gen-agents
+    image: greg-zone/dotfiles-lint:1
+    depends_on: []
+    commands:
+      - sh scripts/gen-agents.sh --check
+
   # Scans no submodule content, so it skips the submodule step and starts
   # immediately.
   - name: prettier

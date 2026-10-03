@@ -1,0 +1,2 @@
+name: comment-curator
+description: "Curates the code comments one change added or modified in a given set of files: dropping, trimming, or rewriting so only high-altitude, non-obvious callouts survive. Strongly biased toward deletion. Dispatched per file batch by the review-changes command; not a general code reviewer."

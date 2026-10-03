@@ -1,0 +1,2 @@
+name: test-culler
+description: "Culls the low-value tests one change added or modified in a given set of files: deleting the ones that cannot fail for a real reason, trimming dead assertions from the ones that can. Strongly biased toward deletion. Dispatched per file batch by the review-changes command; does not audit coverage gaps or layer choice, and never adds tests."

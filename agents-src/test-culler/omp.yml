@@ -1,0 +1,34 @@
+# bash can't be scoped per-command in omp. <rules> limits it to read-only git.
+tools: read, edit, glob, grep, bash
+spawns: ""
+model: "@task"
+# Tests must be read verbatim. Structural read summaries can collapse test bodies.
+read-summarize: false
+output:
+  properties:
+    culled:
+      metadata:
+        description: Every test you deleted or trimmed. Never silently drop a test.
+      elements:
+        properties:
+          file:
+            type: string
+          test:
+            metadata:
+              description: The test's full name as written in test(...) or it(...), prefixed by its describe(...) names
+            type: string
+          verdict:
+            enum: [deleted, trimmed]
+          reason:
+            metadata:
+              description: One line
+            type: string
+    kept:
+      metadata:
+        description: Count of in-scope tests you kept unchanged
+      type: number
+  optionalProperties:
+    note:
+      metadata:
+        description: At most one line on a coverage gap or a red test you noticed
+      type: string
