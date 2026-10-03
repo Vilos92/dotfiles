@@ -166,7 +166,6 @@ const groups: GroupDefinition[] = [
         {kind: 'command', command: 'dex'},
         ['bun']
       ),
-      brew('hunk', 'hunk', 'Interactive diff viewer', 'hunk'),
       brew('gh', 'GitHub CLI', 'GitHub command-line client', 'gh')
     ]
   },
