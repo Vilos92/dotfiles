@@ -8,7 +8,8 @@
 Usage: vocal-samples <input audio file> <output directory>
 
 Writes <output directory>/<input name>/ containing stems/ (the separated
-stems) and samples/ (the vocal phrases, named by their start time).
+stems) and samples/ (the vocal phrases, named by their start time). A later
+run reuses the stems, so re-splitting with other settings skips separation.
 """
 
 import argparse
@@ -50,8 +51,16 @@ STEM_NAMES = {
 VOCALS_STEM = "vocals"
 # Two-stem vocal models call everything else "other", which is the instrumental.
 TWO_STEM_RENAMES = {"other.wav": "instrumental.wav"}
-REQUIRED_COMMANDS = ("audio-separator", "ffmpeg")
+# Records which model made the stems, so a reuse with another model is caught.
+MODEL_RECORD = "model.txt"
+SEPARATION_COMMANDS = ("audio-separator", "ffmpeg")
 MIN_INDEX_WIDTH = 3
+
+# The settings --analyze compares, chosen to bracket the defaults.
+ANALYSIS_THRESHOLDS_DB = (-50.0, -45.0, -40.0, -35.0, -30.0, -25.0)
+ANALYSIS_GAPS_SECONDS = (0.3, 0.5, 0.75, 1.0)
+SHORT_SAMPLE_SECONDS = 0.5
+MIN_REPORTED_GAP_SECONDS = 0.1
 
 
 def find_regions(
@@ -112,21 +121,38 @@ def format_timestamp(seconds: float) -> str:
     return f"{int(minutes)}m{remainder:04.1f}s"
 
 
-def check_prerequisites(input_path: Path, song_dir: Path) -> list[str]:
-    problems = [
-        f"`{command}` not found on PATH"
-        for command in REQUIRED_COMMANDS
-        if shutil.which(command) is None
-    ]
+def check_prerequisites(
+    input_path: Path, stems_dir: Path, samples_dir: Path, args: argparse.Namespace
+) -> list[str]:
+    problems = []
     if not input_path.is_file():
         problems.append(f"input file not found: {input_path}")
-    if song_dir.exists():
-        problems.append(f"output folder already exists: {song_dir}")
+
+    vocals = stems_dir / f"{VOCALS_STEM}.wav"
+    if vocals.is_file():
+        recorded = stems_dir / MODEL_RECORD
+        if recorded.is_file() and recorded.read_text().strip() != args.model:
+            problems.append(
+                f"{stems_dir} was made with {recorded.read_text().strip()}. "
+                f"Delete it to re-separate with {args.model}"
+            )
+    else:
+        problems.extend(
+            f"`{command}` not found on PATH"
+            for command in SEPARATION_COMMANDS
+            if shutil.which(command) is None
+        )
+
+    if samples_dir.exists() and not args.analyze and not args.replace_samples:
+        problems.append(
+            f"samples folder already exists: {samples_dir} "
+            "(pass --replace-samples to re-split)"
+        )
     return problems
 
 
 def separate(input_path: Path, stems_dir: Path, model: str) -> Path:
-    stems_dir.mkdir(parents=True)
+    stems_dir.mkdir(parents=True, exist_ok=True)
     with tempfile.TemporaryDirectory() as temp_dir:
         intermediate = Path(temp_dir) / f"{input_path.stem}.wav"
         subprocess.run(
@@ -173,6 +199,7 @@ def separate(input_path: Path, stems_dir: Path, model: str) -> Path:
         for stem in stems:
             if stem.name in TWO_STEM_RENAMES:
                 stem.rename(stems_dir / TWO_STEM_RENAMES[stem.name])
+    (stems_dir / MODEL_RECORD).write_text(f"{model}\n")
     return vocals
 
 
@@ -184,12 +211,63 @@ def write_samples(
     regions = find_regions(audio.mean(axis=1), sample_rate, threshold_db, gap_seconds)
     regions = pad_regions(regions, len(audio), sample_rate)
 
+    if samples_dir.exists():
+        shutil.rmtree(samples_dir)
     samples_dir.mkdir(parents=True)
     width = max(MIN_INDEX_WIDTH, len(str(len(regions))))
     for number, (start, end) in enumerate(regions, start=1):
         name = f"{number:0{width}d}_{format_timestamp(start / sample_rate)}.wav"
         sf.write(samples_dir / name, audio[start:end], sample_rate, subtype=subtype)
     return len(regions)
+
+
+def describe_settings(
+    mono: np.ndarray, sample_rate: int, threshold_db: float, gap_seconds: float
+) -> str:
+    regions = find_regions(mono, sample_rate, threshold_db, gap_seconds)
+    if not regions:
+        return f"{threshold_db:>5.0f} dB  {gap_seconds:>4} s  no samples"
+
+    lengths = np.array([(end - start) / sample_rate for start, end in regions])
+    coverage = lengths.sum() * sample_rate / len(mono)
+    short = int((lengths < SHORT_SAMPLE_SECONDS).sum())
+    return (
+        f"{threshold_db:>5.0f} dB  {gap_seconds:>4} s  {len(regions):>7}  {short:>5}"
+        f"  {np.median(lengths):>6.1f}  {lengths.max():>7.1f}  {coverage:>8.0%}"
+    )
+
+
+def analyze(vocals: Path, threshold_db: float) -> str:
+    """Report the silent gaps in the vocal stem and what each candidate setting yields."""
+    audio, sample_rate = sf.read(vocals, dtype="float32", always_2d=True)
+    mono = audio.mean(axis=1)
+
+    regions = find_regions(mono, sample_rate, threshold_db, gap_seconds=0)
+    gaps = sorted(
+        (
+            (regions[index + 1][0] - regions[index][1]) / sample_rate
+            for index in range(len(regions) - 1)
+        ),
+        reverse=True,
+    )
+    reported_gaps = [gap for gap in gaps if gap >= MIN_REPORTED_GAP_SECONDS]
+
+    lines = [
+        f"Vocal stem: {len(mono) / sample_rate:.1f} s",
+        "",
+        f"Silent gaps at {threshold_db:.0f} dB, longest first (seconds, under "
+        f"{MIN_REPORTED_GAP_SECONDS} s omitted):",
+        "  " + " ".join(f"{gap:.2f}" for gap in reported_gaps),
+        "",
+        "Samples per setting (lengths in seconds, coverage = share of the song inside a sample):",
+        f"threshold   gap  samples  <{SHORT_SAMPLE_SECONDS}s  median  longest  coverage",
+    ]
+    lines.extend(
+        describe_settings(mono, sample_rate, threshold, gap)
+        for threshold in ANALYSIS_THRESHOLDS_DB
+        for gap in ANALYSIS_GAPS_SECONDS
+    )
+    return "\n".join(lines)
 
 
 def parse_args() -> argparse.Namespace:
@@ -202,6 +280,16 @@ def parse_args() -> argparse.Namespace:
     )
     parser.add_argument(
         "output", type=Path, help="folder to create the song's folder in"
+    )
+    parser.add_argument(
+        "--analyze",
+        action="store_true",
+        help="print gap lengths and per-setting sample counts instead of writing samples",
+    )
+    parser.add_argument(
+        "--replace-samples",
+        action="store_true",
+        help="delete and rewrite an existing samples folder (stems are always reused)",
     )
     parser.add_argument(
         "--gap",
@@ -227,15 +315,26 @@ def main() -> None:
     args = parse_args()
     input_path = args.input.expanduser().resolve()
     song_dir = args.output.expanduser().resolve() / input_path.stem
+    stems_dir = song_dir / "stems"
+    samples_dir = song_dir / "samples"
 
-    problems = check_prerequisites(input_path, song_dir)
+    problems = check_prerequisites(input_path, stems_dir, samples_dir, args)
     if problems:
         sys.exit("\n".join(f"error: {problem}" for problem in problems))
 
-    print(f"Separating stems with {args.model} (this takes a few minutes)...")
-    vocals = separate(input_path, song_dir / "stems", args.model)
-    count = write_samples(vocals, song_dir / "samples", args.threshold, args.gap)
-    print(f"Wrote {count} samples to {song_dir / 'samples'}")
+    vocals = stems_dir / f"{VOCALS_STEM}.wav"
+    if vocals.is_file():
+        print(f"Reusing stems in {stems_dir}")
+    else:
+        print(f"Separating stems with {args.model} (this takes a few minutes)...")
+        separate(input_path, stems_dir, args.model)
+
+    if args.analyze:
+        print(analyze(vocals, args.threshold))
+        return
+
+    count = write_samples(vocals, samples_dir, args.threshold, args.gap)
+    print(f"Wrote {count} samples to {samples_dir}")
 
 
 if __name__ == "__main__":

@@ -161,6 +161,10 @@ wrapper that runs `vocal-samples/vocal_samples.py` with `uv`. The script declare
 its own Python dependencies inline, so it needs only `uv`, `ffmpeg` and
 `audio-separator` on `PATH`. Tests: `uv run --no-project --with numpy --with soundfile --with pytest pytest vocal-samples`.
 
+Re-runs reuse `stems/`, so `--analyze` (gap lengths and per-setting sample counts)
+and `--replace-samples` (re-split) take under a second. The `vocal-samples` skill in
+`claude-md/.claude/skills/` uses both to tune settings for a specific track.
+
 `gmux` and `attach-tmux-session` are the exception: they live in the public
 `gmux/` submodule rather than a stow package, so `zsh/.zshrc` puts
 `$GREG_DOTFILES_PATH/gmux/bin` on `$PATH` directly instead of symlinking them.
