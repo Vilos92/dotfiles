@@ -84,3 +84,50 @@ test('detects missing, current, outdated, and newer MilkTea installations', asyn
   expect(outdated.get('milktea')).toBe('outdated');
   expect(newer.get('milktea')).toBe('installed');
 });
+
+const uvToolCatalog: Catalog = {
+  groups: [
+    {
+      id: 'python',
+      label: 'Python',
+      packages: ['ruff', 'black', 'mypy'].map(tool => ({
+        id: tool,
+        label: tool,
+        description: tool,
+        action: {kind: 'managed-shell', installCommand: `install ${tool}`, updateCommand: `upgrade ${tool}`},
+        probe: {kind: 'uv-tool', tool}
+      }))
+    }
+  ]
+};
+
+test('detects missing, installed, and outdated uv tools', async () => {
+  const uvRunner: CommandRunner = {
+    async run(argv) {
+      const output: Record<string, string> = {
+        'uv tool list': 'ruff v0.14.10\n- ruff\nblack v25.12.0\n- black\n',
+        'uv tool list --outdated': 'ruff v0.14.10 [latest: 0.15.0]\n- ruff\n'
+      };
+      return {exitCode: 0, stdout: output[argv.join(' ')] ?? '', stderr: ''};
+    }
+  };
+
+  const inventory = await scanInventory(uvRunner, {catalog: uvToolCatalog});
+
+  expect(inventory.get('ruff')).toBe('outdated');
+  expect(inventory.get('black')).toBe('installed');
+  expect(inventory.get('mypy')).toBe('missing');
+});
+
+test('reports uv tools as missing when uv is not installed', async () => {
+  const noUvRunner: CommandRunner = {
+    async run(argv) {
+      if (argv[0] === 'uv') throw new Error('ENOENT');
+      return {exitCode: 0, stdout: '', stderr: ''};
+    }
+  };
+
+  const inventory = await scanInventory(noUvRunner, {catalog: uvToolCatalog});
+
+  expect(inventory.get('ruff')).toBe('missing');
+});

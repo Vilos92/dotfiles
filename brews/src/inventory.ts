@@ -52,6 +52,28 @@ const readBrewTokens = async (
   );
 };
 
+// `uv tool list` prints each tool as `<name> v<version>`, followed by `- <executable>` lines.
+const readUvTools = async (
+  runner: CommandRunner,
+  scope: 'installed' | 'outdated'
+): Promise<Set<string> | null> => {
+  let result: CommandResult;
+  try {
+    result = await runner.run(['uv', 'tool', 'list', ...(scope === 'outdated' ? ['--outdated'] : [])]);
+  } catch {
+    // uv itself is missing, so no uv tool is installed.
+    return scope === 'installed' ? new Set() : null;
+  }
+  if (result.exitCode !== 0) return null;
+
+  return new Set(
+    result.stdout
+      .split('\n')
+      .filter(line => line && !line.startsWith('-'))
+      .map(line => line.split(/\s+/)[0])
+  );
+};
+
 const expandHome = (path: string): string => path.replace(/^\$HOME/, process.env.HOME ?? '');
 
 const parseVersion = (raw: string): [number, number, number] | null => {
@@ -140,6 +162,7 @@ const probePackage = async (
     case 'unknown':
       return 'unknown';
     case 'brew':
+    case 'uv-tool':
       return 'unknown';
   }
 };
@@ -158,8 +181,22 @@ export const scanInventory = async (
   const casks = await readBrewTokens(runner, 'cask', 'list');
   const outdatedFormulae = formulae ? await readBrewTokens(runner, 'formula', 'outdated') : null;
   const outdatedCasks = casks ? await readBrewTokens(runner, 'cask', 'outdated') : null;
+  const hasUvTools = allPackages(source).some(pkg => pkg.probe.kind === 'uv-tool');
+  const uvTools = hasUvTools ? await readUvTools(runner, 'installed') : null;
+  const outdatedUvTools = uvTools?.size ? await readUvTools(runner, 'outdated') : null;
 
   for (const pkg of allPackages(source)) {
+    if (pkg.probe.kind === 'uv-tool') {
+      if (!uvTools) {
+        inventory.set(pkg.id, 'unknown');
+      } else if (outdatedUvTools?.has(pkg.probe.tool)) {
+        inventory.set(pkg.id, 'outdated');
+      } else {
+        inventory.set(pkg.id, uvTools.has(pkg.probe.tool) ? 'installed' : 'missing');
+      }
+      continue;
+    }
+
     if (pkg.probe.kind !== 'brew') {
       inventory.set(pkg.id, await probePackage(pkg, runner, probeOptions));
       continue;

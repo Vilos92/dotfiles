@@ -10,6 +10,7 @@ export type Probe =
   | {kind: 'command'; command: string}
   | {kind: 'path'; path: string}
   | {kind: 'github-release-macos-app'; repository: string; path: string}
+  | {kind: 'uv-tool'; tool: string}
   | {kind: 'unknown'};
 
 export type PackageDefinition = {

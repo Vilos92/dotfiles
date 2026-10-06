@@ -49,6 +49,24 @@ const managedShell = (
   requires
 });
 
+// `uv tool upgrade` reuses the original install's Python and `--with` options.
+const uvTool = (
+  id: string,
+  label: string,
+  description: string,
+  installArgs: string,
+  tool: string = id
+): PackageDefinition =>
+  managedShell(
+    id,
+    label,
+    description,
+    `uv tool install ${installArgs}`,
+    `uv tool upgrade ${tool}`,
+    {kind: 'uv-tool', tool},
+    ['uv']
+  );
+
 const milkTeaInstaller =
   "curl --proto '=https' --tlsv1.2 -fsSL https://github.com/Vilos92/MilkTea/releases/latest/download/install.sh";
 
@@ -199,21 +217,10 @@ const groups: GroupDefinition[] = [
     id: 'python-dev-pkgs',
     label: 'Python',
     packages: [
-      brew('pipx', 'pipx', 'Isolated Python app installer', 'pipx'),
-      shell('black', 'Black', 'Python formatter', 'pipx install black', {kind: 'command', command: 'black'}, [
-        'pipx'
-      ]),
-      shell(
-        'ruff',
-        'Ruff',
-        'Python linter and formatter',
-        'pipx install ruff',
-        {kind: 'command', command: 'ruff'},
-        ['pipx']
-      ),
-      shell('mypy', 'mypy', 'Python type checker', 'pipx install mypy', {kind: 'command', command: 'mypy'}, [
-        'pipx'
-      ])
+      brew('uv', 'uv', 'Python package and tool manager', 'uv'),
+      uvTool('black', 'Black', 'Python formatter', 'black'),
+      uvTool('ruff', 'Ruff', 'Python linter and formatter', 'ruff'),
+      uvTool('mypy', 'mypy', 'Python type checker', 'mypy')
     ]
   },
   {
@@ -318,6 +325,13 @@ const groups: GroupDefinition[] = [
       brew('xld', 'XLD', 'Lossless audio decoder', 'xld', 'cask'),
       brew('musicbrainz-picard', 'MusicBrainz Picard', 'Music tagger', 'musicbrainz-picard', 'cask'),
       brew('ffmpeg', 'FFmpeg', 'Audio and video toolkit', 'ffmpeg'),
+      // Python 3.14 is unsupported, and 0.47.0 fails at startup without audioread.
+      uvTool(
+        'audio-separator',
+        'audio-separator',
+        'Split songs into vocal and instrumental stems',
+        "--python 3.13 'audio-separator[cpu]' --with audioread"
+      ),
       brew('handbrake', 'HandBrake', 'Video transcoder', 'handbrake'),
       brew('keka', 'Keka', 'Archive manager', 'keka', 'cask'),
       brew('gimp', 'GIMP', 'Image editor', 'gimp', 'cask'),
