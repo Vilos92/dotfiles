@@ -61,6 +61,7 @@ created these links ran outside that script; they date from June 2026. `.gitigno
 - `agents-src/` - Source for the subagents that `scripts/gen-agents.sh` builds (see Agent definitions below)
 - `greg-zone/` - Docker infrastructure and services (separate repository, but this AGENTS.md is responsible for documenting it)
 - `gmux/` - Public tmux session switcher (separate repository: https://github.com/Vilos92/gmux)
+- `vocal-samples/` - Source and tests for the `vocal-samples` command (see Binary Commands below)
 
 ### Agent definitions (Claude Code and omp)
 
@@ -152,7 +153,13 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 
 - **mac-mini:** `gbackup-lacie`, `gbackup-t7`, `gllama`, `hermes` (opens the Hermes TUI in a persistent tmux session named `hermes`)
 - **alacritty:** `alacritty-theme`, `alacritty-theme-select`
-- **zsh:** `compress-video-hevc`, `download-media`, `fuzzy-find`, `fuzzy-ripgrep`, `remux-video`
+- **zsh:** `compress-video-hevc`, `download-media`, `fuzzy-find`, `fuzzy-ripgrep`, `remux-video`, `vocal-samples`
+
+`vocal-samples <audio file> <output dir>` separates a song with `audio-separator`
+and cuts the vocal stem into one WAV per phrase. Its `zsh/` entry is a thin
+wrapper that runs `vocal-samples/vocal_samples.py` with `uv`. The script declares
+its own Python dependencies inline, so it needs only `uv`, `ffmpeg` and
+`audio-separator` on `PATH`. Tests: `uv run --no-project --with numpy --with soundfile --with pytest pytest vocal-samples`.
 
 `gmux` and `attach-tmux-session` are the exception: they live in the public
 `gmux/` submodule rather than a stow package, so `zsh/.zshrc` puts

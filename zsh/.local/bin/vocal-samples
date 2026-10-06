@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Separate a song's vocals and cut them into one WAV file per phrase.
+# The tool lives in $GREG_DOTFILES_PATH/vocal-samples. See vocal_samples.py --help.
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "error: \`uv\` not found on PATH (install it with scripts/brews.sh)" >&2
+    exit 1
+fi
+
+if [ -z "$GREG_DOTFILES_PATH" ]; then
+    echo "error: GREG_DOTFILES_PATH is not set" >&2
+    exit 1
+fi
+
+exec uv run --script "$GREG_DOTFILES_PATH/vocal-samples/vocal_samples.py" "$@"
