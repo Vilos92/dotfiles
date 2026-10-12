@@ -25,3 +25,14 @@ gwt() {
 
   builtin cd "$target" || return
 }
+
+# Complete only branches that have a worktree. Any other branch would fail.
+if [ -n "${ZSH_VERSION-}" ]; then
+  _gwt() {
+    # Branch names never contain spaces, so word splitting is safe here.
+    # shellcheck disable=SC2046
+    compadd -- $(git worktree list --porcelain 2>/dev/null \
+      | awk '$1 == "branch" { sub("^refs/heads/", "", $2); print $2 }')
+  }
+  compdef _gwt gwt
+fi
