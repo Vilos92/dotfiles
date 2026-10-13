@@ -1,4 +1,4 @@
-"""Tests on synthetic projects. Run: uv run --no-project --with numpy --with soundfile --with pytest pytest vocal-clips"""
+"""Tests on synthetic projects and audio. Run: uv run --no-project --with numpy --with soundfile --with scipy --with pyloudnorm --with pytest pytest vocal-clips"""
 
 import sqlite3
 import struct
@@ -219,3 +219,76 @@ def test_plan_names_rejects_missing_track_and_wrong_clip_count():
 
     assert "no entry for tracks [2]" in str(error.value)
     assert "track 1 has 2 clips but names.json gives 1 names" in str(error.value)
+
+
+SAMPLE_RATE = 48000
+
+
+def tone_with_silence(lead: float, voice: float, tail: float) -> np.ndarray:
+    """A 300 Hz tone between stretches of quiet noise, shaped (samples, 1)."""
+    rng = np.random.default_rng(0)
+    total = round((lead + voice + tail) * SAMPLE_RATE)
+    audio = rng.normal(0, 1e-4, total)
+    start = round(lead * SAMPLE_RATE)
+    t = np.arange(round(voice * SAMPLE_RATE)) / SAMPLE_RATE
+    audio[start : start + len(t)] += 0.3 * np.sin(2 * np.pi * 300 * t)
+    return audio.astype(np.float32)[:, None]
+
+
+def test_trim_keeps_padding_around_voice_and_fades_edges():
+    audio = tone_with_silence(lead=1.0, voice=1.0, tail=1.0)
+
+    trimmed = vocal_clips.trim(audio, SAMPLE_RATE)
+
+    expected = 1.0 + vocal_clips.PRE_ROLL_SECONDS + vocal_clips.POST_ROLL_SECONDS
+    assert len(trimmed) / SAMPLE_RATE == pytest.approx(expected, abs=0.02)
+    assert trimmed[0, 0] == 0
+    assert trimmed[-1, 0] == 0
+
+
+def test_level_hits_target_loudness():
+    audio = tone_with_silence(lead=0.2, voice=2.0, tail=0.2) * 0.1
+
+    leveled, gain_db, peak_capped = vocal_clips.level(audio, SAMPLE_RATE, -30.0)
+
+    meter = vocal_clips.pyloudnorm.Meter(SAMPLE_RATE)
+    assert meter.integrated_loudness(leveled) == pytest.approx(-30.0, abs=0.1)
+    assert gain_db > 0
+    assert not peak_capped
+
+
+def test_level_caps_boost_and_peak():
+    quiet = tone_with_silence(lead=0.2, voice=2.0, tail=0.2) * 0.01
+    _, boost_db, _ = vocal_clips.level(quiet, SAMPLE_RATE, -20.0)
+    assert boost_db == vocal_clips.MAX_BOOST_DB
+
+    loud = tone_with_silence(lead=0.2, voice=2.0, tail=0.2) * 3
+    leveled, _, peak_capped = vocal_clips.level(loud, SAMPLE_RATE, 0.0)
+    assert peak_capped
+    assert vocal_clips.to_db(float(np.abs(leveled).max())) == pytest.approx(
+        vocal_clips.PEAK_CEILING_DBFS, abs=0.01
+    )
+
+
+def test_highpass_removes_rumble_and_keeps_voice():
+    t = np.arange(SAMPLE_RATE) / SAMPLE_RATE
+    rumble = np.sin(2 * np.pi * 30 * t)[:, None].astype(np.float32)
+    voice = np.sin(2 * np.pi * 300 * t)[:, None].astype(np.float32)
+
+    def rms(audio: np.ndarray) -> float:
+        # Skip the filter's settling time at the start.
+        return float(np.sqrt(np.mean(audio[SAMPLE_RATE // 10 :] ** 2)))
+
+    assert rms(vocal_clips.highpass(rumble, SAMPLE_RATE, 80)) < 0.05 * rms(rumble)
+    assert rms(vocal_clips.highpass(voice, SAMPLE_RATE, 80)) > 0.95 * rms(voice)
+
+
+def test_trim_ignores_a_click_far_from_the_voice():
+    audio = tone_with_silence(lead=1.5, voice=1.0, tail=0.5)
+    click = round(0.2 * SAMPLE_RATE)
+    audio[click : click + 48] = 0.5
+
+    trimmed = vocal_clips.trim(audio, SAMPLE_RATE)
+
+    expected = 1.0 + vocal_clips.PRE_ROLL_SECONDS + vocal_clips.POST_ROLL_SECONDS
+    assert len(trimmed) / SAMPLE_RATE == pytest.approx(expected, abs=0.02)

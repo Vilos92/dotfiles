@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["numpy", "soundfile"]
+# dependencies = ["numpy", "pyloudnorm", "scipy", "soundfile"]
 # ///
 """Export every clip in an Audacity project as its own WAV file, transcribed.
 
@@ -12,8 +12,9 @@ Usage:
 `extract` writes <output directory>/<project name>/ containing clips/ (one
 folder per track, one WAV per clip), transcripts/, and manifest.json.
 `apply` writes the clips into samples/ under the folder and file names given
-in names.json, with low-frequency rumble filtered out. An LLM writes
-names.json from the transcripts in manifest.json.
+in names.json, ready for an effects chain: rumble filtered out, silence
+trimmed, and every take leveled to one loudness. An LLM writes names.json
+from the transcripts in manifest.json.
 """
 
 import argparse
@@ -29,7 +30,9 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 import numpy as np
+import pyloudnorm
 import soundfile as sf
+from scipy.signal import butter, sosfiltfilt
 
 # Field types in Audacity's binary project encoding (ProjectSerializer.cpp).
 FT_CHAR_SIZE = 0
@@ -68,9 +71,50 @@ MIN_INDEX_WIDTH = 2
 MAX_SLUG_LENGTH = 60
 # Measured on real takes: 94% of the noise between words sat below 120 Hz, as room
 # rumble rather than hiss. An 80 Hz cut lowered the noise floor about 13 dB and left
-# speech untouched. Two passes make a steeper 24 dB per octave slope.
+# speech untouched. Filtering forward and backward doubles the second-order slope to
+# 24 dB per octave, and avoids the thump a one-pass filter adds at the clip's start.
 DEFAULT_HIGHPASS_HZ = 80
-HIGHPASS_PASSES = 2
+HIGHPASS_ORDER = 2
+
+# Trimming finds the voice against the take's own loudest moment, but never closer
+# than TRIM_FLOOR_MARGIN_DB to its noise floor, so a quiet take still trims cleanly.
+FRAME_SECONDS = 0.01
+TRIM_BELOW_PEAK_DB = 40.0
+TRIM_FLOOR_MARGIN_DB = 12.0
+NOISE_FLOOR_PERCENTILE = 10
+# Sound within this gap of the voice belongs to it, such as a final plosive. Farther
+# out, a blip shorter than MIN_VOICED_SECONDS is a click and does not count.
+MERGE_GAP_SECONDS = 0.5
+MIN_VOICED_SECONDS = 0.05
+# Soft opening consonants start below any threshold, and word endings decay slowly.
+PRE_ROLL_SECONDS = 0.03
+POST_ROLL_SECONDS = 0.2
+# Fades keep the cut edges from clicking.
+FADE_IN_SECONDS = 0.005
+FADE_OUT_SECONDS = 0.02
+
+# Typical dialogue loudness, leaving headroom for an effects chain.
+DEFAULT_LOUDNESS_LUFS = -20.0
+# A static gain only, never compression. The caps keep quiet takes from pulling
+# up their noise and keep peaks below what saturating plugins expect.
+MAX_BOOST_DB = 10.0
+PEAK_CEILING_DBFS = -1.0
+
+
+@dataclass
+class SampleSettings:
+    # Zero disables the step.
+    highpass_hz: int = DEFAULT_HIGHPASS_HZ
+    trim: bool = True
+    # None disables leveling.
+    loudness_lufs: float | None = DEFAULT_LOUDNESS_LUFS
+
+
+@dataclass
+class SampleReport:
+    trimmed_seconds: float = 0.0
+    gain_db: float = 0.0
+    peak_capped: bool = False
 
 
 @dataclass
@@ -310,9 +354,9 @@ def extract(project: Path, output_dir: Path, replace: bool) -> None:
         problems.append(
             f"`{TRANSCRIBE_COMMAND}` not found on PATH (install it with the brews TUI)"
         )
-    if output_dir.exists() and not replace:
+    if (output_dir / MANIFEST).exists() and not replace:
         problems.append(
-            f"output already exists: {output_dir} (pass --replace to rebuild it)"
+            f"already extracted: {output_dir} (pass --replace to re-extract)"
         )
     if problems:
         sys.exit("\n".join(f"error: {problem}" for problem in problems))
@@ -321,8 +365,10 @@ def extract(project: Path, output_dir: Path, replace: bool) -> None:
     for warning in warnings:
         print(f"warning: {warning}", file=sys.stderr)
 
-    if output_dir.exists():
-        shutil.rmtree(output_dir)
+    # names.json and samples/ hold naming work, so a re-extract leaves them.
+    for generated in (CLIPS_DIR, TRANSCRIPTS_DIR):
+        if (output_dir / generated).exists():
+            shutil.rmtree(output_dir / generated)
     clips_dir = output_dir / CLIPS_DIR
     track_width = max(MIN_INDEX_WIDTH, len(str(len(tracks))))
     manifest_tracks = []
@@ -418,19 +464,103 @@ def plan_names(manifest: dict, names: dict) -> list[tuple[str, str, str]]:
     return plan
 
 
-def write_sample(source: Path, destination: Path, highpass_hz: int) -> None:
-    if highpass_hz == 0:
-        shutil.copy2(source, destination)
-        return
-    audio_filter = ",".join([f"highpass=f={highpass_hz}"] * HIGHPASS_PASSES)
-    subprocess.run(
-        ["ffmpeg", "-v", "error", "-i", str(source), "-af", audio_filter]
-        + ["-c:a", "pcm_f32le", str(destination)],
-        check=True,
+def to_db(value: float) -> float:
+    return 20 * np.log10(max(value, 1e-12))
+
+
+def highpass(audio: np.ndarray, rate: int, cutoff_hz: int) -> np.ndarray:
+    sections = butter(
+        HIGHPASS_ORDER, cutoff_hz, btype="highpass", fs=rate, output="sos"
     )
+    return sosfiltfilt(sections, audio, axis=0).astype(np.float32)
 
 
-def apply(project_dir: Path, names_path: Path, replace: bool, highpass_hz: int) -> None:
+def voiced_regions(above: np.ndarray) -> list[tuple[int, int]]:
+    """Group frames above the threshold into (start, end) regions, dropping isolated clicks."""
+    edges = np.diff(np.concatenate(([0], above.astype(np.int8), [0])))
+    runs = zip(np.flatnonzero(edges == 1), np.flatnonzero(edges == -1))
+
+    merge_gap = round(MERGE_GAP_SECONDS / FRAME_SECONDS)
+    regions: list[list[int]] = []
+    for start, end in runs:
+        if regions and start - regions[-1][1] < merge_gap:
+            regions[-1][1] = end
+            continue
+        regions.append([start, end])
+
+    min_voiced = round(MIN_VOICED_SECONDS / FRAME_SECONDS)
+    return [
+        (start, end) for start, end in regions if above[start:end].sum() >= min_voiced
+    ]
+
+
+def trim(audio: np.ndarray, rate: int) -> np.ndarray:
+    """Cut the silence around the voice, keeping some padding and fading the edges."""
+    frame = max(1, round(rate * FRAME_SECONDS))
+    frame_count = len(audio) // frame
+    if frame_count == 0:
+        return audio
+
+    mono = audio.mean(axis=1)[: frame_count * frame].reshape(frame_count, frame)
+    levels = np.array([to_db(value) for value in np.sqrt(np.mean(mono**2, axis=1))])
+    threshold = max(
+        levels.max() - TRIM_BELOW_PEAK_DB,
+        np.percentile(levels, NOISE_FLOOR_PERCENTILE) + TRIM_FLOOR_MARGIN_DB,
+    )
+    regions = voiced_regions(levels > threshold)
+    if not regions:
+        return audio
+
+    start = max(0, regions[0][0] * frame - round(rate * PRE_ROLL_SECONDS))
+    end = min(len(audio), regions[-1][1] * frame + round(rate * POST_ROLL_SECONDS))
+    trimmed = audio[start:end].copy()
+
+    fade_in = min(len(trimmed), round(rate * FADE_IN_SECONDS))
+    fade_out = min(len(trimmed), round(rate * FADE_OUT_SECONDS))
+    trimmed[:fade_in] *= np.linspace(0, 1, fade_in, dtype=np.float32)[:, None]
+    trimmed[len(trimmed) - fade_out :] *= np.linspace(1, 0, fade_out, dtype=np.float32)[
+        :, None
+    ]
+    return trimmed
+
+
+def level(
+    audio: np.ndarray, rate: int, target_lufs: float
+) -> tuple[np.ndarray, float, bool]:
+    """Apply one gain so the take hits target_lufs within the caps. Returns audio, gain, and whether the peak cap bound."""
+    loudness = pyloudnorm.Meter(rate).integrated_loudness(audio)
+    if not np.isfinite(loudness):
+        return audio, 0.0, False
+
+    gain_db = min(target_lufs - loudness, MAX_BOOST_DB)
+    peak_room_db = PEAK_CEILING_DBFS - to_db(float(np.abs(audio).max()))
+    peak_capped = gain_db > peak_room_db
+    gain_db = min(gain_db, peak_room_db)
+    return (audio * 10 ** (gain_db / 20)).astype(np.float32), gain_db, peak_capped
+
+
+def write_sample(
+    source: Path, destination: Path, settings: SampleSettings
+) -> SampleReport:
+    audio, rate = sf.read(source, dtype="float32", always_2d=True)
+    report = SampleReport()
+    if settings.highpass_hz:
+        audio = highpass(audio, rate, settings.highpass_hz)
+    if settings.trim:
+        trimmed = trim(audio, rate)
+        report.trimmed_seconds = (len(audio) - len(trimmed)) / rate
+        audio = trimmed
+    if settings.loudness_lufs is not None:
+        audio, report.gain_db, report.peak_capped = level(
+            audio, rate, settings.loudness_lufs
+        )
+    sf.write(destination, audio, rate, subtype="FLOAT")
+    return report
+
+
+def apply(
+    project_dir: Path, names_path: Path, replace: bool, settings: SampleSettings
+) -> None:
     manifest_path = project_dir / MANIFEST
     if not manifest_path.is_file():
         sys.exit(
@@ -442,19 +572,33 @@ def apply(project_dir: Path, names_path: Path, replace: bool, highpass_hz: int) 
             f"error: samples folder already exists: {samples_dir} (pass --replace to rewrite it)"
         )
 
-    if highpass_hz and shutil.which("ffmpeg") is None:
-        sys.exit("error: `ffmpeg` not found on PATH (or pass --highpass 0)")
-
     manifest = json.loads(manifest_path.read_text())
     plan = plan_names(manifest, json.loads(names_path.read_text()))
 
     if samples_dir.exists():
         shutil.rmtree(samples_dir)
+    reports = []
     for clip_file, folder, file_name in plan:
-        source = project_dir / clip_file
         (samples_dir / folder).mkdir(parents=True, exist_ok=True)
-        write_sample(source, samples_dir / folder / file_name, highpass_hz)
+        reports.append(
+            write_sample(
+                project_dir / clip_file, samples_dir / folder / file_name, settings
+            )
+        )
+
     print(f"Wrote {len(plan)} named clips to {samples_dir}")
+    if settings.trim:
+        trimmed = [report.trimmed_seconds for report in reports]
+        print(
+            f"Trimmed a median of {np.median(trimmed):.2f} s per take (most: {max(trimmed):.2f} s)"
+        )
+    if settings.loudness_lufs is not None:
+        gains = [report.gain_db for report in reports]
+        capped = sum(report.peak_capped for report in reports)
+        print(
+            f"Leveled to {settings.loudness_lufs} LUFS: gain {min(gains):+.1f} to {max(gains):+.1f} dB, "
+            f"{capped} takes held below the {PEAK_CEILING_DBFS} dBFS peak ceiling"
+        )
 
 
 def parse_args() -> argparse.Namespace:
@@ -477,12 +621,12 @@ def parse_args() -> argparse.Namespace:
     extract_parser.add_argument(
         "--replace",
         action="store_true",
-        help="delete and rebuild an existing project folder",
+        help="rebuild clips, transcripts and manifest.json (names.json and samples/ are kept)",
     )
 
     apply_parser = commands.add_parser(
         "apply",
-        help="write the clips into samples/ under the names in names.json, high-passed",
+        help="write the clips into samples/ under the names in names.json, ready for effects",
     )
     apply_parser.add_argument(
         "project_dir", type=Path, help="the folder `extract` created"
@@ -499,7 +643,25 @@ def parse_args() -> argparse.Namespace:
         "--highpass",
         type=int,
         default=DEFAULT_HIGHPASS_HZ,
-        help=f"cut rumble below this frequency in Hz, 0 to copy clips unfiltered (default: {DEFAULT_HIGHPASS_HZ})",
+        help=f"cut rumble below this frequency in Hz, 0 to skip (default: {DEFAULT_HIGHPASS_HZ})",
+    )
+    apply_parser.add_argument(
+        "--no-trim",
+        dest="trim",
+        action="store_false",
+        help="keep the silence before and after each take",
+    )
+    apply_parser.add_argument(
+        "--loudness",
+        type=float,
+        default=DEFAULT_LOUDNESS_LUFS,
+        help=f"level every take to this loudness in LUFS (default: {DEFAULT_LOUDNESS_LUFS})",
+    )
+    apply_parser.add_argument(
+        "--no-level",
+        dest="level",
+        action="store_false",
+        help="keep each take's recorded loudness",
     )
     return parser.parse_args()
 
@@ -515,7 +677,11 @@ def main() -> None:
         args.project_dir.expanduser().resolve(),
         args.names.expanduser().resolve(),
         args.replace,
-        args.highpass,
+        SampleSettings(
+            highpass_hz=args.highpass,
+            trim=args.trim,
+            loudness_lufs=args.loudness if args.level else None,
+        ),
     )
 
 

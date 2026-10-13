@@ -171,11 +171,12 @@ project (`.aup3` or `.aup4`) as its own WAV, one folder per track, and transcrib
 each with `parakeet-mlx`. It reads the project's SQLite file read-only, so
 Audacity can stay open; it never needs Audacity's scripting pipe, which Audacity 4
 may not have. `vocal-clips apply <dir> <names.json>` then writes the clips into
-`samples/` under LLM-chosen folder and file names, high-passed at 80 Hz to cut
-room rumble (`--highpass 0` disables it). The `vocal-clips` skill in
-`claude-md/.claude/skills/` drives the naming. Same `uv` wrapper pattern as
-`vocal-samples`; needs `uv`, `ffmpeg` and `parakeet-mlx` on `PATH`. Tests:
-`uv run --no-project --with numpy --with soundfile --with pytest pytest vocal-clips`.
+`samples/` under LLM-chosen folder and file names, prepared for an Ableton
+effects chain: high-passed at 80 Hz to cut room rumble, trimmed to the voice,
+and leveled to -20 LUFS with a static gain. Each step has a flag to turn it off.
+The `vocal-clips` skill in `claude-md/.claude/skills/` drives the naming. Same
+`uv` wrapper pattern as `vocal-samples`; needs `uv` and `parakeet-mlx` on `PATH`.
+Tests: `uv run --no-project --with numpy --with soundfile --with scipy --with pyloudnorm --with pytest pytest vocal-clips`.
 
 `gmux` and `attach-tmux-session` are the exception: they live in the public
 `gmux/` submodule rather than a stow package, so `zsh/.zshrc` puts
