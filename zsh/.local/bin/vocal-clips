@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# Export every clip in an Audacity project as its own transcribed WAV file.
+# The tool lives in $GREG_DOTFILES_PATH/vocal-clips. See vocal_clips.py --help.
+
+if ! command -v uv >/dev/null 2>&1; then
+    echo "error: \`uv\` not found on PATH (install it with scripts/brews.sh)" >&2
+    exit 1
+fi
+
+if [ -z "$GREG_DOTFILES_PATH" ]; then
+    echo "error: GREG_DOTFILES_PATH is not set" >&2
+    exit 1
+fi
+
+exec uv run --script "$GREG_DOTFILES_PATH/vocal-clips/vocal_clips.py" "$@"
