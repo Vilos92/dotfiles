@@ -57,7 +57,10 @@ parts. You do the naming.
      all the noise, and the cut lowered the noise floor by about 13 dB without
      touching the voice. `--highpass 0` skips it.
    - **Trim** to 30 ms before the voice and 200 ms after, with short fades.
-     Breaths next to the line are kept. `--no-trim` skips it.
+     A quiet sound more than 0.5 s before the line, such as a stray breath, is
+     cut. A breath right before the line is kept, because the trim measures
+     only loudness and can't tell it from a soft opening "h", "f" or "s".
+     Greg removes those by ear in Ableton. `--no-trim` skips trimming.
    - **Level** every take to -20 LUFS with one static gain, so one effects
      chain behaves the same on every take. Boosts stop at +10 dB, and peaks stay
      at or below -1 dBFS. `--loudness` changes the target, and `--no-level`

@@ -86,6 +86,9 @@ NOISE_FLOOR_PERCENTILE = 10
 # out, a blip shorter than MIN_VOICED_SECONDS is a click and does not count.
 MERGE_GAP_SECONDS = 0.5
 MIN_VOICED_SECONDS = 0.05
+# A separate sound before the line this far below its peak is a stray breath or
+# noise. Anything within MERGE_GAP_SECONDS of the voice is never dropped.
+LEAD_IN_BELOW_PEAK_DB = 20.0
 # Soft opening consonants start below any threshold, and word endings decay slowly.
 PRE_ROLL_SECONDS = 0.03
 POST_ROLL_SECONDS = 0.2
@@ -494,6 +497,23 @@ def voiced_regions(above: np.ndarray) -> list[tuple[int, int]]:
     ]
 
 
+def drop_quiet_lead_ins(
+    regions: list[tuple[int, int]], levels: np.ndarray
+) -> list[tuple[int, int]]:
+    """Drop the separate sounds before the line that are much quieter than it."""
+    if not regions:
+        return regions
+    voice_peak = levels.max()
+    first_kept = 0
+    while (
+        first_kept < len(regions) - 1
+        and levels[slice(*regions[first_kept])].max()
+        < voice_peak - LEAD_IN_BELOW_PEAK_DB
+    ):
+        first_kept += 1
+    return regions[first_kept:]
+
+
 def trim(audio: np.ndarray, rate: int) -> np.ndarray:
     """Cut the silence around the voice, keeping some padding and fading the edges."""
     frame = max(1, round(rate * FRAME_SECONDS))
@@ -507,7 +527,7 @@ def trim(audio: np.ndarray, rate: int) -> np.ndarray:
         levels.max() - TRIM_BELOW_PEAK_DB,
         np.percentile(levels, NOISE_FLOOR_PERCENTILE) + TRIM_FLOOR_MARGIN_DB,
     )
-    regions = voiced_regions(levels > threshold)
+    regions = drop_quiet_lead_ins(voiced_regions(levels > threshold), levels)
     if not regions:
         return audio
 

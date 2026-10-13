@@ -292,3 +292,27 @@ def test_trim_ignores_a_click_far_from_the_voice():
 
     expected = 1.0 + vocal_clips.PRE_ROLL_SECONDS + vocal_clips.POST_ROLL_SECONDS
     assert len(trimmed) / SAMPLE_RATE == pytest.approx(expected, abs=0.02)
+
+
+def quiet_breath_then_line(breath_amplitude: float) -> np.ndarray:
+    """A 0.2 s sound, 1 s of near-silence, then a 1 s line."""
+    audio = tone_with_silence(lead=1.5, voice=1.0, tail=0.5)
+    start = round(0.3 * SAMPLE_RATE)
+    t = np.arange(round(0.2 * SAMPLE_RATE)) / SAMPLE_RATE
+    audio[start : start + len(t), 0] += breath_amplitude * np.sin(2 * np.pi * 300 * t)
+    return audio
+
+
+def test_trim_drops_a_quiet_sound_well_before_the_line():
+    trimmed = vocal_clips.trim(quiet_breath_then_line(0.01), SAMPLE_RATE)
+
+    expected = 1.0 + vocal_clips.PRE_ROLL_SECONDS + vocal_clips.POST_ROLL_SECONDS
+    assert len(trimmed) / SAMPLE_RATE == pytest.approx(expected, abs=0.02)
+
+
+def test_trim_keeps_a_loud_phrase_before_a_pause():
+    trimmed = vocal_clips.trim(quiet_breath_then_line(0.3), SAMPLE_RATE)
+
+    # From the first phrase at 0.3 s through the end of the line.
+    expected = 2.2 + vocal_clips.PRE_ROLL_SECONDS + vocal_clips.POST_ROLL_SECONDS
+    assert len(trimmed) / SAMPLE_RATE == pytest.approx(expected, abs=0.02)
