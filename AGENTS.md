@@ -62,6 +62,7 @@ created these links ran outside that script; they date from June 2026. `.gitigno
 - `greg-zone/` - Docker infrastructure and services (separate repository, but this AGENTS.md is responsible for documenting it)
 - `gmux/` - Public tmux session switcher (separate repository: https://github.com/Vilos92/gmux)
 - `vocal-samples/` - Source and tests for the `vocal-samples` command (see Binary Commands below)
+- `vocal-clips/` - Source and tests for the `vocal-clips` command (see Binary Commands below)
 
 ### Agent definitions (Claude Code and omp)
 
@@ -153,7 +154,7 @@ Each stowable directory can include a `.local/bin/` directory that gets symlinke
 
 - **mac-mini:** `gbackup-lacie`, `gbackup-t7`, `gllama`, `hermes` (opens the Hermes TUI in a persistent tmux session named `hermes`)
 - **alacritty:** `alacritty-theme`, `alacritty-theme-select`
-- **zsh:** `compress-video-hevc`, `download-media`, `fuzzy-find`, `fuzzy-ripgrep`, `remux-video`, `vocal-samples`
+- **zsh:** `compress-video-hevc`, `download-media`, `fuzzy-find`, `fuzzy-ripgrep`, `remux-video`, `vocal-samples`, `vocal-clips`
 
 `vocal-samples <audio file> <output dir>` separates a song with `audio-separator`
 and cuts the vocal stem into one WAV per phrase. Its `zsh/` entry is a thin
@@ -164,6 +165,17 @@ its own Python dependencies inline, so it needs only `uv`, `ffmpeg` and
 Re-runs reuse `stems/`, so `--analyze` (gap lengths and per-setting sample counts)
 and `--replace-samples` (re-split) take under a second. The `vocal-samples` skill in
 `claude-md/.claude/skills/` uses both to tune settings for a specific track.
+
+`vocal-clips extract <project> <output dir>` writes every clip in an Audacity
+project (`.aup3` or `.aup4`) as its own WAV, one folder per track, and transcribes
+each with `parakeet-mlx`. It reads the project's SQLite file read-only, so
+Audacity can stay open; it never needs Audacity's scripting pipe, which Audacity 4
+may not have. `vocal-clips apply <dir> <names.json>` then writes the clips into
+`samples/` under LLM-chosen folder and file names, high-passed at 80 Hz to cut
+room rumble (`--highpass 0` disables it). The `vocal-clips` skill in
+`claude-md/.claude/skills/` drives the naming. Same `uv` wrapper pattern as
+`vocal-samples`; needs `uv`, `ffmpeg` and `parakeet-mlx` on `PATH`. Tests:
+`uv run --no-project --with numpy --with soundfile --with pytest pytest vocal-clips`.
 
 `gmux` and `attach-tmux-session` are the exception: they live in the public
 `gmux/` submodule rather than a stow package, so `zsh/.zshrc` puts

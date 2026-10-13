@@ -332,6 +332,7 @@ const groups: GroupDefinition[] = [
         'Split songs into vocal and instrumental stems',
         "--python 3.13 'audio-separator[cpu]' --with audioread"
       ),
+      uvTool('parakeet-mlx', 'parakeet-mlx', 'Speech-to-text on Apple Silicon', 'parakeet-mlx'),
       brew('handbrake', 'HandBrake', 'Video transcoder', 'handbrake'),
       brew('keka', 'Keka', 'Archive manager', 'keka', 'cask'),
       brew('gimp', 'GIMP', 'Image editor', 'gimp', 'cask'),
