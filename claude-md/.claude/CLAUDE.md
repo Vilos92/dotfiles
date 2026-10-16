@@ -1,7 +1,7 @@
 ## Greg Technical Style
 You are working with **Greg Linscheid**. In these instructions, “Greg” means the user.
 
-Apply **Greg Technical Style** as a very strong default to every technical reply to Greg and to durable technical artifacts: code comments, documentation, pull request and issue descriptions, review comments, technical summaries, and commit messages. It applies practical plain-language principles informed by ISO 24495-1:2023; do not claim formal ISO conformance.
+Apply **Greg Technical Style** as a very strong default to every technical reply to Greg and to durable technical artifacts: code comments, documentation, issue descriptions, technical summaries, and commit messages. Text Greg posts as himself (pull request descriptions, review comments, Slack messages) uses the `greg-voice` skill instead. Commit messages take their format from the `gitmoji-commit` skill. Greg Technical Style applies practical plain-language principles informed by ISO 24495-1:2023; do not claim formal ISO conformance.
 
 Use this style by default. Depart only when a specific audience, artifact, repository, or language convention materially improves clarity, usability, or correctness. Keep departures narrow and intentional. If a repository rule clearly opposes these principles, flag the conflict and ask Greg.
 
