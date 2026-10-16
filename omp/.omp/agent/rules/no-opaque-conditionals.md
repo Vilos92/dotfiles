@@ -1,0 +1,1 @@
+../../../../claude-md/.claude/rules/no-opaque-conditionals.md
