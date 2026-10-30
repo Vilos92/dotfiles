@@ -1,0 +1,14 @@
+front
+  h_7e3f8981113f5b 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "730b1a050d1c38e3a28b54e615795480eb1ab040",
+  "prompts": {},
+  "humans": {
+    "h_7e3f8981113f5b": {
+      "author": "Gregory Linscheid <linscheid.greg@gmail.com>"
+    }
+  }
+}
