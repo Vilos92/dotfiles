@@ -292,6 +292,7 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 **Networking & Infrastructure:**
 
 - **tailscale:** VPN mesh network
+- **typerion-staging:** Tailscale exit node; Typerion's staging Workers admit only this home's IP
 - **cloudflared:** Cloudflare tunnel for public access
 - **nginx-tailscale:** Reverse proxy for Tailscale network
 - **nginx-cloudflared:** Reverse proxy for Cloudflare tunnel
@@ -661,6 +662,8 @@ the dependents come back without a network.
 - Environment variables (in `greg-zone/.env`):
   - `COPYPARTY_CLOUDFLARED_TOKEN` (required for copyparty)
   - `TAILSCALE_AUTH_KEY` (required for Tailscale)
+  - `TAILSCALE_EXIT_NODE_AUTH_KEY` (required for the tailscale-exit-node container Transmission routes through)
+  - `TAILSCALE_TYPERION_STAGING_AUTH_KEY` (required for the typerion-staging exit node)
   - `TRANSMISSION_PASSWORD` (required for Transmission)
   - `GRAFANA_PASSWORD` (required for Grafana)
   - `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` / `PASSWORD` / `SECRET` (required for Hermes dashboard)
