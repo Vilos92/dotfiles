@@ -286,13 +286,14 @@ See `greg-zone/README.md` and `./docker-services.sh help` for full command refer
 - **alertmanager:** Alert routing (port 9093)
 - **node-exporter:** System metrics (port 9100)
 - **cadvisor:** Container metrics (port 8080)
-- **docker-stats-exporter:** Docker stats exporter (port 8081)
+- **docker-stats-exporter:** Docker stats exporter (port 8081). Also exports `container_healthy` for every container with a Docker healthcheck, which `ContainerUnhealthy` alerts on, so a new service's healthcheck pages without further wiring.
 - **mc-monitor:** Minecraft server metrics (port 8082) — **profile-gated; do not start unless Greg explicitly asks.** Its Prometheus scrape job is commented out to match; leave it commented unless the profile is coming back up.
 
 **Networking & Infrastructure:**
 
 - **tailscale:** VPN mesh network
 - **typerion-staging:** Tailscale exit node; Typerion's staging Workers admit only this home's IP
+- **typerion-staging-gate:** Keeps Typerion's staging WAF rule admitting this home's IP as it changes, and posts changes to Discord's infra channel. Runs `infra/src/gate/watch.ts` from a read-only mount of `~/greg_projects/typerion-next`, so that checkout must keep `infra/` (any branch from `main` onward does).
 - **cloudflared:** Cloudflare tunnel for public access
 - **nginx-tailscale:** Reverse proxy for Tailscale network
 - **nginx-cloudflared:** Reverse proxy for Cloudflare tunnel
@@ -664,6 +665,7 @@ the dependents come back without a network.
   - `TAILSCALE_AUTH_KEY` (required for Tailscale)
   - `TAILSCALE_EXIT_NODE_AUTH_KEY` (required for the tailscale-exit-node container Transmission routes through)
   - `TAILSCALE_TYPERION_STAGING_AUTH_KEY` (required for the typerion-staging exit node)
+  - `TYPERION_CLOUDFLARE_API_TOKEN` (required for typerion-staging-gate: Zone WAF Edit on typerion.dev and typerion.ai)
   - `TRANSMISSION_PASSWORD` (required for Transmission)
   - `GRAFANA_PASSWORD` (required for Grafana)
   - `HERMES_DASHBOARD_BASIC_AUTH_USERNAME` / `PASSWORD` / `SECRET` (required for Hermes dashboard)
