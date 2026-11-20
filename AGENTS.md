@@ -43,9 +43,17 @@ device, the Mac Mini included, stows `claude-settings/`. Never keep a hand-edite
 `~/.claude/settings.json` there.
 
 `claude-md/` is unaffected by that split. It supplies no settings, so it stows alongside
-either package. The one exception is the comment-punctuation hook: its script lives in
-`claude-md/.claude/hooks/`, but its registration lives in `settings.json`, so it is
+either package. The exceptions are the hooks: their scripts live in
+`claude-md/.claude/hooks/`, but their registration lives in `settings.json`, so each is
 registered in **both** `claude-settings/` and `front/`.
+
+`tmux-claude.sh` is one of those hooks. While Claude runs in a tmux session, it gives
+that session a multi-line status bar (three windows per line, each labeled with its
+Claude session title) and renames Claude's window to `repo:branch`. All of it is set as
+tmux *session* options from the hook, never in `tmux/.tmux.conf`. `SessionEnd` unsets
+them once no Claude is left in the session, so tmux without Claude behaves exactly as
+`.tmux.conf` says. If Claude is killed without `SessionEnd` firing, the bar stays until
+that tmux session ends.
 
 **`agent/` is a fourth `~/.claude` package, and the dangerous one.** It supplies
 `sessions/`, `session-env/`, `backups/`, and `projects/` — live Claude Code state,
