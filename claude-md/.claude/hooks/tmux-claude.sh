@@ -14,7 +14,9 @@
 #   end    SessionEnd: release the pane, restore tmux once Claude is gone
 #   lines  internal: size the bar to a session's window count
 
-[ -n "$TMUX" ] && [ -n "$TMUX_PANE" ] || exit 0
+[ -n "$TMUX" ] || exit 0
+# tmux's run-shell sets no TMUX_PANE, and `lines` is given its session instead.
+[ "$1" = lines ] || [ -n "$TMUX_PANE" ] || exit 0
 
 SELF=$0
 MODE=$1
