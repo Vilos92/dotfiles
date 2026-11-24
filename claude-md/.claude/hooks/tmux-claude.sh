@@ -41,7 +41,10 @@ status_line_format() {
   first=$(($1 * WINDOWS_PER_LINE))
   last=$((first + WINDOWS_PER_LINE))
   in_range="#{&&:#{e|>=:#{window_index},$first},#{e|<:#{window_index},$last}}"
-  cell="#[range=window|#{window_index}]#{?window_active,#[reverse],} #{p$CELL_WIDTH:#{E:@tab_label}}#[norange]#[default]"
+  # The highlight covers only the label. The padding after it stays unstyled.
+  gap="#{e|-:$CELL_WIDTH,#{w:#{E:@tab_label}}}"
+  pad="#{?#{e|>:$gap,0},#{p/$gap/:},}"
+  cell="#[range=window|#{window_index}]#{?window_active,#[reverse],} #{E:@tab_label} #[noreverse]$pad#[norange]#[default]"
   printf '%s' "#[align=left]#{W:#{?$in_range,$cell,}}"
   [ "$1" -eq 0 ] && printf '%s' '#[align=right] #{session_name} · %H:%M '
 }
